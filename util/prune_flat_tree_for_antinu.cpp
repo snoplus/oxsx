@@ -75,8 +75,11 @@ TNtuple* ntload(const char* fname, const char* nout) {
   std::vector<double> fLongitude;
   std::vector<double> fAltitude;
   double fDistance = 0.;
+  
+  size_t ie = 0;
+  size_t Nevents = ds.GetEntryCount();
 
-  for (size_t ie = 0; ie < ds.GetEntryCount(); ++ie) {
+  for (ie=0; ie<Nevents; ++ie) {
       
     // number of entries
     const RAT::DS::Entry& entry = ds.GetEntry(ie);
@@ -110,11 +113,16 @@ TNtuple* ntload(const char* fname, const char* nout) {
     // distance
     fDistance = GetReactorDistanceLLA( fLongitude[coreNumber],fLatitude[coreNumber],fAltitude[coreNumber] );
     v[8] = fDistance;
-    std::cout <<  "Name=" << reactorName << " core=" << coreNumber+1 << " longitude=" << v[6] << " latitude=" << v[7] << " distance=" << v[8] << std::endl;
+    //std::cout <<  "Name=" << reactorName << " core=" << coreNumber+1 << " longitude=" << v[6] << " latitude=" << v[7] << " distance=" << v[8] << std::endl;
+
+    if (ie % 1000 == 0) std::cout <<  "    Processed events: " << ie << " (" << (double)ie/Nevents*100. << "%) " << std::endl;
 
     // fill ntuple
     nt->Fill(v);
   }
+  
+  // 
+  std::cout <<  " Processed events: " << Nevents << std::endl;
   
   // write output ntuple
   std::stringstream outname;
