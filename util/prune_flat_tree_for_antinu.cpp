@@ -62,6 +62,7 @@ TNtuple* ntload(const char* fname, const char* nout) {
   Float_t v[9];
 
   RAT::DU::DSReader ds(fname);
+  
   std::string rName="";
   int coreNumber;
   std::string reactorName="";
@@ -71,7 +72,7 @@ TNtuple* ntload(const char* fname, const char* nout) {
   RAT::DB *db = RAT::DB::Get();
   RAT::DBLinkPtr fLink;
   std::vector<double> fLatitude;
-  std::vector<double> fLongitute;
+  std::vector<double> fLongitude;
   std::vector<double> fAltitude;
   double fDistance = 0.;
 
@@ -101,15 +102,15 @@ TNtuple* ntload(const char* fname, const char* nout) {
     coreNumber = atoi(reactorcoreStr.substr(pos+1, reactorcoreStr.size()).c_str());
     fLink = db->GetLink("REACTOR", reactorName);
     fLatitude  = fLink->GetDArray("latitude");
-    fLongitute = fLink->GetDArray("longitude");
+    fLongitude = fLink->GetDArray("longitude");
     fAltitude  = fLink->GetDArray("altitude");
     v[6] = fLatitude[coreNumber];
-    v[7] = fLatitude[coreNumber];
+    v[7] = fLongitude[coreNumber];
     
     // distance
-    fDistance = GetReactorDistanceLLA( fLongitute[coreNumber],fLatitude[coreNumber],fAltitude[coreNumber] );
+    fDistance = GetReactorDistanceLLA( fLongitude[coreNumber],fLatitude[coreNumber],fAltitude[coreNumber] );
     v[8] = fDistance;
-    std::cout <<  "Name=" << reactorName << " core=" << coreNumber << " longitude=" << v[6] << " latitude=" << v[7] << " distance=" << v[8] << std::endl;
+    std::cout <<  "Name=" << reactorName << " core=" << coreNumber+1 << " longitude=" << v[6] << " latitude=" << v[7] << " distance=" << v[8] << std::endl;
 
     // fill ntuple
     nt->Fill(v);
@@ -130,4 +131,3 @@ int main(int argc, char* argv[])
   const char* ntout = argv[2];
   ntload(rootin, ntout);
 }
-
