@@ -249,8 +249,9 @@ SurvProb::Cdf(size_t dim_, double val_) const{
     double rtnVal = 0;
 
     rtnVal = (a*b/2)*val_*cos(e);
-    rtnVal -= val_*(a+d-(a*b)/2);
+    rtnVal += val_*(a+d-(a*b)/2);
     rtnVal += a*b*c*Si(e);
+    rtnVal -= a*b*c*3.1415926535898/2;
 
     return rtnVal;
 }
@@ -264,10 +265,10 @@ SurvProb::Integral(const std::vector<double>& mins_, const std::vector<double>& 
     for(size_t i = 0; i < mins_.size(); i++){
       // std::cout << maxs_[i]<< " " << mins_[i] << std::endl;
       // std::cout << Cdf(i, maxs_[i]) << " "<< Cdf(i, mins_[i]) << std::endl;
-        integral *= ( Cdf(i, maxs_[i]) - Cdf(i, mins_[i]));
+      integral *= ( Cdf(i, maxs_[i]) - Cdf(i, mins_[i]))/Cdf(i,10.);
     }
 
-    // std::cout << integral << std::endl;
+    std::cout << integral << std::endl;
     return integral;  
 }
 
