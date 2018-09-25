@@ -268,7 +268,7 @@ SurvProb::Integral(const std::vector<double>& mins_, const std::vector<double>& 
       integral *= ( Cdf(i, maxs_[i]) - Cdf(i, mins_[i]))/Cdf(i,10.);
     }
 
-    std::cout << integral << std::endl;
+    //std::cout << Cdf(0,10.) << std::endl;
     return integral;  
 }
 

@@ -101,7 +101,7 @@ int main(){
   ////////////////////////////////////////////
 
   NuOsc* osc_data = new NuOsc("osc_data"); //Oscillation systematic
-  SurvProb* survprob = new SurvProb(7e-5,0.3,0.02,238,"survprob"); // Surv Prob function, with intial parameters delm21,ssqqr12, ssqr13 and NB PRECISE BASELINE for reactor pdf
+  SurvProb* survprob = new SurvProb(7.4e-5,0.297,0.0215,238,"survprob"); // Surv Prob function, with intial parameters delm21,ssqqr12, ssqr13 and NB PRECISE BASELINE for reactor pdf
 
   survprob->RenameParameter("delmsqr21_0","d21");
   survprob->RenameParameter("sinsqrtheta12_0","s12");
@@ -116,6 +116,13 @@ int main(){
   osc_data->Construct();
   std::cout << "constructed" << std::endl;
 
+  SparseMatrix sp = osc_data->GetResponse();  //not essential
+  sp.PrintMat();                              //not essential
+  TH1D hist("hist","",80,2,10);
+  for (int i = 0; i < sp.GetNRows(); ++i) {   //not essential
+    hist.Fill(2+(i*(10-2)/80.),sp.GetComponent(i,i));
+  }
+
   /////////////////////////////////////////////
   // 3. Set Up LH function & fit parameters  //
   /////////////////////////////////////////////
@@ -124,14 +131,14 @@ int main(){
   ParameterDict minima;
   minima["UnOscPdf_norm"]= 0;
   minima["d21" ] = 0.;
-  minima["s12" ] = 0.05;
+  minima["s12" ] = 0.01;
   minima["s13" ] = 0.001;
 
   ParameterDict maxima;
   maxima["UnOscPdf_norm"]= 100000;
   maxima["d21" ] = 0.0001;
-  maxima["s12" ] = 0.5;
-  maxima["s13" ] = 0.5;
+  maxima["s12" ] = 0.4;
+  maxima["s13" ] = 0.1;
 
   // ParameterDict initialval;
   // Rand rand;
@@ -141,9 +148,9 @@ int main(){
 
   ParameterDict initialval;
   initialval["UnOscPdf_norm"]= 4000;
-  initialval["d21" ]  = 7e-5;
-  initialval["s12" ]  = 0.3;
-  initialval["s13" ]  = 0.02;
+  initialval["d21" ]  = 7.4e-5;
+  initialval["s12" ]  = 0.297;
+  initialval["s13" ]  = 0.0215;
 
   ParameterDict initialerr;
   initialerr["UnOscPdf_norm"]= 270;
@@ -157,6 +164,9 @@ int main(){
   //lhFunction.AddPdf(bgPdf);  //const std::string& name_,
   lhFunction.AddDist(mcPdfs.at(0));
   lhFunction.AddSystematic(osc_data);
+  //lhFunction.SetConstraint("s12",0.297,0.01);
+  //lhFunction.SetConstraint("s13",0.0215,0.001);
+  
   //lhFunction.AddPdf("osc", signalPdf);
   std::cout << "Built LH function " << std::endl;
 
@@ -203,6 +213,7 @@ int main(){
   TH1D datahist("datahist","",FitHist.GetNbinsX(),FitHist.GetXaxis()->GetXmin(),FitHist.GetXaxis()->GetXmax());
 
   FullFit.Add(&FitHist);
+  datahist.Add(&DataHist);
 
   TCanvas* c1 = new TCanvas("c1");
   datahist.Draw("same");
