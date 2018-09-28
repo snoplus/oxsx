@@ -223,7 +223,7 @@ SurvProb::operator() (const std::vector<double>& vals_) const{
 
         survprob +=  (fC4 * (1.0 - fSSqr2Theta12 * sSqrDmBE) + fS4);
     }
-
+    std::cout<<"called operator"<<std::endl;
     return survprob;
 }
 //?
@@ -269,6 +269,7 @@ SurvProb::Integral(const std::vector<double>& mins_, const std::vector<double>& 
     }
 
     //std::cout << Cdf(0,10.) << std::endl;
+    //std::cout << fsinsqrtheta12s.at(0) << std::endl;
     return integral;  
 }
 
