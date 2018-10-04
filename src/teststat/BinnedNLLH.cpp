@@ -4,6 +4,8 @@
 #include <Exceptions.h>
 #include <DistFiller.h>
 #include <CutLog.h>
+#include <Exceptions.h>
+#include <Formatter.hpp>
 #include <iostream>
 
 double 
@@ -19,9 +21,8 @@ BinnedNLLH::Evaluate(){
         fAlreadyShrunk = true;
     }
 
-    // Construct systematics
-    fSystematicManager.Construct();
-
+    // Construct systematics 
+    fSystematicManager.Construct(); 
     // Apply systematics
     fPdfManager.ApplySystematics(fSystematicManager);
 
@@ -37,7 +38,6 @@ BinnedNLLH::Evaluate(){
         nLogLH -= fDataDist.GetBinContent(i) *  log(prob);        
     }
 
-
     // Extended LH correction
     const std::vector<double>& normalisations = fPdfManager.GetNormalisations();
     for(size_t i = 0; i < normalisations.size(); i++)
@@ -47,7 +47,7 @@ BinnedNLLH::Evaluate(){
     for(std::map<std::string, QuadraticConstraint>::iterator it = fConstraints.begin();
         it != fConstraints.end(); ++it)
         nLogLH += it->second.Evaluate(fComponentManager.GetParameter(it->first));
-
+   
     return nLogLH;
 }
 
@@ -62,6 +62,30 @@ BinnedNLLH::BinData(){
 }
 
 void
+BinnedNLLH::AddDist(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& sys_){
+    if (pdfs.size() != sys_.size())
+       throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
+    for (int i = 0; i < pdfs.size(); ++i)
+        AddDist( pdfs.at(i), sys_.at(i) );
+}
+
+void
+BinnedNLLH::AddDist(const BinnedED& pdf_, const std::vector<std::string>& syss_){
+    fPdfManager.AddPdf(pdf_);
+    fSystematicManager.AddDist(pdf_,syss_);
+}
+
+void
+BinnedNLLH::AddDist(const BinnedED& pdf_){
+    fPdfManager.AddPdf(pdf_);
+    fSystematicManager.AddDist(pdf_,"");
+}
+void
+BinnedNLLH::AddPdf(const BinnedED& pdf_){
+    AddDist(pdf_);
+}
+
+void
 BinnedNLLH::SetPdfManager(const BinnedEDManager& man_){
     fPdfManager = man_;
 }
@@ -71,14 +95,14 @@ BinnedNLLH::SetSystematicManager(const SystematicManager& man_){
     fSystematicManager = man_;
 }
 
-void
-BinnedNLLH::AddPdf(const BinnedED& pdf_){
-    fPdfManager.AddPdf(pdf_);
-}
-
 void 
 BinnedNLLH::AddSystematic(Systematic* sys_){
     fSystematicManager.Add(sys_);
+}
+
+void 
+BinnedNLLH::AddSystematic(Systematic* sys_, const std::string&  group_){
+    fSystematicManager.Add(sys_, group_);
 }
 
 void
@@ -125,17 +149,18 @@ BinnedNLLH::GetBufferAsOverflow() const{
 }
 
 void
-BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs_){
-  for(size_t i = 0; i < pdfs_.size(); i++)
-    AddPdf(pdfs_.at(i));
+BinnedNLLH::AddSystematics(const std::vector<Systematic*> systematics_){
+    for(size_t i = 0; i < systematics_.size(); i++)
+        AddSystematic(systematics_.at(i));
 }
 
 void
-BinnedNLLH::AddSystematics(const std::vector<Systematic*> systematics_){
-  for(size_t i = 0; i < systematics_.size(); i++)
-    AddSystematic(systematics_.at(i));
+BinnedNLLH::AddSystematics(const std::vector<Systematic*> sys_, const std::vector<std::string> & groups_){
+    if (groups_.size() != sys_.size())
+       throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
+    for(size_t i = 0; i <sys_.size(); i++)
+        AddSystematic(sys_.at(i), groups_.at(i));
 }
-
 
 void
 BinnedNLLH::SetNormalisations(const std::vector<double>& norms_){    
@@ -190,9 +215,20 @@ void
 BinnedNLLH::RegisterFitComponents(){
     fComponentManager.Clear();
     fComponentManager.AddComponent(&fPdfManager);
-    for(size_t i = 0; i < fSystematicManager.GetSystematics().size(); i++)
-        fComponentManager.AddComponent(fSystematicManager.GetSystematics().at(i));
+    
+    //Because the limits are set by name they can be added in any order.
+    const std::map<std::string, std::vector<Systematic*> > sys_ = fSystematicManager.GetSystematicsGroup();
+    std::vector<std::string> alreadyAdded;
+    for (std::map<std::string, std::vector<Systematic*> >::const_iterator group_ = sys_.begin(); group_ !=sys_.end(); ++group_) {
+        for (int i = 0; i < group_->second.size(); ++i) {
+            if( std::find( alreadyAdded.begin() , alreadyAdded.end() , group_->second.at(i)->GetName() ) == alreadyAdded.end() ){
+                fComponentManager.AddComponent( group_->second.at(i) );
+                alreadyAdded.push_back( group_->second.at(i)->GetName() );
+            }
+        }//End of group
+    }//End of groups
 }
+
 
 void
 BinnedNLLH::SetParameters(const ParameterDict& params_){
@@ -204,7 +240,6 @@ BinnedNLLH::SetParameters(const ParameterDict& params_){
     }
 }
                                              
-                 
 ParameterDict
 BinnedNLLH::GetParameters() const{
     return fComponentManager.GetParameters();

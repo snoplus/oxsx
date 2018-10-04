@@ -32,7 +32,6 @@ BinnedEDManager::BinProbability(size_t bin_) const{
     try{
         for(size_t i = 0; i < fWorkingPdfs.size(); i++){
             sum += fNormalisations.at(i) * fWorkingPdfs.at(i).GetBinContent(bin_);
-    
         }
     }
     catch(const std::out_of_range&){
@@ -53,14 +52,11 @@ void
 BinnedEDManager::ApplySystematics(const SystematicManager& sysMan_){
     // If there are no systematics dont do anything
     //  ( working pdfs = original pdfs from initialisation)
-    
-    if(!sysMan_.GetSystematics().size())
+
+    if(!sysMan_.GetSystematicsGroup().size())
         return;
 
-    for(size_t j = 0; j < fOriginalPdfs.size(); j++){
-        fWorkingPdfs[j] = fOriginalPdfs.at(j);
-        fWorkingPdfs[j].SetBinContents(sysMan_.GetTotalResponse().operator()(fOriginalPdfs.at(j).GetBinContents()));
-    }
+    sysMan_.DistortEDs(fOriginalPdfs,fWorkingPdfs);
 }
 
 const BinnedED&

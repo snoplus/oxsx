@@ -62,6 +62,12 @@ SparseMatrix::operator*=(const SparseMatrix& other_){
   return *this;
 }
 
+SparseMatrix
+SparseMatrix::operator*(const SparseMatrix& other_){
+  fArmaMat = fArmaMat * other_.fArmaMat;
+  return *this;
+}
+
 void
 SparseMatrix::SetZeros(){
     if(!fNRows || !fNCols)
