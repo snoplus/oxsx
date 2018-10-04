@@ -101,6 +101,7 @@ void LHFit(){
     (it->second)(Reactors[0],axes);
     }*/
 
+  BinnedED  dataSetPdf("dataSetPdf",axes);
   BinnedED  dataSetPdf1("dataSetPdf1",axes);
   BinnedED  dataSetPdf2("dataSetPdf2",axes);
   BinnedED  dataSetPdf3("dataSetPdf3",axes);
@@ -142,6 +143,7 @@ void LHFit(){
     {
       dataSetPdf.SetBinContent(i, r1->Poisson(dataSetPdf.GetBinContent(i)));
       }
+  
   BinnedED BruceUnOscPdf("BruceUnOscPdf",axes);
   BinnedED DarlingtonUnOscPdf("DarlingtonUnOscPdf",axes);
   BinnedED PickeringUnOscPdf("PickeringUnOscPdf",axes);

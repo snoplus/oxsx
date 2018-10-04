@@ -38,11 +38,13 @@
 // data (ntuples) to load
 //const std::string bgMCfile    = "/data/snoplus/blakei/antinu/mc/ntuples/Oscbg.root";
 //const std::string bgTreeName  = "nt";
-const std::string UnOscfile   = "/data/snoplus/blakei/antinu/mc/ntuples/test/UnOscBruce1000flux_oxsx.root";
+const std::string UnOscfile   = "/data/snoplus/blakei/antinu/mc/ntuples/test/UnOscDarlingtonflux1000_oxsx.root";
 const std::string UnOscTreeName = "nt";
 
-const std::string dataFile = "/data/snoplus/blakei/antinu/mc/ntuples/test/OscBruce1000fluxds21_7.4e-05_ss12_0.297_ss13_0.0215_oxsx.root";
+const std::string dataFile = "/data/snoplus/blakei/antinu/mc/ntuples/test/OscDarlingtonflux1000ds21_7.4e-05_ss12_0.297_ss13_0.0215_oxsx.root";
 const std::string dataTreeName = "nt";
+
+double dist = 349;
 
 int numexps = 1; 
 
@@ -76,7 +78,7 @@ void LHFit(){
   ROOTNtuple dataNtp(dataFile, dataTreeName);
   for(size_t i = 0; i < dataNtp.GetNEntries(); i++)
     dataSetPdf.Fill(dataNtp.GetEntry(i));
-  
+
   //poisson stat fluctutate input data
   /*for(int i = 0; i < dataSetPdf.GetNBins(); i++)
     {
@@ -98,7 +100,8 @@ void LHFit(){
   ////////////////////////////////////////////
 
   NuOsc* osc_data = new NuOsc("osc_data"); //Oscillation systematic
-  SurvProb* survprob = new SurvProb(7.4e-5,0.297,0.0215,240,"survprob"); // Surv Prob function, with intial parameters delm21,ssqqr12, ssqr13 and NB PRECISE BASELINE for reactor pdf
+  SurvProb* survprob = new SurvProb(0.1,0.1,0.1,dist,"survprob"); // Surv Prob function, with intial parameters 
+  //delm21,ssqqr12, ssqr13 (init. w/ any value >0) and NB PRECISE BASELINE for reactor pdf
   survprob->RenameParameter("delmsqr21_0","d21");
   survprob->RenameParameter("sinsqrtheta12_0","s12");
   survprob->RenameParameter("sinsqrtheta13_0","s13");
@@ -107,9 +110,9 @@ void LHFit(){
   osc_data->SetAxes(axes);
   osc_data->SetTransformationObs(dataRep);
   osc_data->SetDistributionObs(dataRep);
-  std::cout << "constructing.." << std::endl;
-  osc_data->Construct();
-  std::cout << "constructed" << std::endl;
+  //std::cout << "constructing.." << std::endl;
+  //osc_data->Construct();
+  //std::cout << "constructed" << std::endl;
 
   //SparseMatrix sp = osc_data->GetResponse();  //not essential
   //sp.PrintMat();                              //not essential
@@ -146,7 +149,7 @@ void LHFit(){
   //std::cout<<"intial s12 value: "<<minima["s12" ]+ (Rand*(maxima["s12" ]-minima["s12" ]))<<std::endl;
 
   ParameterDict initialval;
-  initialval["UnOscPdf_norm"]= 40000;
+  initialval["UnOscPdf_norm"]= 9000;
   initialval["d21" ]  = 7.4e-5;
   initialval["s12" ]  = 0.3;
   initialval["s13" ]  = 0.02;
@@ -199,7 +202,7 @@ void LHFit(){
   BinnedED Result;
 
   NuOsc OscResult("Oscillated");
-  OscResult.SetFunction(new SurvProb(bestFit.at("d21"),bestFit.at("s12"),bestFit.at("s13"),240));
+  OscResult.SetFunction(new SurvProb(bestFit.at("d21"),bestFit.at("s12"),bestFit.at("s13"),dist));
   OscResult.SetAxes(axes);
   OscResult.SetTransformationObs(dataRep);
   OscResult.SetDistributionObs(dataRep);
