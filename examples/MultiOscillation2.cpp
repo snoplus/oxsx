@@ -4,6 +4,7 @@
 #include <math.h>
 #include <Rand.h>
 #include <fstream>
+#include <iostream>
 
 #include <TH1D.h>
 #include <TH2D.h>
@@ -166,37 +167,46 @@ void LHFit(TH2D *h2, const std::string UnOscfile, const std::string dataFile, in
   h2->Fill(bestFit.at("s12"),bestFit.at("d21"));
 }
 
-int main(){
+int main(int argc, char *argv[]) {
 
-    int numexps = 10;
-    TH2D *h2 = new TH2D("h2","h2",100,0.1,0.5,100,5e-5,1e-4);
-
-    std::vector<std::string> Reactors;
-    Reactors.push_back("BRUCE");
-    Reactors.push_back("DARLINGTON");
-    Reactors.push_back("PICKERING");
-    int numPdfs = Reactors.size();
-    
-    //Want array of Reactor names/core names which can be; thrown into Rat to find distances,
-    //used to declare variables and objects
-    std::vector<double> reactorDistances;
-    reactorDistances.push_back(240.22);
-    reactorDistances.push_back(349.147);
-    reactorDistances.push_back(340.37);
-
-    // data (ntuples) to load
-    const std::string UnOscfile   = "/data/snoplus/blakei/antinu/mc/ntuples/test/UnOscBruceflux1000_oxsx.root";
-    const std::string dataFile = "/data/snoplus/blakei/antinu/mc/ntuples/test/Osc3CADflux1000ds21_7.4e-05_ss12_0.297_ss13_0.0215_oxsx.root";
-
-    for (int i = 0; i < numexps; i++){
-        printf("\n-------------------------------------------------------------------------------------\n");
-        printf("experiment: %d of %d\n",i,numexps);
-        LHFit(h2,UnOscfile,dataFile,numPdfs,reactorDistances);
-        printf("-------------------------------------------------------------------------------------\n");
+    if (argc != 6) {
+        std::cout<<"5 arguments expected."<<std::endl;
     }
+    else{
+        std::stringstream argParser;
+        const std::string &UnOscfile = argv[1];
+        const std::string &dataFile = argv[2];
+        const std::string &infoFile = argv[3];
+        const std::string &outFile = argv[4];
+        argParser << argv[5];
+        int numexps;
+        argParser >> numexps;
+    
+        TH2D *h2 = new TH2D("h2","h2",100,0.1,0.5,100,5e-5,1e-4);
 
-    TFile *fileOut = new TFile("/data/snoplus/lidgard/OXSX/tdhfit.root","RECREATE");
-    h2->Write();
-    fileOut->Close();
+        std::vector<std::string> Reactors;
+        Reactors.push_back("BRUCE");
+        Reactors.push_back("DARLINGTON");
+        Reactors.push_back("PICKERING");
+        int numPdfs = Reactors.size();
+        
+        //Want array of Reactor names/core names which can be; thrown into Rat to find distances,
+        //used to declare variables and objects
+        std::vector<double> reactorDistances;
+        reactorDistances.push_back(240.22);
+        reactorDistances.push_back(349.147);
+        reactorDistances.push_back(340.37);
+
+        for (int i = 0; i < numexps; i++){
+            printf("\n-------------------------------------------------------------------------------------\n");
+            printf("experiment: %d of %d\n",i,numexps);
+            LHFit(h2,UnOscfile,dataFile,numPdfs,reactorDistances);
+            printf("-------------------------------------------------------------------------------------\n");
+        }
+
+        TFile *fileOut = new TFile(outFile.c_str(),"RECREATE");
+        h2->Write();
+        fileOut->Close();
+    }
     return 0;
 }

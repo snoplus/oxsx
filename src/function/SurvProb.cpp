@@ -223,7 +223,7 @@ SurvProb::operator() (const std::vector<double>& vals_) const{
 
         survprob +=  (fC4 * (1.0 - fSSqr2Theta12 * sSqrDmBE) + fS4);
     }
-    std::cout<<"called operator"<<std::endl;
+    //std::cout<<"called operator"<<std::endl;
     return survprob;
 }
 //?
