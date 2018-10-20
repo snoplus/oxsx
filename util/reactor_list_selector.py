@@ -11,6 +11,7 @@
 import os, sys, string, csv, argparse
 from math import pow
 import numpy as np
+import os.path
 
 def getReactorList(reactorListName, filename):
     """Returns the list of reactors for the specified reactor list"""
@@ -25,7 +26,7 @@ def getReactorList(reactorListName, filename):
                 reactorListEntries = (nextlines.split('active_reactors: ['))[1].split('],')[0]
                 reactorListEntries = (reactorListEntries.replace('"','')).split(',')
                 reactorListEntries = map(str.strip, reactorListEntries)
-
+                break
     return reactorListEntries
 
 def getReactorInfo(reactorListName, filename, filenameStatus, filenameOutput):
@@ -60,6 +61,7 @@ def getReactorInfo(reactorListName, filename, filenameStatus, filenameOutput):
                     nextlines = [next(ratDBFile) for x in xrange(12)]
                     nextlines="".join(nextlines).rstrip()
                     nextlines = nextlines.split("}")[0].rstrip()
+                    break
 
             # search REACTORS_STATUS file
             for line in ratDBStatusFile:
@@ -67,6 +69,7 @@ def getReactorInfo(reactorListName, filename, filenameStatus, filenameOutput):
                     nextlines2 = [next(ratDBStatusFile) for x in xrange(12)]
                     nextlines2="".join(nextlines2).rstrip()
                     nextlines2 = nextlines2.split("}")[0].rstrip()
+                    break
 
             #ensure the reactor info is found, otherwise raise an exception
             if nextlines is None:
@@ -113,8 +116,13 @@ def getReactorInfo(reactorListName, filename, filenameStatus, filenameOutput):
             reactorInfo[reactorName] = [distance,coreType,cores,corePower]
 
     # write data to output file
-    with open(filenameOutput,'wb') as fileOut:
-        fileOut.write('reactorName,distance_km,spectrum_type,number_cores,average_core_power\n')
+    if not os.path.isfile(filenameOutput):
+        writeHeader = True
+    else:
+        writeHeader = False
+    with open(filenameOutput,'ab+') as fileOut:
+        if writeHeader:
+            fileOut.write('reactorName,distance_km,spectrum_type,number_cores,average_core_power\n')
         for key, values in reactorInfo.items():
             fileOut.write( key+',' )
             values = map(str, values)
@@ -164,4 +172,14 @@ if __name__=="__main__":
                         default="reactor_list_selection.csv")
     args = parser.parse_args()
 
-    getReactorInfo(args.reactorListName, args.REACTORS_filename, args.REACTORS_STATUS_filename, args.output_filename)
+    # check if the specified files exist
+    if os.path.isfile(args.REACTORS_filename) and os.path.isfile(args.REACTORS_STATUS_filename):
+        if os.path.isfile(args.output_filename):
+            existsQ = str(raw_input("File exists, OK to append? 'y' to append, any other key to exit..")).lower().strip()
+            if existsQ!="y":
+                print "Exiting..."
+                sys.exit()
+        print "Getting reactor info..."
+        getReactorInfo(args.reactorListName, args.REACTORS_filename, args.REACTORS_STATUS_filename, args.output_filename)
+    else:
+        print "One of the specified ratdb files cannot be found, check paths. Exiting..."
