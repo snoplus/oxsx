@@ -37,8 +37,47 @@
 #include <ROOTMultiPlot.h>
 #include <TRandom3.h>
 
-  
-void LHFit(TH2D *h2, const std::string UnOscfile, const std::string dataFile, int numPdfs, std::vector<double> reactorDistances){
+
+void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &reactorNames, std::vector<double> &distances, std::vector<std::string> &reactorTypes, std::vector<int> &nCores, std::vector<double> &powers ) {
+    // Read couchDB run-info text file
+    std::ifstream in;
+    in.open(runInfoFileName.c_str());
+    std::cout << "opening file: " << runInfoFileName.c_str() << std::endl;
+
+    std::fill(reactorNames.begin(), reactorNames.end(), "");
+    std::fill(distances.begin(), distances.end(), 0.);
+    std::fill(reactorTypes.begin(), reactorTypes.end(), "");
+    std::fill(nCores.begin(), nCores.end(), 0);
+    std::fill(powers.begin(), powers.end(), 0.);
+
+    std::string reactorName,distance,reactorType,nCore,power;
+    int lineNo = 0;
+
+    // read until end of file.
+    while(in.good()){
+        std::getline(in,reactorName,',');
+        std::getline(in,distance,',');
+        std::getline(in,reactorType,',');
+        std::getline(in,nCore,',');
+        std::getline(in,power,'\n');
+
+        if (lineNo>0){ //skip csv header
+            if (strcmp(reactorName.c_str(),"")!=0) {
+                reactorNames.push_back(reactorName);
+                distances.push_back(atof(distance.c_str()));
+                reactorTypes.push_back(reactorType.c_str());
+                nCores.push_back(atoi(nCore.c_str()));
+                powers.push_back(atof(power.c_str()));
+
+                //std::cout << "v: reactorName: " << reactorNames[lineNo-1] << ", distance: " << distances[lineNo-1] << ", reactorType: " << reactorTypes[lineNo-1] << ", nCore: " << nCores[lineNo-1] << ", power: " << powers[lineNo-1] << std::endl; //debug check ('-1' for header)
+            }
+        }
+        lineNo++;
+    }
+    in.close();
+}
+
+void LHFit(TH2D *h2, const std::string UnOscfile, const std::string dataFile, int numPdfs, std::vector<double> &reactorDistances){
 
   char name[100];
 
@@ -101,7 +140,7 @@ void LHFit(TH2D *h2, const std::string UnOscfile, const std::string dataFile, in
     sprintf(name,"ReactorPdf%d",i);
     reactorPdf[i] = new BinnedED(name,axes);
     reactorPdf[i]->SetObservables(0);
-    
+
     for(size_t j = 0; j < reactorNtp.GetNEntries(); j++)
       reactorPdf[i]->Fill(reactorNtp.GetEntry(j));
 
@@ -159,7 +198,7 @@ void LHFit(TH2D *h2, const std::string UnOscfile, const std::string dataFile, in
    /////////////////////////////////////////////
   ////////        Fit Result        ///////////
   /////////////////////////////////////////////
-  
+
   FitResult fitResult = min.Optimise(&lhFunction);
   ParameterDict bestFit = fitResult.GetBestFit();
   fitResult.Print();
@@ -181,21 +220,16 @@ int main(int argc, char *argv[]) {
         argParser << argv[5];
         int numexps;
         argParser >> numexps;
-    
+
         TH2D *h2 = new TH2D("h2","h2",100,0.1,0.5,100,5e-5,1e-4);
 
-        std::vector<std::string> Reactors;
-        Reactors.push_back("BRUCE");
-        Reactors.push_back("DARLINGTON");
-        Reactors.push_back("PICKERING");
-        int numPdfs = Reactors.size();
-        
-        //Want array of Reactor names/core names which can be; thrown into Rat to find distances,
-        //used to declare variables and objects
-        std::vector<double> reactorDistances;
-        reactorDistances.push_back(240.22);
-        reactorDistances.push_back(349.147);
-        reactorDistances.push_back(340.37);
+        std::vector<std::string> reactorNames;
+        std::vector<double> distances;
+        std::vector<std::string> reactorTypes;
+        std::vector<int> nCores;
+        std::vector<double> powers;
+        readInfoFile(infoFile, reactorNames, distances, reactorTypes, nCores, powers); // get reactor information
+        int numPdfs = reactorNames.size();
 
         for (int i = 0; i < numexps; i++){
             printf("\n-------------------------------------------------------------------------------------\n");
