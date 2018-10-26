@@ -1,0 +1,60 @@
+'''
+Quick script to generate fake data for example/simpleFit.cpp
+
+'''
+
+import ROOT
+from array import array
+import numpy as np
+
+def main():
+    nSamples = 100000
+    bgMean= 2
+    bgSTD = 4
+
+    sigMean= 7
+    sigSTD = 5
+
+    dataBgRate= 1000
+    dataSigRate= 2000
+
+    bgFile = ROOT.TFile("simple_bg.root","recreate") 
+
+    nt = ROOT.TNtuple("output", "", "energy")
+    for val in np.random.normal(loc= bgMean, scale = bgSTD, size=nSamples):
+        nt.Fill(array('f',[val]))
+    bgFile.cd()
+    nt.Write()
+    bgFile.Close()
+
+    bgFile = ROOT.TFile("simple_bg1.root","recreate") 
+
+    nt = ROOT.TNtuple("output", "", "energy")
+    for val in np.random.normal(loc=5, scale = bgSTD, size=nSamples):
+        nt.Fill(array('f',[val]))
+    bgFile.cd()
+    nt.Write()
+    bgFile.Close()
+
+    sigFile = ROOT.TFile("simple_sig.root","recreate") 
+    nt = ROOT.TNtuple("output", "", "energy")
+    for val in np.random.normal(loc= sigMean, scale = sigSTD, size=nSamples):
+        nt.Fill(array('f',[val]))
+    sigFile.cd()
+    nt.Write()
+    sigFile.Close()
+
+    dataFile= ROOT.TFile("simple_data.root","recreate") 
+    nt = ROOT.TNtuple("output", "", "energy")
+    fakeBg = [x for x in np.random.normal(loc= bgMean, scale = bgSTD, size=dataBgRate)]
+    fakeSig = [x for x in np.random.normal(loc= sigMean, scale = sigSTD, size=dataSigRate)]
+    data = fakeBg + fakeSig
+    np.random.shuffle(data)
+    for val in data:
+        nt.Fill(array('f',[val]))
+    dataFile.cd()
+    nt.Write()
+    dataFile.Close()
+
+if __name__ == "__main__":
+    main() 
