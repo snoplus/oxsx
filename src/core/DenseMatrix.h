@@ -30,6 +30,9 @@ class DenseMatrix{
 
     void SetSymmetricMatrix(const std::vector<double>& _input);
 
+    void   Print(const std::string&);
+    void   PrintSparse(const std::string&);
+
  private:
     // N x M matrix
     int fNRows;
