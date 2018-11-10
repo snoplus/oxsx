@@ -37,10 +37,10 @@ void ntOscillate( const char* ntin, const char* ntout, double delmsqr21, double 
     inT->GetEntry(i);
     survprob = NuSurvProb(ParKE, ReactorDistance, delmsqr21, sinsqrtheta12, sinsqrtheta13);
     const double random = CLHEP::HepUniformRand();
-    std::cout<<"Rand:   ";
-    std::cout<<random<<std::endl;
-    std::cout<<"Prob:   ";
-    std::cout<<survprob<<std::endl;
+    //std::cout<<"Rand:   ";
+    //std::cout<<random<<std::endl;
+    //std::cout<<"Prob:   ";
+    //std::cout<<survprob<<std::endl;
     if (survprob > random){
       outT->Fill();
     }
