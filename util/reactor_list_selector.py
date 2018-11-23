@@ -100,14 +100,20 @@ def getReactorInfo(reactorListName, filename, filenameStatus, filenameOutput):
             latitudes = latitudes.split(',')
             latitudes = map(str.strip, latitudes)
             latitudes = map(float, latitudes)
-            latitude = np.average(latitudes, weights=corePowers) #average weighted for core power
+            try:
+                latitude = np.average(latitudes, weights=corePowers) #average weighted for core power
+            #except ZeroDivisionError:
+            #    latitude = np.average(latitudes) #and if it fails for some reason then don't weight
 
             # get longitude information
             longitudes = (nextlines.split('longitude: ['))[1].split('],')[0]
             longitudes = longitudes.strip().split(',')
             longitudes = map(str.strip, longitudes)
             longitudes = map(float, longitudes)
-            longitude = np.average(longitudes, weights=corePowers) #average weighted for core power
+            try:
+                longitude = np.average(longitudes, weights=corePowers) #average weighted for core power
+            #except ZeroDivisionError:
+            #    longitude = np.average(longitudes) #and if it fails for some reason then don't weight
 
             # convert lat and long to distance
             distance = latLongToDistance(latitude,longitude)
@@ -157,7 +163,7 @@ def latLongToDistance(latitude, longitude, altitude=0):
     distance = np.linalg.norm(displacement)
     return round(distance,2)
 
-if __name__=="__main__":
+def main(args):
     parser = argparse.ArgumentParser("Pulls reactor info from ratdb files, output txt file contains selected reactor info.")
     parser.add_argument("-n", dest="reactorListName", required=True,
                         help="reactor list (from REACTORS.ratdb) to use")
@@ -170,7 +176,7 @@ if __name__=="__main__":
     parser.add_argument("-o", dest='output_filename', type=str, nargs='?',
                         help='filename & path to output file.ratdb',
                         default="reactor_list_selection.csv")
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     # check if the specified files exist
     if os.path.isfile(args.REACTORS_filename) and os.path.isfile(args.REACTORS_STATUS_filename):
@@ -183,3 +189,6 @@ if __name__=="__main__":
         getReactorInfo(args.reactorListName, args.REACTORS_filename, args.REACTORS_STATUS_filename, args.output_filename)
     else:
         print "One of the specified ratdb files cannot be found, check paths. Exiting..."
+
+if __name__=="__main__":
+    main(sys.argv[1:])
