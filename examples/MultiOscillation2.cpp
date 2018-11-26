@@ -77,7 +77,7 @@ void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &
     in.close();
 }
 
-void LHFit(TH2D *h2, const std::string UnOscfile, const std::string dataFile, int numPdfs, std::vector<double> &reactorDistances){
+double LHFit(TH2D *h2, const std::string UnOscfile, const std::string dataFile, int numPdfs, std::vector<double> &reactorDistances, double param_d21, double param_s12, double param_s13){
 
   char name[100];
 
@@ -184,9 +184,7 @@ void LHFit(TH2D *h2, const std::string UnOscfile, const std::string dataFile, in
 
   std::cout << "Built LH function " << std::endl;
 
-  ////////////
-  // 4. Fit //
-  ////////////
+  //Fit
   Minuit min;
   min.SetMethod("Migrad");
   min.SetMaxCalls(10000000);
@@ -195,21 +193,27 @@ void LHFit(TH2D *h2, const std::string UnOscfile, const std::string dataFile, in
   min.SetInitialValues(initialval);
   min.SetInitialErrors(initialerr);
 
-   /////////////////////////////////////////////
-  ////////        Fit Result        ///////////
-  /////////////////////////////////////////////
-
+  //Fit Result
   FitResult fitResult = min.Optimise(&lhFunction);
   ParameterDict bestFit = fitResult.GetBestFit();
   fitResult.Print();
 
-  h2->Fill(bestFit.at("s12"),bestFit.at("d21"));
+  double lhmax = -1000000000;
+  double lhmin = 1000000000;
+  lhFunction.SetParameters(bestFit);
+  double lhval =(-1)*lhFunction.Evaluate();
+  if (lhval > lhmax)
+    lhmax = lhval;
+  if (lhval < lhmin)
+    lhmin = lhval;
+  std::cout<<"LH val at best fit: "<<lhval<<std::endl;
+  return lhval;
 }
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 6) {
-        std::cout<<"5 arguments expected."<<std::endl;
+    if (argc != 5) {
+        std::cout<<"4 arguments expected."<<std::endl;
     }
     else{
         std::stringstream argParser;
@@ -217,11 +221,6 @@ int main(int argc, char *argv[]) {
         const std::string &dataFile = argv[2];
         const std::string &infoFile = argv[3];
         const std::string &outFile = argv[4];
-        argParser << argv[5];
-        int numexps;
-        argParser >> numexps;
-
-        TH2D *h2 = new TH2D("h2","h2",100,0.1,0.5,100,5e-5,1e-4);
 
         std::vector<std::string> reactorNames;
         std::vector<double> distances;
@@ -231,16 +230,9 @@ int main(int argc, char *argv[]) {
         readInfoFile(infoFile, reactorNames, distances, reactorTypes, nCores, powers); // get reactor information
         int numPdfs = reactorNames.size();
 
-        for (int i = 0; i < numexps; i++){
-            printf("\n-------------------------------------------------------------------------------------\n");
-            printf("experiment: %d of %d\n",i,numexps);
-            LHFit(h2,UnOscfile,dataFile,numPdfs,reactorDistances);
-            printf("-------------------------------------------------------------------------------------\n");
-        }
-
-        TFile *fileOut = new TFile(outFile.c_str(),"RECREATE");
-        h2->Write();
-        fileOut->Close();
+        printf("\n-------------------------------------------------------------------------------------\n");
+        //double lhValue = LHFit(UnOscfile,dataFile,numPdfs,distances,d21,s12,0.0215)
+        printf("-------------------------------------------------------------------------------------\n");
     }
-    return 0;
+    return 1.;//lhValue;
 }
