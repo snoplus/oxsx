@@ -186,6 +186,7 @@ def main(args):
     '''
     main - pass args
     '''
+    print args
     parser = argparse.ArgumentParser("Pulls reactor info from ratdb files, " \
         +"output txt file contains selected reactor info.")
     parser.add_argument("-n", dest="reactor_list_name", required=True,
