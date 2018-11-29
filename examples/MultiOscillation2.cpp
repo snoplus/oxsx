@@ -155,7 +155,7 @@ double LHFit(const std::string UnOscfile, const std::string dataFile, int numPdf
     min.SetInitialErrors(initialerr);
 
     // //Fit Result
-    //FitResult fitResult = min.Optimise(&lhFunction);
+    FitResult fitResult = min.Optimise(&lhFunction);
     //ParameterDict bestFit = fitResult.GetBestFit();
     //fitResult.Print();
     //lhFunction.SetParameters(bestFit);
