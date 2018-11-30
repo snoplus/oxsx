@@ -38,7 +38,7 @@ void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &
     // Read couchDB run-info text file
     std::ifstream in;
     in.open(runInfoFileName.c_str());
-    std::cout << "opening file: " << runInfoFileName.c_str() << std::endl;
+    //std::cout << "opening file: " << runInfoFileName.c_str() << std::endl;
 
     std::fill(reactorNames.begin(), reactorNames.end(), "");
     std::fill(distances.begin(), distances.end(), 0.);
@@ -103,6 +103,7 @@ double LHFit(const std::string UnOscfile, const std::string dataFile, int numPdf
     reactorPdf0->Fill(reactorNtp.GetEntry(i));
     reactorPdf0->Normalise();
 
+    NuOsc *reactorSystematic;
     ParameterDict minima;
     ParameterDict maxima;
     ParameterDict initialval;
@@ -113,11 +114,6 @@ double LHFit(const std::string UnOscfile, const std::string dataFile, int numPdf
     int Buff = 5;
     lhFunction.SetBuffer(0, Buff, Buff);
     lhFunction.SetDataDist(dataSetPdf); // initialise with the data set
-
-    // print out read info
-    //for (size_t i=0; i<(size_t)reactorDistances.size(); i++){
-    //   printf("i:%d, distance: %.5f, param_d21: %.7e, param_s12: %.7e, param_s13: %.7e\n",i,reactorDistances[i], param_d21, param_s12, param_s13);
-    //}
 
     //loop over all reactor pdfs
     for (int i = 0; i < numPdfs; i++){
@@ -138,8 +134,8 @@ double LHFit(const std::string UnOscfile, const std::string dataFile, int numPdf
         // Setting optimisation limits
         sprintf(name,"ReactorPdf%d_norm", i);
         minima[name] = 0;
-        maxima[name] = 100000;
-        initialval[name] = 50000;
+        maxima[name] = 1000;
+        initialval[name] = 10;
         initialerr[name] = 0.1*initialval[name];
 
         lhFunction.AddDist(*reactorPdf);
@@ -156,68 +152,64 @@ double LHFit(const std::string UnOscfile, const std::string dataFile, int numPdf
 
     // //Fit Result
     FitResult fitResult = min.Optimise(&lhFunction);
-    //ParameterDict bestFit = fitResult.GetBestFit();
-    //fitResult.Print();
-    //lhFunction.SetParameters(bestFit);
-    //double lhval =(-1)*lhFunction.Evaluate();
-    double lhval = 0;
+    ParameterDict bestFit = fitResult.GetBestFit();
+    fitResult.Print();
+    lhFunction.SetParameters(bestFit);
+    double lhval =(-1)*lhFunction.Evaluate();
+    //double lhval = 0;
     return lhval;
 }
 
 int main(int argc, char *argv[]) {
 
-  if (argc != 8){
-      std::cout<<"Error: 7 arguments expected."<<std::endl;
-      return 1; // failed
-  }
-  else{
-
-    //std::stringstream argParser;
-    const std::string &UnOscfile = argv[1];
-    const std::string &dataFile = argv[2];
-    const std::string &infoFile = argv[3];
-    const std::string &outFile = argv[4];
-    double d_21 = atof(argv[5]);
-    double s_12 = atof(argv[6]);
-    double s_13 = atof(argv[7]);
-
-    printf("LHFitting:: del_21:%.7f, sin2_12:%.7f, sin2_13:%.7f\n",d_21,s_12,s_13);
-
-    std::vector<std::string> reactorNames;
-    std::vector<double> distances;
-    std::vector<std::string> reactorTypes;
-    std::vector<int> nCores;
-    std::vector<double> powers;
-    readInfoFile(infoFile, reactorNames, distances, reactorTypes, nCores, powers); // get reactor information
-    int numPdfs = reactorNames.size();
-    printf("numPdfs:%d\n",numPdfs);
-    
-    // print out read info
-    for (size_t i=0; i<(size_t)reactorNames.size(); i++){
-       printf("i:%d,reactorNames[i]:%s, distance: %.5f, type: %s, nCores: %d, power: %.5f \n",i,reactorNames[i].c_str(),distances[i],reactorTypes[i].c_str(),nCores[i],powers[i]);
+    if (argc != 8){
+        std::cout<<"Error: 7 arguments expected."<<std::endl;
+        return 1; // return>0 indicates error code 
     }
+    else{
+        const std::string &UnOscfile = argv[1];
+        const std::string &dataFile = argv[2];
+        const std::string &infoFile = argv[3];
+        const std::string &outFile = argv[4];
+        double d_21 = atof(argv[5]);
+        double s_12 = atof(argv[6]);
+        double s_13 = atof(argv[7]);
 
-    double lhValue = LHFit(UnOscfile,dataFile,numPdfs,distances,d_21,s_12,s_13);
-    //TRandom3 *myRand = new TRandom3() ;
-    //myRand->SetSeed(0);
-    //double lhValue = myRand->Gaus(50,5);
-    int fitValidity = 1; //make this do something useful
-    printf("LHValue:%.7f\n",lhValue);
+        printf("LHFitting:: del_21:%.7f, sin2_12:%.7f, sin2_13:%.7f\n",d_21,s_12,s_13);
 
-    //Write fit coefficients to txt file
-    printf("writing to: %s\n",outFile.c_str());
-    FILE *fOut = fopen(outFile.c_str(),"w");
+        std::vector<std::string> reactorNames;
+        std::vector<double> distances;
+        std::vector<std::string> reactorTypes;
+        std::vector<int> nCores;
+        std::vector<double> powers;
+        readInfoFile(infoFile, reactorNames, distances, reactorTypes, nCores, powers); // get reactor information
+        int numPdfs = reactorNames.size();
+        //printf("numPdfs:%d\n",numPdfs);
 
-    printf("fit valid: %d\n",fitValidity);
-    fprintf(fOut,"fit valid: %d\n", fitValidity);
+        // print out read info
+        // for (size_t i=0; i<(size_t)reactorNames.size(); i++){
+            // printf("i:%d,reactorNames[i]:%s, distance: %.5f, type: %s, nCores: %d, power: %.5f \n",i,reactorNames[i].c_str(),distances[i],reactorTypes[i].c_str(),nCores[i],powers[i]);
+        // }
 
-    printf("d21,s12,s13,lhValue\n");
-    fprintf(fOut,"d21,s12,s13,lhValue\n", d_21, s_12, s_13, lhValue);
-    printf("%.7f,%.7f,%.7f,%.7f\n", d_21, s_12, s_13, lhValue);
-    fprintf(fOut,"%.7f,%.7f,%.7f,%.7f\n", d_21, s_12, s_13, lhValue);
+        double lhValue = LHFit(UnOscfile,dataFile,numPdfs,distances,d_21,s_12,s_13);
+        //TRandom3 *myRand = new TRandom3() ;
+        //myRand->SetSeed(0);
+        //double lhValue = myRand->Gaus(50,5);
+        int fitValidity = 1; //make this do something useful
+        printf("LHValue:%.5f\n",lhValue);
 
-    fclose(fOut);
+        //Write fit coefficients to txt file
+        //printf("writing to: %s\n",outFile.c_str());
+        FILE *fOut = fopen(outFile.c_str(),"w");
 
-    return 0; // completed successfully
-  }
+        //printf("fit valid: %d\n",fitValidity);
+        fprintf(fOut,"fit valid: %d\n", fitValidity);
+
+        //printf("d21,s12,s13,lhValue\n");
+        fprintf(fOut,"d21,s12,s13,lhValue\n", d_21, s_12, s_13, lhValue);
+        //printf("%.9f,%.7f,%.7f,%.5f\n", d_21, s_12, s_13, lhValue);
+        fprintf(fOut,"%.9f,%.7f,%.7f,%.5f\n", d_21, s_12, s_13, lhValue);
+        fclose(fOut);
+        return 0; // completed successfully
+    }
 }
