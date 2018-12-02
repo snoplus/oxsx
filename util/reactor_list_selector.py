@@ -132,6 +132,12 @@ def get_reactor_info(reactor_list_name, filename, filename_status, filename_outp
             # write values to dictionary
             reactor_info[reactor_name] = [distance, core_type, cores, core_power]
 
+    return reactor_info
+
+def write_output_file(filename_output, reactor_info):
+    '''
+    write output file
+    '''
     # write data to output file
     if not os.path.isfile(filename_output):
         write_header = True
@@ -146,9 +152,7 @@ def get_reactor_info(reactor_list_name, filename, filename_status, filename_outp
             values = map(str, values)
             values = ','.join(values)
             file_out.write(values+'\n')
-
-    return None
-
+    
 def lat_long_to_ecef(latitude, longitude, altitude):
     '''
     Returns the distance (km) from a lat,long to SNOLAB
@@ -211,8 +215,9 @@ def main(args):
                 print "Exiting..."
                 sys.exit()
         print "Getting reactor info..."
-        get_reactor_info(args.reactor_list_name, args.REACTORS_filename, \
+        reactor_info = get_reactor_info(args.reactor_list_name, args.REACTORS_filename, \
             args.REACTORS_STATUS_filename, args.output_filename)
+        write_output_file(args.output_filename, reactor_info)
     else:
         print "One of the specified ratdb files cannot be found, check paths. Exiting..."
 
