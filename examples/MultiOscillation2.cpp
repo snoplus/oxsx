@@ -1,4 +1,4 @@
-// A simple fit in energy for signal and a background
+// A fit in energy for signal and a background
 #include <string>
 #include <vector>
 #include <math.h>
@@ -6,8 +6,6 @@
 #include <fstream>
 #include <iostream>
 
-#include <TH1D.h>
-#include <TH2D.h>
 #include <TPaveText.h>
 #include <TCanvas.h>
 #include <TLegend.h>
@@ -15,6 +13,8 @@
 #include <TPad.h>
 #include <TPaveStats.h>
 #include <ROOTNtuple.h>
+#include <TRandom3.h>
+#include <TH1D.h>
 
 #include <BinnedED.h>
 #include <BinnedEDGenerator.h>
@@ -33,16 +33,12 @@
 #include <ContainerTools.hpp>
 #include <NuOsc.h>
 #include <SurvProb.h>
-#include <TH1D.h>
-#include <ROOTMultiPlot.h>
-#include <TRandom3.h>
-
 
 void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &reactorNames, std::vector<double> &distances, std::vector<std::string> &reactorTypes, std::vector<int> &nCores, std::vector<double> &powers ) {
     // Read couchDB run-info text file
     std::ifstream in;
     in.open(runInfoFileName.c_str());
-    std::cout << "opening file: " << runInfoFileName.c_str() << std::endl;
+    //std::cout << "opening file: " << runInfoFileName.c_str() << std::endl;
 
     std::fill(reactorNames.begin(), reactorNames.end(), "");
     std::fill(distances.begin(), distances.end(), 0.);
@@ -77,151 +73,109 @@ void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &
     in.close();
 }
 
-void LHFit(TH2D *h2, const std::string UnOscfile, const std::string dataFile, int numPdfs, std::vector<double> &reactorDistances){
+double LHFit(const std::string UnOscfile, const std::string dataFile, int numPdfs, std::vector<double> &reactorDistances, double param_d21, double param_s12, double param_s13){
 
-  char name[100];
+    char name[100];
 
-  TRandom3 *r1 = new TRandom3();
-  r1->SetSeed(0);
+    // Only interested in first bit of data ntuple
+    ObsSet dataRep(0);
 
-  ////////////////////
-  // 1. Set Up PDFs //
-  ////////////////////
+    // Set up binning
+    AxisCollection axes;
+    double Emin = 2;
+    double Emax = 8;
+    int numbins = 60;
+    axes.AddAxis(BinAxis("ParKE", Emin, Emax, numbins));
 
-  // Only interested in first bit of data ntuple
-  ObsSet dataRep(0);
-
-  // Set up binning
-  AxisCollection axes;
-  double Emin = 2;
-  double Emax = 8;
-  int numbins = 60;
-  axes.AddAxis(BinAxis("ParKE", Emin, Emax, numbins));
-
-  BinnedED dataSetPdf("dataSetPdf",axes);
-  dataSetPdf.SetObservables(dataRep);
-  ROOTNtuple dataNtp(dataFile, "nt");
-
-  for(size_t i = 0; i < dataNtp.GetNEntries(); i++)
+    // create and fill data ntp and pdf
+    BinnedED dataSetPdf("dataSetPdf", axes);
+    dataSetPdf.SetObservables(dataRep);
+    ROOTNtuple dataNtp(dataFile, "nt");
+    for(size_t i = 0; i < dataNtp.GetNEntries(); i++)
     dataSetPdf.Fill(dataNtp.GetEntry(i));
+    dataSetPdf.Normalise();
 
-  //poisson stat fluctutate input data
-  for(int i = 0; i < dataSetPdf.GetNBins(); i++)
-      dataSetPdf.SetBinContent(i, r1->Poisson(dataSetPdf.GetBinContent(i)));
+    // create and fill simulated ntp and pdf
+    BinnedED *reactorPdf0 = new BinnedED(name, axes);
+    reactorPdf0->SetObservables(0);
+    ROOTNtuple reactorNtp(UnOscfile, "nt");
+    for(size_t i = 0; i < reactorNtp.GetNEntries(); i++)
+    reactorPdf0->Fill(reactorNtp.GetEntry(i));
+    reactorPdf0->Normalise();
 
-  std::vector<BinnedED*> reactorPdf(numPdfs);
-  ROOTNtuple reactorNtp(UnOscfile, "nt");
-  NuOsc *reactorSystematic[numPdfs];
-  ParameterDict minima;
-  ParameterDict maxima;
-  ParameterDict initialval;
-  ParameterDict initialerr;
+    NuOsc *reactorSystematic;
+    ParameterDict minima;
+    ParameterDict maxima;
+    ParameterDict initialval;
+    ParameterDict initialerr;
 
-  BinnedNLLH lhFunction;
-  lhFunction.SetBufferAsOverflow(true);
-  int Buff = 5;
-  lhFunction.SetBuffer(0,Buff,Buff);
-  lhFunction.SetDataDist(dataSetPdf); // initialise withe the data set
+    BinnedNLLH lhFunction;
+    lhFunction.SetBufferAsOverflow(true);
+    int Buff = 5;
+    lhFunction.SetBuffer(0, Buff, Buff);
+    lhFunction.SetDataDist(dataSetPdf); // initialise with the data set
 
-  minima["d21"] = 0.;
-  minima["s12"] = 0.1;
-  minima["s13"] = 0.01;
-  maxima["d21" ] = 0.0001;
-  maxima["s12" ] = 0.5;
-  maxima["s13" ] = 0.05;
-  initialval["d21" ]  = 7.4e-5;
-  initialval["s12" ]  = 0.3;
-  initialval["s13" ]  = 0.02;
-  initialerr["d21" ] = 0.1*initialval["d21"];
-  initialerr["s12" ] = 0.1*initialval["s12"];
-  initialerr["s13" ] = 0.1*initialval["s13"];
+    //loop over all reactor pdfs
+    for (int i = 0; i < numPdfs; i++){
+        sprintf(name, "ReactorPdf%d", i);
+        BinnedED *reactorPdf = new BinnedED(name, axes);
+        reactorPdf->SetObservables(0);
 
-  for (int i = 0; i< numPdfs; i++){
-    sprintf(name,"ReactorPdf%d",i);
-    reactorPdf[i] = new BinnedED(name,axes);
-    reactorPdf[i]->SetObservables(0);
+        NuOsc reactorSystematic("reactorSystematic");
+        reactorSystematic.SetFunction(new SurvProb(param_d21, param_s12, param_s13, reactorDistances[i]));
+        reactorSystematic.SetAxes(axes);
+        reactorSystematic.SetTransformationObs(dataRep);
+        reactorSystematic.SetDistributionObs(dataRep);
+        reactorSystematic.Construct();
 
-    for(size_t j = 0; j < reactorNtp.GetNEntries(); j++)
-      reactorPdf[i]->Fill(reactorNtp.GetEntry(j));
+        reactorPdf->Add(reactorSystematic(*reactorPdf0), 1);
+        reactorPdf->Normalise();
 
-    reactorPdf[i]->Normalise();
+        // Setting optimisation limits
+        sprintf(name,"ReactorPdf%d_norm", i);
+        minima[name] = 0;
+        maxima[name] = 1000;
+        initialval[name] = 10;
+        initialerr[name] = 0.1*initialval[name];
 
-    // create and fill the oscillated systematics
-    sprintf(name,"ReactorSystematic%d",i);
-    reactorSystematic[i] = new NuOsc(name);
+        lhFunction.AddDist(*reactorPdf);
+    }
 
-    sprintf(name,"ReactorSurvival%d",i);
-    SurvProb* survprob = new SurvProb(0.1,0.1,0.1,reactorDistances[i],name); // Surv Prob function, with intial parameters delm21,ssqqr12, ssqr13 and NB PRECISE BASELINE for reactor pdf
-    survprob->RenameParameter("delmsqr21_0","d21");
-    survprob->RenameParameter("sinsqrtheta12_0","s12");
-    survprob->RenameParameter("sinsqrtheta13_0","s13");
-    reactorSystematic[i]->SetFunction(survprob);
-    reactorSystematic[i]->SetAxes(axes);
-    reactorSystematic[i]->SetTransformationObs(dataRep);
-    reactorSystematic[i]->SetDistributionObs(dataRep);
+    //Fit
+    Minuit min;
+    min.SetMethod("Migrad");
+    min.SetMaxCalls(10000000);
+    min.SetMinima(minima);
+    min.SetMaxima(maxima);
+    min.SetInitialValues(initialval);
+    min.SetInitialErrors(initialerr);
 
-    // Setting optimisation limits
-    sprintf(name,"ReactorPdf%d_norm",i);
-    minima[name] = 0;
-    maxima[name] = 100000;
-    initialval[name] = 50000;
-    initialerr[name] = 0.1*initialval[name];
-
-    sprintf(name,"group%d",i);
-    lhFunction.AddSystematic(reactorSystematic[i],name);
-    lhFunction.AddDist(*reactorPdf[i],std::vector<std::string>(1,name));
-  }
-
-  std::cout << "Initialised Pdfs" << std::endl;
-
-  //lhFunction.SetConstraint("ReactorPdf0_norm",41000,5000);
-  lhFunction.SetConstraint("ReactorPdf1_norm",9450,2000);
-  lhFunction.SetConstraint("ReactorPdf2_norm",9500,2000);
-
-  //lhFunction.SetConstraint("d21",7.37e-5,1.6e-6);
-  lhFunction.SetConstraint("s12",0.297,0.016);
-  lhFunction.SetConstraint("s13",0.0215,0.009);
-
-  std::cout << "Built LH function " << std::endl;
-
-  ////////////
-  // 4. Fit //
-  ////////////
-  Minuit min;
-  min.SetMethod("Migrad");
-  min.SetMaxCalls(10000000);
-  min.SetMinima(minima);
-  min.SetMaxima(maxima);
-  min.SetInitialValues(initialval);
-  min.SetInitialErrors(initialerr);
-
-   /////////////////////////////////////////////
-  ////////        Fit Result        ///////////
-  /////////////////////////////////////////////
-
-  FitResult fitResult = min.Optimise(&lhFunction);
-  ParameterDict bestFit = fitResult.GetBestFit();
-  fitResult.Print();
-
-  h2->Fill(bestFit.at("s12"),bestFit.at("d21"));
+    // //Fit Result
+    FitResult fitResult = min.Optimise(&lhFunction);
+    ParameterDict bestFit = fitResult.GetBestFit();
+    fitResult.Print();
+    lhFunction.SetParameters(bestFit);
+    double lhval =(-1)*lhFunction.Evaluate();
+    //double lhval = 0;
+    return lhval;
 }
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 6) {
-        std::cout<<"5 arguments expected."<<std::endl;
+    if (argc != 8){
+        std::cout<<"Error: 7 arguments expected."<<std::endl;
+        return 1; // return>0 indicates error code 
     }
     else{
-        std::stringstream argParser;
         const std::string &UnOscfile = argv[1];
         const std::string &dataFile = argv[2];
         const std::string &infoFile = argv[3];
         const std::string &outFile = argv[4];
-        argParser << argv[5];
-        int numexps;
-        argParser >> numexps;
+        double d_21 = atof(argv[5]);
+        double s_12 = atof(argv[6]);
+        double s_13 = atof(argv[7]);
 
-        TH2D *h2 = new TH2D("h2","h2",100,0.1,0.5,100,5e-5,1e-4);
+        printf("LHFitting:: del_21:%.7f, sin2_12:%.7f, sin2_13:%.7f\n",d_21,s_12,s_13);
 
         std::vector<std::string> reactorNames;
         std::vector<double> distances;
@@ -230,17 +184,32 @@ int main(int argc, char *argv[]) {
         std::vector<double> powers;
         readInfoFile(infoFile, reactorNames, distances, reactorTypes, nCores, powers); // get reactor information
         int numPdfs = reactorNames.size();
+        //printf("numPdfs:%d\n",numPdfs);
 
-        for (int i = 0; i < numexps; i++){
-            printf("\n-------------------------------------------------------------------------------------\n");
-            printf("experiment: %d of %d\n",i,numexps);
-            LHFit(h2,UnOscfile,dataFile,numPdfs,reactorDistances);
-            printf("-------------------------------------------------------------------------------------\n");
-        }
+        // print out read info
+        // for (size_t i=0; i<(size_t)reactorNames.size(); i++){
+            // printf("i:%d,reactorNames[i]:%s, distance: %.5f, type: %s, nCores: %d, power: %.5f \n",i,reactorNames[i].c_str(),distances[i],reactorTypes[i].c_str(),nCores[i],powers[i]);
+        // }
 
-        TFile *fileOut = new TFile(outFile.c_str(),"RECREATE");
-        h2->Write();
-        fileOut->Close();
+        double lhValue = LHFit(UnOscfile,dataFile,numPdfs,distances,d_21,s_12,s_13);
+        //TRandom3 *myRand = new TRandom3() ;
+        //myRand->SetSeed(0);
+        //double lhValue = myRand->Gaus(50,5);
+        int fitValidity = 1; //make this do something useful
+        printf("LHValue:%.5f\n",lhValue);
+
+        //Write fit coefficients to txt file
+        //printf("writing to: %s\n",outFile.c_str());
+        FILE *fOut = fopen(outFile.c_str(),"w");
+
+        //printf("fit valid: %d\n",fitValidity);
+        fprintf(fOut,"fit valid: %d\n", fitValidity);
+
+        //printf("d21,s12,s13,lhValue\n");
+        fprintf(fOut,"d21,s12,s13,lhValue\n", d_21, s_12, s_13, lhValue);
+        //printf("%.9f,%.7f,%.7f,%.5f\n", d_21, s_12, s_13, lhValue);
+        fprintf(fOut,"%.9f,%.7f,%.7f,%.5f\n", d_21, s_12, s_13, lhValue);
+        fclose(fOut);
+        return 0; // completed successfully
     }
-    return 0;
 }
