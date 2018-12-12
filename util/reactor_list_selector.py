@@ -7,6 +7,7 @@
 #
 # Revision History:
 #  - 2018/10/19: first implementation
+#  - 2018/12/12: modification, reshaping
 ######################################################################
 '''
 
@@ -24,7 +25,12 @@ def get_reactor_list(reactor_list_name, filename):
     with open(filename, 'r') as ratdb_file:
         for line in ratdb_file:
             if 'index: "'+reactor_list_name+'"' in line:
-                next_lines = [next(ratdb_file) for x in xrange(12)]
+                next_lines = []
+                next_line = next(ratdb_file)
+                # read lines until a line containing a "}" is found
+                while next_line.split("}")[0] is not "":
+                    next_line = next(ratdb_file)
+                    next_lines.append(next_line)
                 next_lines = "".join(next_lines).rstrip()
                 next_lines = next_lines.split("}")[0].rstrip()
 
@@ -34,105 +40,208 @@ def get_reactor_list(reactor_list_name, filename):
                 break
     return reactor_list_entries
 
-def get_reactor_info(reactor_list_name, filename, filename_status, filename_output):
+def get_reactor_ratdb_info(reactor_ratdb_filename):
     '''
-    Returns the list of reactors for the specified reactor list
+    Returns all the info from the reactors.ratdb file
     '''
     # init variables
     reactor_info = {}
 
-    # get the reactors in the specified list
-    reactor_list = get_reactor_list(reactor_list_name, filename)
+    # open the REACTORS file
+    with open(reactor_ratdb_filename, 'r') as ratdb_file:
 
-    # open both the REACTORS and the REACTORS_STATUS files
-    with open(filename, 'r') as ratdb_file, open(filename_status, 'r') as ratdb_status_file:
+        # search REACTORS file
+        for line in ratdb_file:
 
-        # for each reactor in the list, lookup values
-        for reactor_name in reactor_list:
-
-            # go back to start of files, re-init vars
-            ratdb_file.seek(0)
-            ratdb_status_file.seek(0)
+            # re-init vars
+            reactor_name = None
             cores = None
             latitudes = None
             longitudes = None
+            next_lines = None
+
+            # look for REACTOR entries
+            if 'type: "REACTOR",' in line:
+                next_lines = []
+                next_line = next(ratdb_file)
+                # read lines until a line containing a "}" is found
+                while next_line.split("}")[0] is not "":
+                    next_line = next(ratdb_file)
+                    next_lines.append(next_line)
+                next_lines = "".join(next_lines).rstrip()
+                next_lines = next_lines.split("}")[0].rstrip()
+
+                #ensure the reactor info is found, otherwise raise an exception
+                if next_lines is None:
+                    raise Exception("Didn't find reactor information in REACTORS file")
+
+                # Now go through data and pull out figures
+                # get reactor name (index)
+                reactor_name = ((next_lines.split('index:'))[1].split(',\n')[0]).strip()
+                reactor_name = reactor_name.replace('"', '')
+
+                # get number of cores
+                cores = ((next_lines.split('no_cores:'))[1].split(',\n')[0]).strip()
+                cores = int(cores)
+
+                # get latitude information
+                latitudes = (next_lines.split('latitude: ['))[1].split('],')[0]
+                latitudes = (latitudes.strip()).split(',')
+                latitudes = map(str.strip, latitudes)
+                latitudes = map(float, latitudes)
+
+                # get longitude information
+                longitudes = (next_lines.split('longitude: ['))[1].split('],')[0]
+                longitudes = (longitudes.strip()).split(',')
+                longitudes = map(str.strip, longitudes)
+                longitudes = map(float, longitudes)
+
+                # write values to dictionary
+                reactor_info[reactor_name] = {}
+                reactor_info[reactor_name]["latitudes"] = latitudes
+                reactor_info[reactor_name]["longitudes"] = longitudes
+
+    return reactor_info
+
+def get_reactor_status_ratdb_info(reactor_ratdb_status_filename):
+    '''
+    Returns all the info from the reactors_status.ratdb file
+    '''
+    # init variables
+    reactor_status_info = {}
+
+    # open the REACTORS_STATUS file
+    with open(reactor_ratdb_status_filename, 'r') as ratdb_status_file:
+
+        # search REACTORS_STATUS file
+        for line in ratdb_status_file:
+
+            # re-init vars
+            reactor_name = None
+            cores = None
             core_powers = None
             core_types = None
             next_lines = None
-            next_lines2 = None
 
-            # search REACTORS file
-            for line in ratdb_file:
-                if 'index: "'+reactor_name+'"' in line:
-                    next_lines = [next(ratdb_file) for x in xrange(12)]
-                    next_lines = "".join(next_lines).rstrip()
-                    next_lines = next_lines.split("}")[0].rstrip()
-                    break
+            # look for REACTOR_STATUS entries
+            if 'type: "REACTOR_STATUS",' in line:
+                next_lines = []
+                next_line = next(ratdb_status_file)
+                # read lines until a line containing a "}" is found
+                while next_line.split("}")[0] is not "":
+                    next_line = next(ratdb_status_file)
+                    next_lines.append(next_line)
+                next_lines = "".join(next_lines).rstrip()
+                next_lines = next_lines.split("}")[0].rstrip()
 
-            # search REACTORS_STATUS file
-            for line in ratdb_status_file:
-                if 'index: "'+reactor_name+'"' in line:
-                    next_lines2 = [next(ratdb_status_file) for x in xrange(12)]
-                    next_lines2 = "".join(next_lines2).rstrip()
-                    next_lines2 = next_lines2.split("}")[0].rstrip()
-                    break
+                # ensure the reactor info is found, otherwise raise an exception
+                if next_lines is None:
+                    raise Exception("Didn't find reactor information in REACTORS_STATUS file")
 
-            #ensure the reactor info is found, otherwise raise an exception
-            if next_lines is None:
-                raise Exception("Didn't find reactor information in REACTORS file")
-            if next_lines2 is None:
-                raise Exception("Didn't find reactor information in REACTORS_STATUS file")
+                # Now go through data and pull out figures
+                # get reactor name (index)
+                reactor_name = ((next_lines.split('index:'))[1].split(',\n')[0]).strip()
+                reactor_name = reactor_name.replace('"', '')
 
-            # Now go through data and pull out figures
-            # get number of cores
-            cores = ((next_lines.split('no_cores:'))[1].split(',\n')[0]).strip()
-            cores = int(cores)
+                # get number of cores
+                cores = ((next_lines.split('no_cores:'))[1].split(',\n')[0]).strip()
+                cores = int(cores)
 
-            # get core power information
-            core_powers = (next_lines2.split('core_power: ['))[1].split('],')[0]
-            core_powers = core_powers.split(',')
-            core_powers = map(str.strip, core_powers)
-            core_powers = map(float, core_powers)
-            # rounded to nearest (and set as int)
-            core_power = int(round(sum(core_powers)/len(core_powers), 0))
+                # get core power information
+                core_powers = (next_lines.split('core_power: ['))[1].split('],')[0]
+                core_powers = core_powers.split(',')
+                core_powers = map(str.strip, core_powers)
+                core_powers = map(float, core_powers)
 
-            # get core type information
-            core_types = (next_lines2.split('core_spectrum: ['))[1].split('],')[0]
-            core_types = (core_types.replace('"', '')).split(',')
-            core_types = map(str.strip, core_types)
-            core_type = core_types[0] # assumption that all cores are the same type
+                # get core type information
+                core_types = (next_lines.split('core_spectrum: ['))[1].split('],')[0]
+                core_types = (core_types.replace('"', '')).split(',')
+                core_types = map(str.strip, core_types)
 
-            # get latitude information
-            latitudes = (next_lines.split('latitude: ['))[1].split('],')[0]
-            latitudes = (latitudes.strip()).split(',')
-            latitudes = map(str.strip, latitudes)
-            latitudes = map(float, latitudes)
-            try:
-                #average weighted for core power
-                latitude = np.average(latitudes, weights=core_powers)
-            except ZeroDivisionError:
-                #and if it fails for some reason then don't weight
-                latitude = np.average(latitudes)
+                # write values to dictionary
+                reactor_status_info[reactor_name] = {}
+                reactor_status_info[reactor_name]["cores"] = cores
+                reactor_status_info[reactor_name]["core_powers"] = core_powers
+                reactor_status_info[reactor_name]["core_types"] = core_types
 
-            # get longitude information
-            longitudes = (next_lines.split('longitude: ['))[1].split('],')[0]
-            longitudes = (longitudes.strip()).split(',')
-            longitudes = map(str.strip, longitudes)
-            longitudes = map(float, longitudes)
-            try:
-                #average weighted for core power
-                longitude = np.average(longitudes, weights=core_powers)
-            except ZeroDivisionError:
-                #and if it fails for some reason then don't weight
-                longitude = np.average(longitudes)
+    return reactor_status_info
 
-            # convert lat and long to distance
-            distance = lat_long_to_distance(latitude, longitude)
+def get_reactor_info(reactor_ratdb_info, reactor_status_ratdb_info, reactor_list="All"):
+    '''
+    Returns the combined, averaged info from the reactors.ratdb and reactors_status.ratdb files
+    '''
+    # init variables
+    reactor_info = {}
 
-            # write values to dictionary
-            reactor_info[reactor_name] = [distance, core_type, cores, core_power]
+    for reactor_name in reactor_ratdb_info:
 
-    return reactor_info
+        #ensure the reactor info is found, otherwise raise an exception
+        if reactor_name is None:
+            raise Exception("Reactor is None, something is wrong")
+        try:
+            reactor_status_ratdb_info[reactor_name]
+        except KeyError:
+            raise Exception("Didn't find corresponding reactor status information")
+
+        # combine dictionaries
+        reactor_info[reactor_name] = reactor_ratdb_info[reactor_name]
+        reactor_info[reactor_name]["cores"] = reactor_status_ratdb_info[reactor_name]["cores"]
+        reactor_info[reactor_name]["core_powers"] = \
+            reactor_status_ratdb_info[reactor_name]["core_powers"]
+        reactor_info[reactor_name]["core_types"] = \
+            reactor_status_ratdb_info[reactor_name]["core_types"]
+
+        # Now go through data and add some average values
+        # rounded core power (and set as int)
+        reactor_info[reactor_name]["core_power"] = \
+            int(round(
+                sum(reactor_info[reactor_name]["core_powers"])\
+                            /len(reactor_info[reactor_name]["core_powers"])
+                , 0))
+
+        # get latitude information
+        try:
+            #average weighted for core power
+            latitude = np.average(reactor_info[reactor_name]["latitudes"],\
+                weights=reactor_info[reactor_name]["core_powers"])
+        except ZeroDivisionError:
+            #and if it fails for some reason then don't weight
+            latitude = np.average(reactor_info[reactor_name]["latitudes"])
+        reactor_info[reactor_name]["latitude"] = latitude
+
+        # get longitude information
+        try:
+            #average weighted for core power
+            longitude = np.average(reactor_info[reactor_name]["longitudes"],\
+                weights=reactor_info[reactor_name]["core_powers"])
+        except ZeroDivisionError:
+            #and if it fails for some reason then don't weight
+            longitude = np.average(reactor_info[reactor_name]["longitudes"])
+        reactor_info[reactor_name]["longitude"] = longitude
+
+        # convert lat and long to distance
+        reactor_info[reactor_name]["distance"] = lat_long_to_distance(latitude, longitude)
+
+        # get core type information
+        # assumption that all cores are the same type
+        core_type = max(set(reactor_info[reactor_name]["core_types"]),\
+            key=reactor_info[reactor_name]["core_types"].count)
+        # if assumption not true, throw error
+        if any(i != core_type for i in reactor_info[reactor_name]["core_types"]):
+            print "Warning: mix of core types: "\
+                +reactor_name+", core_type:"+core_type+", All cores:"\
+                +str(reactor_info[reactor_name]["core_types"])\
+                +", distance:"+str(reactor_info[reactor_name]["distance"])
+        reactor_info[reactor_name]["core_type"] = core_type
+
+    if reactor_list == "All":
+        return reactor_info
+    else:
+        #Return the reactor info for the specified reactor list
+        reactor_info_select = {}
+        for reactor_name in reactor_list: # select out reactor from the list
+            reactor_info_select[reactor_name] = reactor_info[reactor_name]
+        return reactor_info_select
 
 def write_output_file(filename_output, reactor_info):
     '''
@@ -145,14 +254,16 @@ def write_output_file(filename_output, reactor_info):
         write_header = False
     with open(filename_output, 'ab+') as file_out:
         if write_header:
-            file_out.write\
-                ('reactor_name,distance_km,spectrum_type,number_cores,average_core_power\n')
+            file_out.write(
+                'reactor_name,distance_km,spectrum_type,number_cores,average_core_power\n')
         for key, values in reactor_info.items():
-            file_out.write(key+',')
-            values = map(str, values)
-            values = ','.join(values)
-            file_out.write(values+'\n')
-    
+            file_out.write(key\
+                +','+str(values["distance"])\
+                +','+str(values["core_type"])\
+                +','+str(values["cores"])\
+                +','+str(values["core_power"])\
+                +'\n')
+
 def lat_long_to_ecef(latitude, longitude, altitude):
     '''
     Returns the distance (km) from a lat,long to SNOLAB
@@ -193,8 +304,9 @@ def main(args):
     print args
     parser = argparse.ArgumentParser("Pulls reactor info from ratdb files, " \
         +"output txt file contains selected reactor info.")
-    parser.add_argument("-n", dest="reactor_list_name", required=True,
-                        help="reactor list (from REACTORS.ratdb) to use")
+    parser.add_argument("-n", dest="reactor_list_name",
+                        help="reactor list (from REACTORS.ratdb) to use, default is 'All'",\
+                        default="All")
     parser.add_argument("-i", dest='REACTORS_filename', type=str, nargs='?',
                         help='filename & path to REACTORS.ratdb',
                         default="/home/lidgard/rat3/data/REACTORS.ratdb")
@@ -215,8 +327,20 @@ def main(args):
                 print "Exiting..."
                 sys.exit()
         print "Getting reactor info..."
-        reactor_info = get_reactor_info(args.reactor_list_name, args.REACTORS_filename, \
-            args.REACTORS_STATUS_filename, args.output_filename)
+
+        # get the reactors in the specified list
+        if args.reactor_list_name is not "All":
+            reactor_list_name = get_reactor_list(args.reactor_list_name, args.REACTORS_filename)
+        else:
+            reactor_list_name = args.reactor_list_name
+
+        # then get info
+        reactor_ratdb_info = get_reactor_ratdb_info(args.REACTORS_filename)
+        reactor_status_ratdb_info = get_reactor_status_ratdb_info(args.REACTORS_STATUS_filename)
+
+        reactor_info = get_reactor_info(reactor_ratdb_info, \
+            reactor_status_ratdb_info,\
+            reactor_list_name)
         write_output_file(args.output_filename, reactor_info)
     else:
         print "One of the specified ratdb files cannot be found, check paths. Exiting..."
