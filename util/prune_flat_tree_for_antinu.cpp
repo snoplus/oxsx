@@ -63,29 +63,75 @@ void ntload(std::string input_filename, std::string output_filename) {
     //Float_t v[9];
 
     size_t ientry=0;
-    std::vector<float> MCenergy;
-    std::vector<float> MCposition;
-    std::vector<float> EVenergy;
-    std::vector<float> EVposition;
-    std::vector<float> EVnhit;
-    std::vector<float> EVtime;
-    std::vector<float> reactorInfo;
+    std::vector<float> mc_quench;
+    std::vector<float> mc_neutrino_energy;
+    std::vector<float> mc_positron_energy;
+    std::vector<float> mc_neutron_energy;
+    std::vector<float> mc_neutrino_position_r;
+    std::vector<float> mc_neutrino_position_x;
+    std::vector<float> mc_neutrino_position_y;
+    std::vector<float> mc_neutrino_position_z;
+    std::vector<float> mc_positron_position_r;
+    std::vector<float> mc_positron_position_x;
+    std::vector<float> mc_positron_position_y;
+    std::vector<float> mc_positron_position_z;
+    std::vector<float> mc_neutron_position_r;
+    std::vector<float> mc_neutron_position_x;
+    std::vector<float> mc_neutron_position_y;
+    std::vector<float> mc_neutron_position_z;
+    std::vector<bool> ev_fit_validity;
+    std::vector<float> ev_fit_energy;
+    std::vector<float> ev_fit_position_r;
+    std::vector<float> ev_fit_position_x;
+    std::vector<float> ev_fit_position_y;
+    std::vector<float> ev_fit_position_z;
+    std::vector<int> ev_nhit;
+    std::vector<unsigned int> ev_time_days;
+    std::vector<unsigned int> ev_time_seconds;
+    std::vector<float> ev_time_nanoseconds;
+    std::vector<float> reactor_info_latitude;
+    std::vector<float> reactor_info_longitude;
+    std::vector<float> reactor_info_altitude;
+    std::vector<float> reactor_info_distance;
     tt->Branch("entry",ientry);
-    tt->Branch("MCenergy",&MCenergy);
-    tt->Branch("MCposition",&MCposition);
-    tt->Branch("EVenergy",&EVenergy);
-    tt->Branch("EVposition",&EVposition);
-    tt->Branch("EVnhit",&EVnhit);
-    tt->Branch("EVtime",&EVtime);
-    tt->Branch("reactorInfo",&reactorInfo);
+    tt->Branch("mc_quench",&mc_quench);
+    tt->Branch("mc_neutrino_energy",&mc_neutrino_energy);
+    tt->Branch("mc_positron_energy",&mc_positron_energy);
+    tt->Branch("mc_neutron_energy",&mc_neutron_energy);
+    tt->Branch("mc_neutrino_position_r",&mc_neutrino_position_r);
+    tt->Branch("mc_neutrino_position_x",&mc_neutrino_position_x);
+    tt->Branch("mc_neutrino_position_y",&mc_neutrino_position_y);
+    tt->Branch("mc_neutrino_position_z",&mc_neutrino_position_z);
+    tt->Branch("mc_positron_position_r",&mc_positron_position_r);
+    tt->Branch("mc_positron_position_x",&mc_positron_position_x);
+    tt->Branch("mc_positron_position_y",&mc_positron_position_y);
+    tt->Branch("mc_positron_position_z",&mc_positron_position_z);
+    tt->Branch("mc_neutron_position_r",&mc_neutron_position_r);
+    tt->Branch("mc_neutron_position_x",&mc_neutron_position_x);
+    tt->Branch("mc_neutron_position_y",&mc_neutron_position_y);
+    tt->Branch("mc_neutron_position_z",&mc_neutron_position_z);
+    tt->Branch("ev_fit_validity",&ev_fit_validity);
+    tt->Branch("ev_fit_energy",&ev_fit_energy);
+    tt->Branch("ev_fit_position_r",&ev_fit_position_r);
+    tt->Branch("ev_fit_position_x",&ev_fit_position_x);
+    tt->Branch("ev_fit_position_y",&ev_fit_position_y);
+    tt->Branch("ev_fit_position_z",&ev_fit_position_z);
+    tt->Branch("ev_nhit",&ev_nhit);
+    tt->Branch("ev_time_days",&ev_time_days);
+    tt->Branch("ev_time_seconds",&ev_time_seconds);
+    tt->Branch("ev_time_nanoseconds",&ev_time_nanoseconds);
+    tt->Branch("reactor_info_latitude",&reactor_info_latitude);
+    tt->Branch("reactor_info_longitude",&reactor_info_longitude);
+    tt->Branch("reactor_info_altitude",&reactor_info_latitude);
+    tt->Branch("reactor_info_distance",&reactor_info_distance);
 
     std::string reactorName="";
     std::string reactorcoreStr="";
     RAT::DB *db = RAT::DB::Get();
     RAT::DBLinkPtr fLink;
-    std::vector<double> fLatitude;
-    std::vector<double> fLongitude;
-    std::vector<double> fAltitude;
+    std::vector<double> latitude;
+    std::vector<double> longitude;
+    std::vector<double> altitude;
 
     // load ds
     RAT::DU::DSReader ds_reader(input_filename.c_str());
@@ -94,6 +140,38 @@ void ntload(std::string input_filename, std::string output_filename) {
 
         // entry index
         const RAT::DS::Entry& ds_entry = ds_reader.GetEntry(i_entry);
+        
+        // reset vectors to zero length for each event
+        mc_quench.clear();
+        mc_neutrino_energy.clear();
+        mc_positron_energy.clear();
+        mc_neutron_energy.clear();
+        mc_neutrino_position_r.clear();
+        mc_neutrino_position_x.clear();
+        mc_neutrino_position_y.clear();
+        mc_neutrino_position_z.clear();
+        mc_positron_position_r.clear();
+        mc_positron_position_x.clear();
+        mc_positron_position_y.clear();
+        mc_positron_position_z.clear();
+        mc_neutron_position_r.clear();
+        mc_neutron_position_x.clear();
+        mc_neutron_position_y.clear();
+        mc_neutron_position_z.clear();
+        ev_fit_validity.clear();
+        ev_fit_energy.clear();
+        ev_fit_position_r.clear();
+        ev_fit_position_x.clear();
+        ev_fit_position_y.clear();
+        ev_fit_position_z.clear();
+        ev_nhit.clear();
+        ev_time_days.clear();
+        ev_time_seconds.clear();
+        ev_time_nanoseconds.clear();
+        reactor_info_latitude.clear();
+        reactor_info_longitude.clear();
+        reactor_info_altitude.clear();
+        reactor_info_distance.clear();
 
         //*** MC entries
         // pdg code -12 = anti electron neutrino, see http://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf
@@ -101,12 +179,12 @@ void ntload(std::string input_filename, std::string output_filename) {
         // pdg code 2112 = neutron
 
         const RAT::DS::MC &rMC = ds_entry.GetMC();
-        for(size_t i_mcparent = 0; i_mcparent < rMC.GetMCParentCount(); i_mcparent++ ) {
+        for(size_t i_mcparent = 0; i_mcparent < rMC.GetMCParentCount(); i_mcparent++) {
 
-            Double_t mc_energy, mc_x, mc_y, mc_z, mc_mag, mc_quench;
+            Double_t mc_energy, mc_x, mc_y, mc_z, mc_mag, mc_quench_i;
             Double_t mc_n_energy, mc_n_x, mc_n_y, mc_n_z, mc_n_mag;
             Double_t mc_ep_energy, mc_ep_x, mc_ep_y, mc_ep_z, mc_ep_mag;
-            double latitude, longitude, altitude, distance;
+            double latitude_i, longitude_i, altitude_i, distance_i;
 
             // set all variables to some unphysical value
             mc_energy = -9000;
@@ -114,7 +192,7 @@ void ntload(std::string input_filename, std::string output_filename) {
             mc_y = -9000;
             mc_z = -9000;
             mc_mag = -9000;
-            mc_quench = -9000;
+            mc_quench_i = -9000;
             mc_n_energy = -9000;
             mc_n_x = -9000;
             mc_n_y = -9000;
@@ -125,14 +203,14 @@ void ntload(std::string input_filename, std::string output_filename) {
             mc_ep_y = -9000;
             mc_ep_z = -9000;
             mc_ep_mag = -9000;
-            latitude = -9000;
-            longitude = -9000;
-            altitude = -9000;
-            distance = -9000;
+            latitude_i = -9000;
+            longitude_i = -9000;
+            altitude_i = -9000;
+            distance_i = -9000;
 
             if ((rMC.GetMCParticleCount()==2)&&(rMC.GetMCParent(i_mcparent).GetPDGCode()==-12)){ // check the parent is an anti-neutrino and there are two child particles
 
-                mc_quench = rMC.GetScintQuenchedEnergyDeposit();
+                mc_quench_i = rMC.GetScintQuenchedEnergyDeposit();
 
                 // parent (antineutrino) particle properties
                 const RAT::DS::MCParticle &mc_parent = rMC.GetMCParent(0);
@@ -168,41 +246,37 @@ void ntload(std::string input_filename, std::string output_filename) {
                 reactorName = reactorcoreStr.substr(0, pos);
                 int coreNumber = atoi(reactorcoreStr.substr(pos+1, reactorcoreStr.size()).c_str());
                 fLink = db->GetLink("REACTOR", reactorName);
-                fLatitude  = fLink->GetDArray("latitude");
-                fLongitude = fLink->GetDArray("longitude");
-                fAltitude  = fLink->GetDArray("altitude");
-                latitude = fLatitude[coreNumber];
-                longitude = fLongitude[coreNumber];
-                altitude = fAltitude[coreNumber];
-                distance = GetReactorDistanceLLA(latitude, longitude, altitude);
+                latitude  = fLink->GetDArray("latitude");
+                longitude = fLink->GetDArray("longitude");
+                altitude  = fLink->GetDArray("altitude");
+                latitude_i = latitude[coreNumber];
+                longitude_i = longitude[coreNumber];
+                altitude_i = altitude[coreNumber];
+                distance_i = GetReactorDistanceLLA(latitude_i, longitude_i, altitude_i);
             }
 
             //add to tree
             ientry = i_entry;
-            //particle order convention: antineutrino, positron, neutron.
-            //energy order convention: energy, quench.
-            MCenergy.push_back(mc_energy);
-            MCenergy.push_back(mc_ep_energy);
-            MCenergy.push_back(mc_n_energy);
-            MCenergy.push_back(mc_quench);
-            //position particle order convention: mag, x, y, z.
-            MCposition.push_back(mc_mag);
-            MCposition.push_back(mc_x);
-            MCposition.push_back(mc_y);
-            MCposition.push_back(mc_z);
-            MCposition.push_back(mc_ep_mag);
-            MCposition.push_back(mc_ep_x);
-            MCposition.push_back(mc_ep_y);
-            MCposition.push_back(mc_ep_z);
-            MCposition.push_back(mc_n_mag);
-            MCposition.push_back(mc_n_x);
-            MCposition.push_back(mc_n_y);
-            MCposition.push_back(mc_n_z);
-            //info order convention: latitude, longitude, altitude, distance.
-            reactorInfo.push_back(latitude);
-            reactorInfo.push_back(longitude);
-            reactorInfo.push_back(altitude);
-            reactorInfo.push_back(distance);
+            mc_quench.push_back(mc_quench_i);
+            mc_neutrino_energy.push_back(mc_energy);
+            mc_positron_energy.push_back(mc_ep_energy);
+            mc_neutron_energy.push_back(mc_n_energy);
+            mc_neutrino_position_r.push_back(mc_mag);
+            mc_neutrino_position_x.push_back(mc_x);
+            mc_neutrino_position_y.push_back(mc_y);
+            mc_neutrino_position_z.push_back(mc_z);
+            mc_positron_position_r.push_back(mc_ep_mag);
+            mc_positron_position_x.push_back(mc_ep_x);
+            mc_positron_position_y.push_back(mc_ep_y);
+            mc_positron_position_z.push_back(mc_ep_z);
+            mc_neutron_position_r.push_back(mc_n_mag);
+            mc_neutron_position_x.push_back(mc_n_x);
+            mc_neutron_position_y.push_back(mc_n_y);
+            mc_neutron_position_z.push_back(mc_n_z);
+            reactor_info_latitude.push_back(latitude_i);
+            reactor_info_longitude.push_back(longitude_i);
+            reactor_info_altitude.push_back(altitude_i);
+            reactor_info_distance.push_back(distance_i);
             //v[0] = (Float_t)(i_entry);
             //v[1] = (Float_t)(mc_quench);
             //v[2] = (Float_t)(mc_mag);
@@ -254,17 +328,17 @@ void ntload(std::string input_filename, std::string output_filename) {
             }
 
             //add all events to tree
-            EVenergy.push_back((int)vertex_validity);
-            EVenergy.push_back(vertex_energy);
+            ev_fit_validity.push_back(vertex_validity);
+            ev_fit_energy.push_back(vertex_energy);
             //position particle order convention: mag, x, y, z.
-            EVposition.push_back(vertex_x);
-            EVposition.push_back(vertex_y);
-            EVposition.push_back(vertex_z);
-            EVposition.push_back(vertex_mag);
-            EVnhit.push_back(nHit);
-            EVtime.push_back(time_days);
-            EVtime.push_back(time_seconds);
-            EVtime.push_back(time_nanoSeconds);
+            ev_fit_position_r.push_back(vertex_x);
+            ev_fit_position_x.push_back(vertex_y);
+            ev_fit_position_y.push_back(vertex_z);
+            ev_fit_position_z.push_back(vertex_mag);
+            ev_nhit.push_back(nHit);
+            ev_time_days.push_back(time_days);
+            ev_time_seconds.push_back(time_seconds);
+            ev_time_nanoseconds.push_back(time_nanoSeconds);
         }
 
         if (i_entry % 1000 == 0) std::cout <<  "    Processed events: " << i_entry << " (" << (double)i_entry/ds_reader.GetEntryCount()*100. << "%) " << std::endl;
