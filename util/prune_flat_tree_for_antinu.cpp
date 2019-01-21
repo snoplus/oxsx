@@ -62,7 +62,7 @@ void ntload(std::string input_filename, std::string output_filename) {
     TTree *tt = new TTree("tt", "AntinuTree");
     //Float_t v[9];
 
-    size_t ientry=0;
+    //size_t ientry=0;
     std::vector<float> mc_quench;
     std::vector<float> mc_neutrino_energy;
     std::vector<float> mc_positron_energy;
@@ -93,7 +93,7 @@ void ntload(std::string input_filename, std::string output_filename) {
     std::vector<float> reactor_info_longitude;
     std::vector<float> reactor_info_altitude;
     std::vector<float> reactor_info_distance;
-    tt->Branch("entry",ientry);
+    //tt->Branch("entry",ientry);
     tt->Branch("mc_quench",&mc_quench);
     tt->Branch("mc_neutrino_energy",&mc_neutrino_energy);
     tt->Branch("mc_positron_energy",&mc_positron_energy);
@@ -122,7 +122,7 @@ void ntload(std::string input_filename, std::string output_filename) {
     tt->Branch("ev_time_nanoseconds",&ev_time_nanoseconds);
     tt->Branch("reactor_info_latitude",&reactor_info_latitude);
     tt->Branch("reactor_info_longitude",&reactor_info_longitude);
-    tt->Branch("reactor_info_altitude",&reactor_info_latitude);
+    tt->Branch("reactor_info_altitude",&reactor_info_altitude);
     tt->Branch("reactor_info_distance",&reactor_info_distance);
 
     std::string reactorName="";
@@ -256,7 +256,7 @@ void ntload(std::string input_filename, std::string output_filename) {
             }
 
             //add to tree
-            ientry = i_entry;
+            //ientry = i_entry;
             mc_quench.push_back(mc_quench_i);
             mc_neutrino_energy.push_back(mc_energy);
             mc_positron_energy.push_back(mc_ep_energy);
@@ -293,7 +293,7 @@ void ntload(std::string input_filename, std::string output_filename) {
 
             const RAT::DS::EV &rEV = ds_entry.GetEV(i_ev);
 
-            const int nHit = rEV.GetNhits();
+            const int nHit = rEV.GetNhitsCleaned();
             const RAT::DS::UniversalTime &time_day_sec_ns = rEV.GetUniversalTime();
             const unsigned int time_days = time_day_sec_ns.GetDays();
             const unsigned int time_seconds = time_day_sec_ns.GetSeconds();
@@ -331,17 +331,17 @@ void ntload(std::string input_filename, std::string output_filename) {
             ev_fit_validity.push_back(vertex_validity);
             ev_fit_energy.push_back(vertex_energy);
             //position particle order convention: mag, x, y, z.
-            ev_fit_position_r.push_back(vertex_x);
-            ev_fit_position_x.push_back(vertex_y);
-            ev_fit_position_y.push_back(vertex_z);
-            ev_fit_position_z.push_back(vertex_mag);
+            ev_fit_position_r.push_back(vertex_mag);
+            ev_fit_position_x.push_back(vertex_x);
+            ev_fit_position_y.push_back(vertex_y);
+            ev_fit_position_z.push_back(vertex_z);
             ev_nhit.push_back(nHit);
             ev_time_days.push_back(time_days);
             ev_time_seconds.push_back(time_seconds);
             ev_time_nanoseconds.push_back(time_nanoSeconds);
         }
 
-        if (i_entry % 1000 == 0) std::cout <<  "    Processed events: " << i_entry << " (" << (double)i_entry/ds_reader.GetEntryCount()*100. << "%) " << std::endl;
+        if (i_entry % 10 == 0) std::cout <<  "    Processed events: " << i_entry << " (" << (double)i_entry/ds_reader.GetEntryCount()*100. << "%) " << std::endl;
 
         // fill
         tt->Fill();
