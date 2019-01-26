@@ -212,7 +212,7 @@ void ntload(std::string input_filename, std::string output_filename) {
 
                 mc_quench_i = rMC.GetScintQuenchedEnergyDeposit();
 
-                // parent (antineutrino) particle properties
+                // parent (anti-neutrino) particle properties
                 const RAT::DS::MCParticle &mc_parent = rMC.GetMCParent(0);
                 mc_energy = mc_parent.GetKineticEnergy();
                 mc_mag = mc_parent.GetPosition().Mag();
@@ -223,14 +223,14 @@ void ntload(std::string input_filename, std::string output_filename) {
                 // child particle properties
                 for( size_t i_mcparticle = 0; i_mcparticle < rMC.GetMCParticleCount(); i_mcparticle++ ) {
                     const RAT::DS::MCParticle &mc_particle = rMC.GetMCParticle(i_mcparticle);
-                    if (mc_particle.GetPDGCode()==2112){  // positron properties
+                    if (mc_particle.GetPDGCode()==-11){  // positron properties
                         mc_ep_energy = mc_particle.GetKineticEnergy();
                         mc_ep_mag = mc_particle.GetPosition().Mag();
                         mc_ep_x = mc_particle.GetPosition().X();
                         mc_ep_y = mc_particle.GetPosition().Y();
                         mc_ep_z = mc_particle.GetPosition().Z();
                     }
-                    if (mc_particle.GetPDGCode()==-11){  // neutron properties
+                    if (mc_particle.GetPDGCode()==2112){  // neutron properties
                         mc_n_energy = mc_particle.GetKineticEnergy();
                         mc_n_mag = mc_particle.GetPosition().Mag();
                         mc_n_x = mc_particle.GetPosition().X();
