@@ -1,5 +1,6 @@
 #include <TFile.h>
 #include <RAT/DB.hh>
+#include <TF1.h>
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TMath.h>
@@ -8,18 +9,35 @@
 #include <iostream>
 #include <RAT/DU/Utility.hh>
 #include <TObject.h>
+#include <math.h>
 
 void process_cuts(const std::string filename_input, const std::string filename_output, double energy_ep_min, double energy_ep_max, double energy_n_min, double energy_n_max, double deltaT = 1000000, double deltaP = 6000, double deltaD = 6000, const bool use_mc = false){
 
     TFile *file_input = new TFile(filename_input.c_str());
     TTree *tree_input = (TTree*)file_input->Get("tt");
-    TFile *file_input_n = new TFile("/data/snoplus/lidgard/OXSX/flux100/myNeutron.root");
-    TH2D *h2_myNeutron = (TH2D*)file_input_n->Get("h_after_cut_efit_p1b");
-    //TH1D *h_myNeutron;
+
+    // load neutron pdf
+    TFile *file_input_n = new TFile("/data/snoplus/lidgard/OXSX/flux100/myNeutron_flux100.root");
+    TH2D *h2_after_cut_fit_neutron = (TH2D*)file_input_n->Get("h2_after_cut_efit_neutron");
     TFile *file_output = new TFile(filename_output.c_str(), "RECREATE");
     TTree *tree_output = new TTree("tt", "AntinuTree");
 
-    size_t n_entries = tree_input->GetEntries();
+    const unsigned int n_slices = 100;
+    char *name = new char[1000];
+    TH1D *h_after_cut_fit_neutron[n_slices];
+    //TF1 *f_after_cut_fit_neutron[n_slices];
+    for (unsigned int i=0; i<n_slices; i++){
+        sprintf(name, "h_after_cut_fit_neutron%d",i);
+        h_after_cut_fit_neutron[i] = h2_after_cut_fit_neutron->ProjectionY(name,i*1-3,i*1+3);
+        sprintf(name, "h_after_cut_fit_neutron%d ",i);
+        h_after_cut_fit_neutron[i]->SetTitle(name);
+        //if (h_after_cut_fit_neutron[i]->GetEntries()>0){
+        //    sprintf(name, "f_after_cut_fit_neutron%d",i);
+            //f_after_cut_fit_neutron[i] = new TF1(name,"gaus",0,3);
+            //h_after_cut_fit_neutron[i]->Fit(f_after_cut_fit_neutron[i], "RQN");
+        //}
+    }
+
     size_t n_passed = 0;
     Int_t day_p1, day_p2;
     Int_t sec_p1, sec_p2;
@@ -27,12 +45,13 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     //Int_t nhit_p1, nhit_p2;
     bool fit_validity;
     double time_ns_diff;
+
     //float position_r, position_x, position_y, position_z;
     float position_ep_x;//, position_ep_y, position_ep_z, position_ep_r;
     float position_n_x;//, position_n_y, position_n_z, position_n_r;
     float position_p1_r, position_p1_x, position_p1_y, position_p1_z;
     float position_p2_r, position_p2_x, position_p2_y, position_p2_z;
-    float energy_p1, energy_p2, energy_ep, energy_n, energy_nu, ev_particle_distance;
+    float energy_p1, energy_p1_corrected, energy_p2, energy_ep, energy_n, energy_nu, ev_particle_distance;
     bool all_pass, energy_pass, coincidence_pass, time_window_pass, position_r_pass, particle_distance_pass, any_ev_passed, ev_passed;
 
     //TH1D h_before_cut_nhit_p1("h_before_cut_nhit_p1", "h_before_cut_nhit_p1", 1000, 0, 5000);
@@ -42,8 +61,9 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     TH1D h_before_cut_emc("h_before_cut_emc", "h_before_cut_emc", 1000, 0, 10);
     TH1D h_before_cut_emc_nu("h_before_cut_emc_nu", "h_before_cut_emc_nu", 1000, 0, 10);
     TH2D h2_before_cut_efit("h2_before_cut_efit", "h2_before_cut_efit", 1000, 0, 10, 1000, 0, 10);
-    TH1D h_before_cut_efit_p1("h_before_cut_efit_p1", "h_before_cut_efit_p1", 1000, 0, 10);
-    TH2D h_before_cut_efit_p1b("h_before_cut_efit_p1b", "h_before_cut_efit_p1b", 1000, 0, 10, 1000, 0, 10);
+    TH2D h2_before_cut_efit_corrected("h2_before_cut_efit_corrected", "h2_before_cut_efit_corrected", 1000, 0, 10, 1000, 0, 10);
+    TH1D h_before_cut_efit_p1_corrected("h_before_cut_efit_p1_corrected", "h_before_cut_efit_p1_corrected", 1000, 0, 10);
+    TH2D h2_before_cut_efit_neutron("h2_before_cut_efit_neutron", "h2_before_cut_efit_neutron", 100, 0, 10, 300, 0, 3);
     TH1D h_before_cut_efit_p2("h_before_cut_efit_p2", "h_before_cut_efit_p2", 1000, 0, 10);
     TH1D h_before_cut_time_diff("h_before_cut_time_diff", "h_before_cut_time_diff", 1000, 0, 5000000);
     TH2D h2_before_cut_energy_resolution("h2_before_cut_energy_resolution", "h2_before_cut_energy_resolution", 200, -2, 2, 201, -2, 2);
@@ -58,8 +78,9 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     TH1D h_after_cut_emc("h_after_cut_emc", "h_after_cut_emc", 1000, 0, 10);
     TH1D h_after_cut_emc_nu("h_after_cut_emc_nu", "h_after_cut_emc_nu", 1000, 0, 10);
     TH2D h2_after_cut_efit("h2_after_cut_efit", "h2_after_cut_efit", 1000, 0, 10, 1000, 0, 10);
-    TH1D h_after_cut_efit_p1("h_after_cut_efit_p1", "h_after_cut_efit_p1", 1000, 0, 10);
-    TH2D h_after_cut_efit_p1b("h_after_cut_efit_p1b", "h_after_cut_efit_p1b", 1000, 0, 10, 1000, 0, 10);
+    TH2D h2_after_cut_efit_corrected("h2_after_cut_efit_corrected", "h2_after_cut_efit_corrected", 1000, 0, 10, 1000, 0, 10);
+    TH1D h_after_cut_efit_p1_corrected("h_after_cut_efit_p1_corrected", "h_after_cut_efit_p1_corrected", 1000, 0, 10);
+    TH2D h2_after_cut_efit_neutron("h2_after_cut_efit_neutron", "h2_after_cut_efit_neutron", 100, 0, 10, 300, 0, 3);
     TH1D h_after_cut_efit_p2("h_after_cut_efit_p2", "h_after_cut_efit_p2", 1000, 0, 10);
     TH1D h_after_cut_time_diff("h_after_cut_time_diff", "h_after_cut_time_diff", 1000, 0, 5000000);
     TH2D h2_after_cut_energy_resolution("h2_after_cut_energy_resolution", "h2_after_cut_energy_resolution", 200, -2, 2, 201, -2, 2);
@@ -70,7 +91,6 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     double neutron_capture_energy = 1.87;
     double e_rem = 0.784; //1.374 +0.47
 
-    //size_t output_ientry=0;
     std::vector<float> output_mc_quench;
     std::vector<float> output_mc_neutrino_energy;
     std::vector<float> output_mc_positron_energy;
@@ -101,7 +121,6 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     std::vector<float> output_reactor_info_longitude;
     std::vector<float> output_reactor_info_altitude;
     std::vector<float> output_reactor_info_distance;
-    //tree_output->Branch("entry",output_ientry);
     tree_output->Branch("mc_quench",&output_mc_quench);
     tree_output->Branch("mc_neutrino_energy",&output_mc_neutrino_energy);
     tree_output->Branch("mc_positron_energy",&output_mc_positron_energy);
@@ -196,8 +215,15 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     tree_input->SetBranchAddress("reactor_info_altitude",&reactor_info_altitude);
     tree_input->SetBranchAddress("reactor_info_distance",&reactor_info_distance);
 
+    size_t n_entries = tree_input->GetEntries();
+    int i_percent = (n_entries/100)*10;
     std::cout<<"initial entries: "<<n_entries<<std::endl;
     for (size_t i=0; i < (n_entries-1); i++){
+
+        // print progress
+        if(i_percent && !(i%i_percent))
+            std::cout << i/i_percent*10 << "% done " << std::endl;
+
         tree_input->GetEntry(i);
         any_ev_passed = false;
 
@@ -233,7 +259,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
         output_reactor_info_altitude.clear();
         output_reactor_info_distance.clear();
 
-        // mc information
+        // get mc information
         //position_ep_r = mc_positron_position_r->at(0);
         position_ep_x = mc_positron_position_x->at(0);
         //position_ep_y = mc_positron_position_y->at(0);
@@ -250,9 +276,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
         if (mc_positron_position_r->size() > 1)
             std::cout << i << "more than one MC parent: " << mc_positron_position_r->size() << std::endl;
 
-        size_t n_ev = ev_fit_validity->size();
-
         // first test all ev entries, then test between entries
+        size_t n_ev = ev_fit_validity->size();
         for (size_t j=0; j < n_ev; j++){ // look through all triggers
 
             ev_passed = false; // if this trigger (j) is in coincidence with any other trigger (and passes cuts, then we will mark this as true)
@@ -296,9 +321,6 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                 TVector3 position_p1_pos(position_p1_x, position_p1_y, position_p1_z);
                 TVector3 position_p2_pos(position_p2_x, position_p2_y, position_p2_z);
                 ev_particle_distance = (position_p2_pos - position_p1_pos).Mag();
-
-                //if (i<10)
-                //    std::cout << "nsecs " << nsec_p1 << ", " << nsec_p2 << std::endl;
 
                 // calculate time difference
                 if(std::abs(day_p2 - day_p1) > 0){ //begin time tests
@@ -349,70 +371,105 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
                     // fill histograms with all triggers which pass cuts
                     if (nsec_p1 <= nsec_p2){ // take care of 'reversed' nanosecond times
+                        // if there is nothing in the projection, then return zero for e_n
+                        double e_n = 0;
+                        unsigned int my_n = round(energy_p1*10);
+                        if (my_n>=n_slices) {
+                            //std::cout<< "warning: slice too high (nsec_p1 <= nsec_p2): " << my_n << " e_p1: " << energy_p1 << std::endl;
+                            my_n = n_slices-1;
+                        }
+                        if (my_n<0) my_n = 0;
+                        if (h_after_cut_fit_neutron[my_n]->GetEntries()>0)
+                            e_n = h_after_cut_fit_neutron[my_n]->GetRandom();
                         //h_after_cut_nhit_p1.Fill(nhit_p1);
                         //h_after_cut_nhit_p2.Fill(nhit_p2);
                         //h2_after_cut_nhit.Fill(nhit_p1, nhit_p2);
-                        h2_after_cut_efit.Fill(energy_p1+e_rem, energy_p2);
-                        TH1D* h_myNeutron = h2_myNeutron->ProjectionY("h_myNeutron",(int)(energy_p1+e_rem)*100-1,(int)(energy_p1+e_rem)*100+1);
-                        double e_n = 0;
-                        if (h_myNeutron->GetEntries()>0) e_n = h_myNeutron->GetRandom();
-                        h_after_cut_efit_p1.Fill(energy_p1+e_rem+e_n);
-                        delete h_myNeutron;
-                        h_after_cut_efit_p1b.Fill(energy_p1, energy_nu - (energy_p1+e_rem) );
+                        h2_after_cut_efit.Fill(energy_p1, energy_p2);
+                        h2_after_cut_efit_corrected.Fill(energy_p1+e_rem+e_n, energy_p2);
+                        h_after_cut_efit_p1_corrected.Fill(energy_p1+e_rem+e_n);
+                        h2_after_cut_efit_neutron.Fill(energy_p1, energy_nu - (energy_p1+e_rem) );
                         h_after_cut_efit_p2.Fill(energy_p2);
                         h_after_cut_time_diff.Fill(time_ns_diff);
                         h_after_cut_position_displacement.Fill(ev_particle_distance);
                         h2_after_cut_time_diff_displacement.Fill(time_ns_diff, ev_particle_distance);
-                        h2_after_cut_energy_resolution.Fill((energy_p1+e_rem-energy_nu)/energy_nu, (energy_p2-neutron_capture_energy)/neutron_capture_energy);
+                        h2_after_cut_energy_resolution.Fill((energy_p1+e_rem+e_n-energy_nu)/energy_nu, (energy_p2-neutron_capture_energy)/neutron_capture_energy);
                         h2_after_cut_position_resolution.Fill((position_p1_x-position_ep_x)/position_ep_x, (position_p2_x-position_n_x)/position_n_x);
                     }
                     else{
+                        double e_n = 0;
+                        unsigned int my_n = round(energy_p2*10);
+                        if (my_n>=n_slices) {
+                            //std::cout<< "warning: slice too high (nsec_p1 > nsec_p2): " << my_n << " e_p1: " << energy_p2 << std::endl;
+                            my_n = n_slices-1;
+                        }
+                        if (my_n<0) my_n = 0;
+                        if (h_after_cut_fit_neutron[my_n]->GetEntries()>0)
+                            e_n = h_after_cut_fit_neutron[my_n]->GetRandom();
                         //h_after_cut_nhit_p1.Fill(nhit_p2);
                         //h_after_cut_nhit_p2.Fill(nhit_p1);
                         //h2_after_cut_nhit.Fill(nhit_p2, nhit_p1);
-                        h2_after_cut_efit.Fill(energy_p2+e_rem, energy_p1);
-                        TH1D* h_myNeutron = h2_myNeutron->ProjectionY("h_myNeutron",(int)(energy_p2+e_rem)*100-1,(int)(energy_p2+e_rem)*100+1);
-                        double e_n = 0;
-                        if (h_myNeutron->GetEntries()>0) e_n = h_myNeutron->GetRandom();
-                        h_after_cut_efit_p1.Fill(energy_p2+e_rem+e_n);
-                        delete h_myNeutron;
-                        h_after_cut_efit_p1b.Fill(energy_p2, energy_nu - (energy_p2+e_rem) );
+                        h2_after_cut_efit.Fill(energy_p2, energy_p1);
+                        h2_after_cut_efit_corrected.Fill(energy_p2+e_rem+e_n, energy_p1);
+                        h_after_cut_efit_p1_corrected.Fill(energy_p2+e_rem+e_n);
+                        h2_after_cut_efit_neutron.Fill(energy_p2, energy_nu - (energy_p2+e_rem) );
                         h_after_cut_efit_p2.Fill(energy_p1);
                         h_after_cut_time_diff.Fill(time_ns_diff);
                         h_after_cut_position_displacement.Fill(ev_particle_distance);
                         h2_after_cut_time_diff_displacement.Fill(time_ns_diff, ev_particle_distance);
-                        h2_after_cut_energy_resolution.Fill((energy_p2+e_rem-energy_nu)/energy_nu, (energy_p1-neutron_capture_energy)/neutron_capture_energy);
+                        h2_after_cut_energy_resolution.Fill((energy_p2+e_rem+e_n-energy_nu)/energy_nu, (energy_p1-neutron_capture_energy)/neutron_capture_energy);
                         h2_after_cut_position_resolution.Fill((position_p2_x-position_ep_x)/position_ep_x, (position_p1_x-position_n_x)/position_n_x);
                     }
                 }
 
                 // fill histograms with every trigger
                 if (nsec_p1 <= nsec_p2){ // take care of 'reversed' nanosecond times
+                    double e_n = 0;
+                    unsigned int my_n = round(energy_p1*10);
+                    if (my_n>=n_slices) {
+                        //std::cout<< "warning: slice too high (nsec_p1 <= nsec_p2): " << my_n << " e_p1: " << energy_p1 << std::endl;
+                        my_n = n_slices-1;
+                    }
+                    if (my_n<0) my_n = 0;
+                    if (h_after_cut_fit_neutron[my_n]->GetEntries()>0)
+                        e_n = h_after_cut_fit_neutron[my_n]->GetRandom();
                     //h_before_cut_nhit_p1.Fill(nhit_p1);
                     //h_before_cut_nhit_p2.Fill(nhit_p2);
                     //h2_before_cut_nhit.Fill(nhit_p1, nhit_p2);
-                    h2_before_cut_efit.Fill(energy_p1+e_rem, energy_p2);
-                    h_before_cut_efit_p1.Fill(energy_p1+e_rem);
-                    h_before_cut_efit_p1b.Fill(energy_p1, energy_nu - (energy_p1+e_rem) );
+                    h2_before_cut_efit.Fill(energy_p1, energy_p2);
+                    energy_p1_corrected = energy_p1+e_rem+e_n;
+                    h2_before_cut_efit_corrected.Fill(energy_p1_corrected, energy_p2);
+                    h_before_cut_efit_p1_corrected.Fill(energy_p1_corrected);
+                    h2_before_cut_efit_neutron.Fill(energy_p1, energy_nu - (energy_p1+e_rem) );
                     h_before_cut_efit_p2.Fill(energy_p2);
                     h_before_cut_time_diff.Fill(time_ns_diff);
                     h_before_cut_position_displacement.Fill(ev_particle_distance);
                     h2_before_cut_time_diff_displacement.Fill(time_ns_diff, ev_particle_distance);
-                    h2_before_cut_energy_resolution.Fill((energy_p1+e_rem-energy_nu)/energy_nu, (energy_p2-neutron_capture_energy)/neutron_capture_energy);
+                    h2_before_cut_energy_resolution.Fill((energy_p1_corrected-energy_nu)/energy_nu, (energy_p2-neutron_capture_energy)/neutron_capture_energy);
                     h2_before_cut_position_resolution.Fill((position_p1_x-position_ep_x)/position_ep_x, (position_p2_x-position_n_x)/position_n_x);
                 }
                 else{
+                    double e_n = 0;
+                    unsigned int my_n = round(energy_p2*10);
+                    if (my_n>=n_slices) {
+                        //std::cout<< "warning: slice too high (nsec_p1 <= nsec_p2): " << my_n << " e_p1: " << energy_p2 << std::endl;
+                        my_n = n_slices-1;
+                    }
+                    if (my_n<0) my_n = 0;
+                    if (h_after_cut_fit_neutron[my_n]->GetEntries()>0)
+                       e_n = h_after_cut_fit_neutron[my_n]->GetRandom();
                     //h_before_cut_nhit_p1.Fill(nhit_p2);
                     //h_before_cut_nhit_p2.Fill(nhit_p1);
                     //h2_before_cut_nhit.Fill(nhit_p2, nhit_p1);
-                    h2_before_cut_efit.Fill(energy_p2+e_rem, energy_p1);
-                    h_before_cut_efit_p1.Fill(energy_p2+e_rem);
-                    h_before_cut_efit_p1b.Fill(energy_p2, energy_nu - (energy_p2+e_rem) );
+                    h2_before_cut_efit.Fill(energy_p2, energy_p1);
+                    energy_p1_corrected = energy_p2+e_rem+e_n;
+                    h2_before_cut_efit_corrected.Fill(energy_p1_corrected, energy_p1);
+                    h_before_cut_efit_p1_corrected.Fill(energy_p1_corrected);
+                    h2_before_cut_efit_neutron.Fill(energy_p2, energy_nu - (energy_p2+e_rem) );
                     h_before_cut_efit_p2.Fill(energy_p1);
                     h_before_cut_time_diff.Fill(time_ns_diff);
                     h_before_cut_position_displacement.Fill(ev_particle_distance);
                     h2_before_cut_time_diff_displacement.Fill(time_ns_diff, ev_particle_distance);
-                    h2_before_cut_energy_resolution.Fill((energy_p2+e_rem-energy_nu)/energy_nu, (energy_p1-neutron_capture_energy)/neutron_capture_energy);
+                    h2_before_cut_energy_resolution.Fill((energy_p1_corrected-energy_nu)/energy_nu, (energy_p1-neutron_capture_energy)/neutron_capture_energy);
                     h2_before_cut_position_resolution.Fill((position_p2_x-position_ep_x)/position_ep_x, (position_p1_x-position_n_x)/position_n_x);
                 }
             }
@@ -477,19 +534,19 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     TH1D *h_after_cut_emc_nu_ratio = (TH1D*)h_after_cut_emc_nu.Clone("h_after_cut_emc_nu_ratio");
     h_after_cut_emc_nu_ratio->Divide(&h_before_cut_emc_nu);
 
-    TH1D *h_before_cut_efit_ratio = (TH1D*)h_before_cut_efit_p1.Clone("h_before_cut_efit_ratio");
+    TH1D *h_before_cut_efit_ratio = (TH1D*)h_before_cut_efit_p1_corrected.Clone("h_before_cut_efit_ratio");
     h_before_cut_efit_ratio->Divide(&h_before_cut_emc_nu);
 
-    TH1D *h_after_cut_efit_ratio = (TH1D*)h_after_cut_efit_p1.Clone("h_after_cut_efit_ratio");
+    TH1D *h_after_cut_efit_ratio = (TH1D*)h_after_cut_efit_p1_corrected.Clone("h_after_cut_efit_ratio");
     h_after_cut_efit_ratio->Divide(&h_after_cut_emc_nu);
 
     TH1D *h_after_cut_emc_nu_n = (TH1D*)h_after_cut_emc_nu.Clone("h_after_cut_emc_nu_n");
-    TH1D *h_after_cut_efit_p1_n = (TH1D*)h_after_cut_efit_p1.Clone("h_after_cut_efit_p1_n");
+    TH1D *h_after_cut_efit_p1_corrected_n = (TH1D*)h_after_cut_efit_p1_corrected.Clone("h_after_cut_efit_p1_corrected_n");
     //h_after_cut_emc_nu_n->Scale(1./h_after_cut_emc_nu_n->Integral());
-    //h_after_cut_efit_p1_n->Scale(1./h_after_cut_efit_p1_n->Integral());
+    //h_after_cut_efit_p1_corrected_n->Scale(1./h_after_cut_efit_p1_corrected_n->Integral());
     h_after_cut_emc_nu_n->Scale(1./h_after_cut_emc_nu_n->GetMaximum());
-    h_after_cut_efit_p1_n->Scale(1./h_after_cut_efit_p1_n->GetMaximum());
-    h_after_cut_efit_p1_n->SetLineColor(kRed);
+    h_after_cut_efit_p1_corrected_n->Scale(1./h_after_cut_efit_p1_corrected_n->GetMaximum());
+    h_after_cut_efit_p1_corrected_n->SetLineColor(kRed);
 
     // save file
     file_input->Close();
@@ -501,20 +558,30 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     //h2_before_cut_nhit.GetYaxis()->SetTitle("nhit_p2");
     h2_before_cut_emc.GetXaxis()->SetTitle("energy_ep");
     h2_before_cut_emc.GetYaxis()->SetTitle("energy_n");
-    h_before_cut_emc.GetXaxis()->SetTitle("KE_ep");
-    h_before_cut_emc_nu.GetXaxis()->SetTitle("KE_nu");
-    h2_before_cut_efit.GetXaxis()->SetTitle("energy_p1+0.784MeV");
+    h2_before_cut_efit.GetXaxis()->SetTitle("energy_p1");
     h2_before_cut_efit.GetYaxis()->SetTitle("energy_p2");
-    h_before_cut_efit_p1.GetXaxis()->SetTitle("energy_p1+0.784MeV");
-    h_before_cut_efit_p2.GetXaxis()->SetTitle("energy_p2");
-    h_before_cut_time_diff.GetXaxis()->SetTitle("time_ns_diff");
-    h_before_cut_position_displacement.GetXaxis()->SetTitle("ev_particle_distance");
+    h2_before_cut_efit_corrected.GetXaxis()->SetTitle("energy_p1+0.784MeV+E_n");
+    h2_before_cut_efit_corrected.GetYaxis()->SetTitle("energy_p2");
     h2_before_cut_time_diff_displacement.GetXaxis()->SetTitle("time_ns_diff");
     h2_before_cut_time_diff_displacement.GetYaxis()->SetTitle("ev_particle_distance");
-    h2_before_cut_energy_resolution.GetXaxis()->SetTitle("(energy_p1+0.784MeV-energy_nu)/energy_nu");
-    h2_before_cut_energy_resolution.GetYaxis()->SetTitle("(energy_p2-neutron_capture_energy)/neutron_capture_energy");
+    h2_before_cut_energy_resolution.GetXaxis()->SetTitle("(energy_p1+0.784MeV+E_n-energy_nu)/energy_nu");
+    h2_before_cut_energy_resolution.GetYaxis()->SetTitle("(energy_p2-n_capE)/n_capE");
     h2_before_cut_position_resolution.GetXaxis()->SetTitle("(position_p1_x-position_ep_x)/position_ep_x");
     h2_before_cut_position_resolution.GetYaxis()->SetTitle("(position_p2_x-position_n_x)/position_n_x");
+    h2_before_cut_efit_neutron.GetXaxis()->SetTitle("energy_p1");
+    h2_before_cut_efit_neutron.GetYaxis()->SetTitle("energy_nu - (energy_p1+e_rem)");
+    h_before_cut_emc.SetTitle("KE_ep");
+    h_before_cut_emc_nu.SetTitle("KE_nu");
+    h_before_cut_efit_p1_corrected.SetTitle("energy_p1+0.784MeV+E_n");
+    h_before_cut_efit_p2.SetTitle("energy_p2");
+    h_before_cut_time_diff.SetTitle("time_ns_diff");
+    h_before_cut_position_displacement.SetTitle("ev_particle_distance");
+    h_before_cut_emc.GetXaxis()->SetTitle("Energy (MeV)");
+    h_before_cut_emc_nu.GetXaxis()->SetTitle("Energy (MeV)");
+    h_before_cut_efit_p1_corrected.GetXaxis()->SetTitle("Energy (MeV)");
+    h_before_cut_efit_p2.GetXaxis()->SetTitle("Energy (MeV)");
+    h_before_cut_time_diff.GetXaxis()->SetTitle("Time between abs(ev_fit_p2 - ev_fit_p1) (ns)");
+    h_before_cut_position_displacement.GetXaxis()->SetTitle("Position (ev_fit_p1 - ev_fit_p2) (mm)");
 
     //h_after_cut_nhit_p1.GetXaxis()->SetTitle("nhit_p1");
     //h_after_cut_nhit_p2.GetXaxis()->SetTitle("nhit_p2");
@@ -522,24 +589,41 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     //h2_after_cut_nhit.GetYaxis()->SetTitle("nhit_p2");
     h2_after_cut_emc.GetXaxis()->SetTitle("energy_ep");
     h2_after_cut_emc.GetYaxis()->SetTitle("energy_n");
-    h_after_cut_emc.GetXaxis()->SetTitle("KE_ep");
-    h_after_cut_emc_nu.GetXaxis()->SetTitle("KE_nu");
-    h2_after_cut_efit.GetXaxis()->SetTitle("energy_p1+0.784MeV");
+    h2_after_cut_efit.GetXaxis()->SetTitle("energy_p1");
     h2_after_cut_efit.GetYaxis()->SetTitle("energy_p2");
-    h_after_cut_efit_p1.GetXaxis()->SetTitle("energy_p1+0.784MeV");
-    h_after_cut_efit_p2.GetXaxis()->SetTitle("energy_p2");
-    h_after_cut_time_diff.GetXaxis()->SetTitle("time_ns_diff");
-    h_after_cut_position_displacement.GetXaxis()->SetTitle("ev_particle_distance");
+    h2_after_cut_efit_corrected.GetXaxis()->SetTitle("energy_p1+0.784MeV+E_n");
+    h2_after_cut_efit_corrected.GetYaxis()->SetTitle("energy_p2");
+    h2_after_cut_efit_neutron.GetXaxis()->SetTitle("energy_p1");
+    h2_after_cut_efit_neutron.GetYaxis()->SetTitle("energy_nu - (energy_p1+e_rem)");
     h2_after_cut_time_diff_displacement.GetXaxis()->SetTitle("time_ns_diff");
     h2_after_cut_time_diff_displacement.GetYaxis()->SetTitle("ev_particle_distance");
-    h2_after_cut_energy_resolution.GetXaxis()->SetTitle("(energy_p1+0.784MeV-energy_nu)/energy_nu");
-    h2_after_cut_energy_resolution.GetYaxis()->SetTitle("(energy_p2+0.784MeV-neutron_capture_energy)/neutron_capture_energy");
+    h2_after_cut_energy_resolution.GetXaxis()->SetTitle("(energy_p1+0.784MeV+E_n-energy_nu)/energy_nu");
+    h2_after_cut_energy_resolution.GetYaxis()->SetTitle("(energy_p2+0.784MeV-n_capE)/n_capE");
     h2_after_cut_position_resolution.GetXaxis()->SetTitle("(position_p1_x-position_ep_x)/position_ep_x");
     h2_after_cut_position_resolution.GetYaxis()->SetTitle("(position_p2_x-position_n_x)/position_n_x");
-
-    h_after_cut_emc_nu_ratio->GetXaxis()->SetTitle("KE_nu after cut / KE_nu before cut");
-    h_before_cut_efit_ratio->GetXaxis()->SetTitle("energy_p1+0.784MeV / KE_nu (before cut)");
-    h_after_cut_efit_ratio->GetXaxis()->SetTitle("energy_p1+0.784MeV / KE_nu (after cut)");
+    h_after_cut_emc.SetTitle("KE_ep");
+    h_after_cut_emc_nu.SetTitle("KE_nu");
+    h_after_cut_emc_nu_n->SetTitle("KE_nu (normalised (maximum = 1)");
+    h_after_cut_efit_p1_corrected.SetTitle("energy_p1+0.784MeV+E_n");
+    h_after_cut_efit_p2.SetTitle("energy_p2");
+    h_after_cut_efit_p1_corrected_n->SetTitle("energy_p1+0.784MeV+E_n");
+    h_after_cut_time_diff.SetTitle("time_ns_diff");
+    h_after_cut_position_displacement.SetTitle("ev_particle_distance");
+    h_after_cut_emc.GetXaxis()->SetTitle("Energy (MeV)");
+    h_after_cut_emc_nu.GetXaxis()->SetTitle("Energy (MeV)");
+    h_after_cut_emc_nu_n->GetXaxis()->SetTitle("Energy (MeV)");
+    h_after_cut_efit_p1_corrected.GetXaxis()->SetTitle("Energy (MeV)");
+    h_after_cut_efit_p2.GetXaxis()->SetTitle("Energy (MeV)");
+    h_after_cut_efit_p1_corrected_n->GetXaxis()->SetTitle("Energy (MeV)");
+    h_after_cut_time_diff.GetXaxis()->SetTitle("Time between abs(ev_fit_p2 - ev_fit_p1) (ns)");
+    h_after_cut_position_displacement.GetXaxis()->SetTitle("Position (ev_fit_p1 - ev_fit_p2) (mm)");
+    
+    h_after_cut_emc_nu_ratio->GetYaxis()->SetTitle("KE_nu after cut / KE_nu before cut");
+    h_before_cut_efit_ratio->GetYaxis()->SetTitle("energy_p1+0.784MeV+E_n / KE_nu");
+    h_after_cut_efit_ratio->GetYaxis()->SetTitle("energy_p1+0.784MeV+E_n / KE_nu");
+    h_after_cut_emc_nu_ratio->GetXaxis()->SetTitle("Energy (MeV)");
+    h_before_cut_efit_ratio->GetXaxis()->SetTitle("Energy (MeV)");
+    h_after_cut_efit_ratio->GetXaxis()->SetTitle("Energy (MeV)");
 
     //h_before_cut_nhit_p1.Write();
     //h_before_cut_nhit_p2.Write();
@@ -548,8 +632,9 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h_before_cut_emc_nu.Write();
     h_before_cut_emc.Write();
     h2_before_cut_efit.Write();
-    h_before_cut_efit_p1.Write();
-    h_before_cut_efit_p1b.Write();
+    h2_before_cut_efit_corrected.Write();
+    h_before_cut_efit_p1_corrected.Write();
+    h2_before_cut_efit_neutron.Write();
     h_before_cut_efit_p2.Write();
     h_before_cut_time_diff.Write();
     h_before_cut_position_displacement.Write();
@@ -565,9 +650,10 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h_after_cut_emc_nu_n->Write();
     h_after_cut_emc.Write();
     h2_after_cut_efit.Write();
-    h_after_cut_efit_p1.Write();
-    h_after_cut_efit_p1_n->Write();
-    h_after_cut_efit_p1b.Write();
+    h2_after_cut_efit_corrected.Write();
+    h_after_cut_efit_p1_corrected.Write();
+    h_after_cut_efit_p1_corrected_n->Write();
+    h2_after_cut_efit_neutron.Write();
     h_after_cut_efit_p2.Write();
     h_after_cut_time_diff.Write();
     h_after_cut_position_displacement.Write();
@@ -578,6 +664,9 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h_after_cut_emc_nu_ratio->Write();
     h_before_cut_efit_ratio->Write();
     h_after_cut_efit_ratio->Write();
+
+    //for (unsigned int ii=0; ii<n_slices; ii++)
+    //    h_after_cut_fit_neutron[ii]->Write();
 
     tree_output->AutoSave();
     file_output->Close();
@@ -591,6 +680,7 @@ int main(int argc, char *argv[]) {
         return 1; // return>0 indicates error code
     }
     else {
+        TH1::AddDirectory(kFALSE);
         const std::string &filename_input = argv[1];
         const std::string &filename_output = argv[2];
         double energy_ep_min = atof(argv[3]);
