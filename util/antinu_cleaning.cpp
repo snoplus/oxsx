@@ -385,14 +385,15 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                         //h_after_cut_nhit_p2.Fill(nhit_p2);
                         //h2_after_cut_nhit.Fill(nhit_p1, nhit_p2);
                         h2_after_cut_efit.Fill(energy_p1, energy_p2);
-                        h2_after_cut_efit_corrected.Fill(energy_p1+e_rem+e_n, energy_p2);
-                        h_after_cut_efit_p1_corrected.Fill(energy_p1+e_rem+e_n);
+                        energy_p1_corrected = energy_p1+e_rem+e_n;
+                        h2_after_cut_efit_corrected.Fill(energy_p1_corrected, energy_p2);
+                        h_after_cut_efit_p1_corrected.Fill(energy_p1_corrected);
                         h2_after_cut_efit_neutron.Fill(energy_p1, energy_nu - (energy_p1+e_rem) );
                         h_after_cut_efit_p2.Fill(energy_p2);
                         h_after_cut_time_diff.Fill(time_ns_diff);
                         h_after_cut_position_displacement.Fill(ev_particle_distance);
                         h2_after_cut_time_diff_displacement.Fill(time_ns_diff, ev_particle_distance);
-                        h2_after_cut_energy_resolution.Fill((energy_p1+e_rem+e_n-energy_nu)/energy_nu, (energy_p2-neutron_capture_energy)/neutron_capture_energy);
+                        h2_after_cut_energy_resolution.Fill((energy_p1_corrected-energy_nu)/energy_nu, (energy_p2-neutron_capture_energy)/neutron_capture_energy);
                         h2_after_cut_position_resolution.Fill((position_p1_x-position_ep_x)/position_ep_x, (position_p2_x-position_n_x)/position_n_x);
                     }
                     else{
@@ -409,14 +410,15 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                         //h_after_cut_nhit_p2.Fill(nhit_p1);
                         //h2_after_cut_nhit.Fill(nhit_p2, nhit_p1);
                         h2_after_cut_efit.Fill(energy_p2, energy_p1);
-                        h2_after_cut_efit_corrected.Fill(energy_p2+e_rem+e_n, energy_p1);
-                        h_after_cut_efit_p1_corrected.Fill(energy_p2+e_rem+e_n);
+                        energy_p1_corrected = energy_p2+e_rem+e_n;
+                        h2_after_cut_efit_corrected.Fill(energy_p1_corrected, energy_p1);
+                        h_after_cut_efit_p1_corrected.Fill(energy_p1_corrected);
                         h2_after_cut_efit_neutron.Fill(energy_p2, energy_nu - (energy_p2+e_rem) );
                         h_after_cut_efit_p2.Fill(energy_p1);
                         h_after_cut_time_diff.Fill(time_ns_diff);
                         h_after_cut_position_displacement.Fill(ev_particle_distance);
                         h2_after_cut_time_diff_displacement.Fill(time_ns_diff, ev_particle_distance);
-                        h2_after_cut_energy_resolution.Fill((energy_p2+e_rem+e_n-energy_nu)/energy_nu, (energy_p1-neutron_capture_energy)/neutron_capture_energy);
+                        h2_after_cut_energy_resolution.Fill((energy_p1_corrected-energy_nu)/energy_nu, (energy_p1-neutron_capture_energy)/neutron_capture_energy);
                         h2_after_cut_position_resolution.Fill((position_p2_x-position_ep_x)/position_ep_x, (position_p1_x-position_n_x)/position_n_x);
                     }
                 }
