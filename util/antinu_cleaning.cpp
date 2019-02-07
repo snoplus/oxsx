@@ -139,13 +139,19 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
         tree_input->GetEntry(i);
 
-        if (ev_index==0) n_parent_entries++; //count parent entries (not second triggers)
+        if (ev_index==0) {
+            n_parent_entries++; //count parent entries (not second triggers)
+            // fill with all events (ev_index == 0 and in this outer loop since there's only one parent per event)
+            h_before_cut_emc_nu.Fill(mc_energy_nu);
+            h_before_cut_emc.Fill(mc_energy_ep);
+            h2_before_cut_emc.Fill(mc_energy_ep, mc_energy_n);
+        }
 
         any_ev_passed = false;
 
-        // // basic cuts to remove junk
-        // if ((ev_validity==false)||(ev_nhit<=20)||(ev_pos_r>6000))
-            // continue;
+        // basic cuts to remove junk
+        if ((ev_validity==false)||(ev_nhit<=20)||(ev_pos_r>6000))
+            continue;
 
         // for events which pass most basic cut, compare events within 1s
         // first test all ev entries, then test between entries
@@ -172,8 +178,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
             particle_distance_pass = false;
 
             // basic cuts to remove junk
-            //if ((ev_validity==false)||(ev_nhit<=20)||(ev_pos_r>6000))
-            //    continue;
+            if ((ev_validity==false)||(ev_nhit<=20)||(ev_pos_r>6000))
+                continue;
 
             // get data from vectors for this trigger
             // p1 is first (prompt particle i.e. assumed positron)
@@ -246,7 +252,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                         coincidence_pass = true;
                     else{
                         coincidence_pass = false; // so close..
-                        //continue; // if this cut failed, don't go any further..
+                        continue; // if this cut failed, don't go any further..
                     }
                 }
             }
@@ -254,8 +260,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
             // both particles to be fitted within radius
             if ((ev_pos_r_p1 < deltaP)&&(ev_pos_r_p2 < deltaP))
                 position_r_pass = true;
-            //else
-            //    continue; // if this cut failed, don't go any further..
+            else
+                continue; // if this cut failed, don't go any further..
 
             // Inter-particle distance cut
             TVector3 position_p1_pos(ev_pos_x_p1, ev_pos_y_p1, ev_pos_z_p1);
@@ -263,14 +269,14 @@ void process_cuts(const std::string filename_input, const std::string filename_o
             ev_particle_distance = (position_p2_pos - position_p1_pos).Mag();
             if (ev_particle_distance < deltaD)
                 particle_distance_pass = true;
-            //else
-            //    continue; // if this cut failed, don't go any further..
+            else
+                continue; // if this cut failed, don't go any further..
 
             // energy cut
             if ((ev_energy_corrected_p1 > energy_ep_min) && (ev_energy_corrected_p1 < energy_ep_max) && (ev_energy_p2 > energy_n_min) && (ev_energy_p2 < energy_n_max))
                 energy_pass = true;
-            //else
-            //    continue; // if this cut failed, don't go any further..
+            else
+                continue; // if this cut failed, don't go any further..
 
             // reached master cut flag
             all_pass = ev_validity && coincidence_pass && position_r_pass && particle_distance_pass && energy_pass;
@@ -311,26 +317,17 @@ void process_cuts(const std::string filename_input, const std::string filename_o
         }
 
         // fill mc event histograms
-        // fill with all events (ev_index == 0 and in this outer loop since there's only one parent per event)
-        if (ev_index==0){
-            h_before_cut_emc_nu.Fill(mc_energy_nu);
-            h_before_cut_emc.Fill(mc_energy_ep);
-            h2_before_cut_emc.Fill(mc_energy_ep, mc_energy_n);
-
-            if (any_ev_passed){ // fill with only those which had a trigger which passed cuts
+        if ((ev_index==0)&&(any_ev_passed)){ // fill with only those which had a trigger which passed cuts
                 h_after_cut_emc_nu.Fill(mc_energy_nu);
                 h_after_cut_emc.Fill(mc_energy_ep);
                 h2_after_cut_emc.Fill(mc_energy_ep, mc_energy_n);
-            }
         }
     }
-
     // if (tagged_entries.size()>0){ // if the doubly-tagged entry vector has any entries, then print the vector.
         // for (ULong64_t ii = 0; ii < tagged_entries.size(); ii++)
             // std::cout << "i(" << ii << ") entry_i: " << tagged_entries.at(ii) << std::endl;
     // }
 
-    //HISTOGRAMS
     // cut purity plots (ratio plot)
     TH1D *h_after_cut_emc_nu_ratio = (TH1D*)h_after_cut_emc_nu.Clone("h_after_cut_emc_nu_ratio");
     h_after_cut_emc_nu_ratio->Divide(&h_before_cut_emc_nu);
