@@ -24,16 +24,16 @@ def process(filename_input, filename_output):
 
     # check to see if file contains the tree, otherwise exit
     try:
-        file_input.tt
+        file_input.nt
     except AttributeError:
         raise Exception("Tree not found in input file")
 
     # get tree from root file
-    tree = ROOT.gDirectory.Get('tt')
+    tree = ROOT.gDirectory.Get('nt')
 
     # get vectors from tree
     myDict = {}
-    for i_ev in xrange(tree.GetEntries()):#tree.GetEntries()):
+    for i_ev in xrange(tree.GetEntries()):
 
         #load entry
         tree.GetEntry(i_ev)

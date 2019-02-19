@@ -29,8 +29,8 @@
 #include <TObject.h>
 
 const TVector3 SNO_LLA_coord_ = TVector3(-81.2014, 46.4753, -1766.0);
-const TVector3 SNO_ECEF_coord_ = TVector3(672.87, -4347.18, 4600.51);
-//const TVector3 SNO_ECEF_coord_ = TVector3(-3777.14425893, 3483.58137383, 3766.0181443); // Kamland
+//const TVector3 SNO_ECEF_coord_ = TVector3(672.87, -4347.18, 4600.51);
+const TVector3 SNO_ECEF_coord_ = TVector3(-3777.14425893, 3483.58137383, 3766.0181443); // Kamland
 
 double CalculateDistance(TVector3 point1, TVector3 point2) {
     return (point2 - point1).Mag();
@@ -83,7 +83,7 @@ void ntload(std::string input_filename, std::string output_filename) {
     UInt_t ev_time_seconds;
     Double_t ev_energy, ev_pos_x, ev_pos_y, ev_pos_z, ev_pos_r;
     Bool_t ev_validity;
-    ULong64_t ev_index;
+    ULong64_t ev_index, mc_ev_index_ep, mc_ev_index_n;
 
     // set branches
     tree_output->Branch("entry", &entry, "entry/l");
@@ -106,6 +106,8 @@ void ntload(std::string input_filename, std::string output_filename) {
     tree_output->Branch("mc_neutron_position_x", &mc_pos_x_n, "mc_pos_x_n/D");
     tree_output->Branch("mc_neutron_position_y", &mc_pos_y_n, "mc_pos_y_n/D");
     tree_output->Branch("mc_neutron_position_z", &mc_pos_z_n, "mc_pos_z_n/D");
+    tree_output->Branch("mc_ev_index_ep", &mc_ev_index_ep, "mc_ev_index_ep/l");
+    tree_output->Branch("mc_ev_index_n", &mc_ev_index_n, "mc_ev_index_n/l");
     tree_output->Branch("ev_index", &ev_index, "ev_index/l");
     tree_output->Branch("ev_fit_validity", &ev_validity, "ev_validity/O");
     tree_output->Branch("ev_fit_energy", &ev_energy, "ev_energy/D");
@@ -161,6 +163,8 @@ void ntload(std::string input_filename, std::string output_filename) {
         longitude_i = -9000;
         altitude_i = -9000;
         distance_i = -9000;
+        mc_ev_index_ep = -9000;
+        mc_ev_index_n = -9000;
 
         if ((rMC.GetMCParticleCount()==2)&&(rMC.GetMCParent(n_mcparent).GetPDGCode()==-12)){ // check the parent is an anti-neutrino and there are two child particles
 
@@ -188,6 +192,7 @@ void ntload(std::string input_filename, std::string output_filename) {
                     mc_pos_x_ep = mc_particle.GetPosition().X();
                     mc_pos_y_ep = mc_particle.GetPosition().Y();
                     mc_pos_z_ep = mc_particle.GetPosition().Z();
+                    mc_ev_index_ep = i_mcparticle;
                 }
                 if (mc_particle.GetPDGCode()==2112){  // neutron properties
                     mc_energy_n = mc_particle.GetKineticEnergy();
@@ -195,6 +200,7 @@ void ntload(std::string input_filename, std::string output_filename) {
                     mc_pos_x_n = mc_particle.GetPosition().X();
                     mc_pos_y_n = mc_particle.GetPosition().Y();
                     mc_pos_z_n = mc_particle.GetPosition().Z();
+                    mc_ev_index_n = i_mcparticle;
                 }
             }
             //*** DB entries
@@ -248,7 +254,7 @@ void ntload(std::string input_filename, std::string output_filename) {
                 catch (RAT::DS::FitVertex::NoValueError &e){;}
             }
             else{
-                ev_validity = false;
+                ev_validity = false; // left for illustration (already is false)
             }
 
             tree_output->Fill();
