@@ -291,7 +291,7 @@ def lat_long_to_distance(latitude, longitude, altitude=0):
     Returns the distance (km) from a lat,long to SNOLAB
     '''
     #SNOLLA  = np.array([-81.2014, 46.4753, -1766.0])
-    superk_ecef = np.array([-3777.14425893, 3483.58137383, 3766.0181443]) #using kamland (lat, long, alt) = (36.4225, 137.3153, 0.358)
+    kamland_ecef = np.array([-3777.14425893, 3483.58137383, 3766.0181443]) #using kamland (lat, long, alt) = (36.4225, 137.3153, 0.358)
     sno_ecef = np.array([672.87, -4347.18, 4600.51]) # converted numbers
     ecef = lat_long_to_ecef(latitude, longitude, altitude)
     displacement = np.subtract(sno_ecef, ecef)

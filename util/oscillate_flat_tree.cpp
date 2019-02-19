@@ -9,59 +9,56 @@
 #include <TObject.h>
 #include <CLHEP/Random/Randomize.h>
 
-double NuSurvProb(double nuE, double baseline, double delmsqr21, double sinsqrtheta12, double sinsqrtheta13)
+Double_t NuSurvProb(Double_t nuE, Double_t baseline, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13)
 {
-  double fSSqr2Theta12 = pow(sin(2.0 * TMath::ASin(sqrt(sinsqrtheta12))), 2.0);
-  double fS4 = pow(sinsqrtheta13, 2.0);
-  double fC4 = pow(1.0-sinsqrtheta13, 2.0);
-  double scale = 1.267e3; // for nuE in [MeV] and baseline in [km]
-  double sSqrDmBE = pow(sin(scale * delmsqr21 * baseline / nuE), 2.0);
-  double fOscProb = (fC4 * (1.0 - fSSqr2Theta12 * sSqrDmBE) + fS4);
-  return fOscProb;
+  Double_t f_s_sqr2_theta_12 = pow(sin(2.0 * TMath::ASin(sqrt(sin_sqr_theta_12))), 2.0);
+  Double_t f_s4 = pow(sin_sqr_theta_13, 2.0);
+  Double_t f_c4 = pow(1.0-sin_sqr_theta_13, 2.0);
+  Double_t scale = 1.267e3; // for nuE in [MeV] and baseline in [km]
+  Double_t s_sqr_dm_be = pow(sin(scale * del_m_sqr_21 * baseline / nuE), 2.0);
+  Double_t f_osc_prob = (f_c4 * (1.0 - f_s_sqr2_theta_12 * s_sqr_dm_be) + f_s4);
+  return f_osc_prob;
 }
 
-void ntOscillate( const char* ntin, const char* ntout, double delmsqr21, double sinsqrtheta12, double sinsqrtheta13) {
+void ntOscillate( const char* nt_in, const char* nt_out, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
 
-  TFile *fin = new TFile(ntin);
-  TTree *inT = (TTree*)fin->Get("nt");
-  int nentries = inT->GetEntries();
-  double survprob;
-  float ParKE;
-  float ReactorDistance;
-  inT->SetBranchAddress("ParKE", &ParKE);
-  inT->SetBranchAddress("ReactorDistance", &ReactorDistance);
-  TFile *fout = new TFile(ntout,"RECREATE");
-  TTree *outT = inT->CloneTree(0);
+  TFile *f_in = new TFile(nt_in);
+  TTree *in_tree = (TTree*)f_in->Get("nt");
+  ULong64_t n_entries = in_tree->GetEntries();
+  Double_t surv_prob, mc_energy_nu, distance;
+  in_tree->SetBranchAddress("mc_neutrino_energy", &mc_energy_nu);
+  in_tree->SetBranchAddress("reactor_info_distance", &distance);
+  TFile *f_out = new TFile(nt_out,"RECREATE");
+  TTree *out_tree = in_tree->CloneTree(0);
   
-  for (int i = 0; i < nentries ; i++){
-    inT->GetEntry(i);
-    survprob = NuSurvProb(ParKE, ReactorDistance, delmsqr21, sinsqrtheta12, sinsqrtheta13);
-    const double random = CLHEP::HepUniformRand();
+  for (ULong64_t i = 0; i < n_entries ; i++){
+    in_tree->GetEntry(i);
+    surv_prob = NuSurvProb(mc_energy_nu, distance, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
+    const Double_t random = CLHEP::HepUniformRand();
     //std::cout<<"Rand:   ";
     //std::cout<<random<<std::endl;
     //std::cout<<"Prob:   ";
-    //std::cout<<survprob<<std::endl;
-    if (survprob > random){
-      outT->Fill();
+    //std::cout<<surv_prob<<std::endl;
+    if (surv_prob > random){
+      out_tree->Fill();
     }
   }
-  outT->Print();
-  outT->AutoSave();
-  delete fin;
-  delete fout;
+  out_tree->Print();
+  out_tree->AutoSave();
+  delete f_in;
+  delete f_out;
 }
 
-int main(int argc, char* argv[])
-{
+Int_t main(int argc, char* argv[]){
   if (argc != 6){
     std::cout<<"5 arguments expected!"<<std::endl;
   }else{
-    const char* rootin = argv[1];
-    const char* rootout = argv[2];
+    const char* root_in = argv[1];
+    const char* root_out = argv[2];
 
-    double delmsqr21 = atof(argv[3]);
-    double sinsqrtheta12 = atof(argv[4]);
-    double sinsqrtheta13 = atof(argv[5]);
-    ntOscillate(rootin, rootout, delmsqr21, sinsqrtheta12, sinsqrtheta13);
+    Double_t del_m_sqr_21 = atof(argv[3]);
+    Double_t sin_sqr_theta_12 = atof(argv[4]);
+    Double_t sin_sqr_theta_13 = atof(argv[5]);
+    ntOscillate(root_in, root_out, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
   }
 }
