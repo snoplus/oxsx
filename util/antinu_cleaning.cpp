@@ -11,14 +11,14 @@
 #include <TObject.h>
 #include <math.h>
 
-void process_cuts(const std::string filename_input, const std::string filename_output, Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max, Double_t deltaT = 1000000, Double_t deltaP = 6000, Double_t deltaD = 6000, Bool_t use_mc = false){
+void process_cuts(const std::string filename_input, const std::string filename_output, const std::string filename_input_correction, Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max, Double_t deltaT = 1000000, Double_t deltaP = 6000, Double_t deltaD = 6000, Bool_t use_mc = false){
 
     // load input file
     TFile *file_input = new TFile(filename_input.c_str());
     TTree *tree_input = (TTree*)file_input->Get("nt");
 
     // load neutron pdf
-    TFile *file_input_n = new TFile("/data/snoplus/lidgard/OXSX/flux100/myNeutron_flux100.root");
+    TFile *file_input_n = new TFile(filename_input_correction.c_str());
     TH2D *h2_after_cut_fit_neutron = (TH2D*)file_input_n->Get("h2_after_cut_efit_neutron");
 
     // setup output file
@@ -42,23 +42,23 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     }
 
     TH2D h2_before_cut_emc("h2_before_cut_emc", "h2_before_cut_emc", 10000, 0, 10, 1000, 0, 1);
-    TH1D h_before_cut_emc("h_before_cut_emc", "h_before_cut_emc", 1000, 0, 10);
-    TH1D h_before_cut_emc_nu("h_before_cut_emc_nu", "h_before_cut_emc_nu", 1000, 0, 10);
+    TH1D h_before_cut_emc("h_before_cut_emc", "h_before_cut_emc", 50, 0, 10);
+    TH1D h_before_cut_emc_nu("h_before_cut_emc_nu", "h_before_cut_emc_nu", 50, 0, 10);
 
     TH2D h2_after_cut_emc("h2_after_cut_emc", "h2_after_cut_emc", 10000, 0, 10, 1000, 0, 1);
-    TH1D h_after_cut_emc("h_after_cut_emc", "h_after_cut_emc", 1000, 0, 10);
-    TH1D h_after_cut_emc_nu("h_after_cut_emc_nu", "h_after_cut_emc_nu", 1000, 0, 10);
+    TH1D h_after_cut_emc("h_after_cut_emc", "h_after_cut_emc", 50, 0, 10);
+    TH1D h_after_cut_emc_nu("h_after_cut_emc_nu", "h_after_cut_emc_nu", 50, 0, 10);
     TH2D h2_after_cut_efit("h2_after_cut_efit", "h2_after_cut_efit", 1000, 0, 10, 1000, 0, 10);
     TH2D h2_after_cut_efit_corrected("h2_after_cut_efit_corrected", "h2_after_cut_efit_corrected", 1000, 0, 10, 1000, 0, 10);
-    TH1D h_after_cut_efit_p1_corrected("h_after_cut_efit_p1_corrected", "h_after_cut_efit_p1_corrected", 1000, 0, 10);
+    TH1D h_after_cut_efit_p1_corrected("h_after_cut_efit_p1_corrected", "h_after_cut_efit_p1_corrected", 50, 0, 10);
     TH2D h2_after_cut_efit_neutron("h2_after_cut_efit_neutron", "h2_after_cut_efit_neutron", 100, 0, 10, 300, 0, 3);
-    TH1D h_after_cut_efit_p2("h_after_cut_efit_p2", "h_after_cut_efit_p2", 1000, 0, 10);
+    TH1D h_after_cut_efit_p2("h_after_cut_efit_p2", "h_after_cut_efit_p2", 50, 0, 10);
     TH1D h_after_cut_time_diff("h_after_cut_time_diff", "h_after_cut_time_diff", 1000, 0, 5000000);
     TH2D h2_after_cut_energy_resolution("h2_after_cut_energy_resolution", "h2_after_cut_energy_resolution", 200, -2, 2, 201, -2, 2);
     TH2D h2_after_cut_position_resolution("h2_after_cut_position_resolution", "h2_after_cut_position_resolution", 200, -2, 2, 201, -2, 2);
     TH1D h_after_cut_position_displacement("h_after_cut_position_displacement", "h_after_cut_position_displacement", 1000, 0, 10000);
     TH2D h2_after_cut_time_diff_displacement("h2_after_cut_time_diff_displacement", "h2_after_cut_time_diff_displacement", 1000, 0, 5000000, 1000, 0, 10000);
-    
+
     Double_t neutron_capture_energy = 1.857;
     Double_t e_rem = 0.784;
 
@@ -80,8 +80,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     Double_t ev_time_nanoseconds, ev_time_nanoseconds_i, ev_time_nanoseconds_p1, ev_time_nanoseconds_p2;
     Int_t ev_nhit;//, ev_nhit_i;
     Bool_t ev_validity;
-    ULong64_t ev_index, mc_ev_index_ep, mc_ev_index_n, ev_index_i;
-    ULong64_t ev_index_p1, ev_index_p2;
+    ULong64_t ev_index, mc_ev_index_ep, mc_ev_index_n; 
+    //ULong64_t ev_index_i, ev_index_p1, ev_index_p2;
 
     Double_t mc_pos_r_nu, mc_pos_x_nu, mc_pos_y_nu, mc_pos_z_nu;
     Double_t mc_pos_n_r, mc_pos_x_n, mc_pos_y_n, mc_pos_z_n;
@@ -139,7 +139,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
         for (ULong64_t i=0; i < (n_entries-1); i++){ // since we're comparing partners we go to entry n-1
 
             //if (i>100) break; // testing
-            
+
             // print progress
             if(i_percent && !(i%i_percent))
                 std::cout << i/i_percent*10 << "% done " << std::endl;
@@ -170,7 +170,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
             ev_pos_y_i = ev_pos_y;
             ev_pos_z_i = ev_pos_z;
             ev_energy_i = ev_energy;
-            ev_index_i = ev_index;
+            //ev_index_i = ev_index;
 
             j = i; // go forward from i'th event
             while ((j <= (i+10)) && (j < (n_entries-1))){ // look through events (next 100)
@@ -201,7 +201,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                     ev_pos_y_p1 = ev_pos_y_i;
                     ev_pos_z_p1 = ev_pos_z_i;
                     ev_energy_p1 = ev_energy_i;
-                    ev_index_p1 = ev_index_i;
+                    //ev_index_p1 = ev_index_i;
 
                     ev_time_days_p2 = ev_time_days;
                     ev_time_seconds_p2 = ev_time_seconds;
@@ -211,7 +211,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                     ev_pos_y_p2 = ev_pos_y;
                     ev_pos_z_p2 = ev_pos_z;
                     ev_energy_p2 = ev_energy;
-                    ev_index_p2 = ev_index;
+                    //ev_index_p2 = ev_index;
                 }
                 else{
                     ev_time_days_p1 = ev_time_days;
@@ -222,7 +222,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                     ev_pos_y_p1 = ev_pos_y;
                     ev_pos_z_p1 = ev_pos_z;
                     ev_energy_p1 = ev_energy;
-                    ev_index_p1 = ev_index;
+                    //ev_index_p1 = ev_index;
 
                     ev_time_days_p2 = ev_time_days_i;
                     ev_time_seconds_p2 = ev_time_seconds_i;
@@ -232,16 +232,13 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                     ev_pos_y_p2 = ev_pos_y_i;
                     ev_pos_z_p2 = ev_pos_z_i;
                     ev_energy_p2 = ev_energy_i;
-                    ev_index_p2 = ev_index_i;
+                    //ev_index_p2 = ev_index_i;
                 }
 
                 // find 'other' energy and correction
                 Double_t e_n = 0;
                 UInt_t my_n = round(ev_energy_p1*10);
-                if (my_n>=n_slices) {
-                    //std::cout<< "warning: slice too high (ev_time_nanoseconds_p1 <= ev_time_nanoseconds_p2): " << my_n << " e_p1: " << ev_energy_p1 << std::endl;
-                    my_n = n_slices-1;
-                }
+                if (my_n>=n_slices) my_n = n_slices-1;
                 if (my_n<0) my_n = 0;
                 if (h_after_cut_fit_neutron[my_n]->GetEntries()>0)
                     e_n = h_after_cut_fit_neutron[my_n]->GetRandom();
@@ -296,12 +293,12 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                 //if ((coincidence_pass)&&(mc_ev_index_ep==0)&&(mc_ev_index_n==1)&&(ev_pos_r_p1>0)&&(ev_pos_r_p2>0))
                 //debug statement
                 //std::cout << "(i," << i << " j " << j << ") mc_entry " << entry << " mc_ev " << "(" << mc_ev_index_ep << "," << mc_ev_index_n << ") ev_ev (" << ev_index_p1 << "," << ev_index_p2 << ") all_pass " << all_pass << " ev_validity " << ev_validity << " coincidence " << coincidence_pass << "(" << time_ns_diff << ") position_r " << position_r_pass << "(" << ev_pos_r_p1 << "," << ev_pos_r_p2 << ") particle_distance " << particle_distance_pass << "(" << ev_particle_distance << ") energy " << energy_pass << "(" << ev_energy_corrected_p1 << "," << ev_energy_p2 << ") nhit " << ev_nhit << std::endl;
-                
+
                 if (all_pass){
                     // mark this i'th trigger as passed (it and at least 1 partner passed cuts)
                     any_ev_passed = true;
 
-                    // whats unique about each entry? the event number and the ev number. 
+                    // whats unique about each entry? the event number and the ev number - record these to check for duplicates.
                     //sprintf(name, "%llu-%llu",entry, ev_index_p1);
                     //tagged_entries.push_back(((TString)name));
                     //sprintf(name, "%llu-%llu",entry, ev_index_p2);
@@ -340,7 +337,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
         }
     }
 
-    // // this takes waaaaayy too long
+    // // this takes waaaaayy too long so taking this out for now..
     // // has this particle been tagged as a partner of another particle previously?
     // for (ULong64_t ii = 0; ii < (tagged_entries.size()-1); ii++){
         // for (ULong64_t jj = (ii+1); jj < (tagged_entries.size()-1); jj++){
@@ -350,7 +347,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
             // }
         // }
     // }
-    
+
     // //print all
     // if (tagged_entries.size()>0){ // if the doubly-tagged entry vector has any entries, then print the vector.
         // for (ULong64_t ii = 0; ii < tagged_entries.size(); ii++)
@@ -447,6 +444,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h_after_cut_emc_nu_ratio->Write();
     h_after_cut_efit_ratio->Write();
 
+    // write the 1D slices of the imported TH2?
     //for (ULong64_t ii=0; ii<n_slices; ii++)
     //    h_after_cut_fit_neutron[ii]->Write();
 
@@ -455,43 +453,44 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     std::cout<<"number of (parent) entries: "<<n_parent_entries<<std::endl;
     std::cout<<"final entries: "<<n_passed<<std::endl;
     std::cout<<"already_tagged: "<<already_tagged<<std::endl;
-    
-    //write csv output file with event numbers 
+
+    //write csv output file with event numbers
     sprintf(name, "%s.csv",filename_output.c_str());
     FILE *fOut = fopen(name,"w");
-    fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,use_mc,initial_entries,final_entries,already_tagged,finished\n");
-    fprintf(fOut,"%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD, use_mc, n_parent_entries, n_passed, already_tagged,1);
+    fprintf(fOut,"filename_input,filename_output,filename_input_correction,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,use_mc,initial_entries,final_entries,already_tagged,finished\n");
+    fprintf(fOut,"%s,%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), filename_input_correction.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD, use_mc, n_parent_entries, n_passed, already_tagged,1);
     fclose(fOut);
 }
 
 Int_t main(Int_t argc, char *argv[]) {
 
-    if (argc != 11) {
-        std::cout<<"Error: 10 arguments expected. Got: "<<argc-1<<std::endl;
+    if (argc != 12) {
+        std::cout<<"Error: 11 arguments expected. Got: "<<argc-1<<std::endl;
         return 1; // return>0 indicates error code
     }
     else {
         TH1::AddDirectory(kFALSE);
         const std::string &filename_input = argv[1];
         const std::string &filename_output = argv[2];
-        double energy_ep_min = atof(argv[3]);
-        double energy_ep_max = atof(argv[4]);
-        double energy_n_min = atof(argv[5]);
-        double energy_n_max = atof(argv[6]);
-        double deltaT = atof(argv[7]);
-        double deltaP = atof(argv[8]);
-        double deltaD = atof(argv[9]);
-        unsigned int use_mc = atoi(argv[10]);
+        const std::string &filename_input_correction = argv[3];
+        double energy_ep_min = atof(argv[4]);
+        double energy_ep_max = atof(argv[5]);
+        double energy_n_min = atof(argv[6]);
+        double energy_n_max = atof(argv[7]);
+        double deltaT = atof(argv[8]);
+        double deltaP = atof(argv[9]);
+        double deltaD = atof(argv[10]);
+        unsigned int use_mc = atoi(argv[11]);
 
         //write csv output file to show process has begun (values filled upon completion)
         char *name = new char[1000];
         sprintf(name, "%s.csv",filename_output.c_str());
         FILE *fOut = fopen(name,"w");
-        fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,use_mc,initial_entries,final_entries,already_tagged,finished\n");
-        fprintf(fOut,"%s,%s,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i\n", filename_input.c_str(), filename_output.c_str(), -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000,0);
+        fprintf(fOut,"filename_input,filename_output,filename_input_correction,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,use_mc,initial_entries,final_entries,already_tagged,finished\n");
+        fprintf(fOut,"%s,%s,%s,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i\n", filename_input.c_str(), filename_output.c_str(), filename_input_correction.c_str(), -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000,0);
         fclose(fOut);
-        
-        process_cuts(filename_input, filename_output, energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD, (Bool_t)use_mc);
+
+        process_cuts(filename_input, filename_output, filename_input_correction, energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD, (Bool_t)use_mc);
 
         return 0; // completed successfully
     }
