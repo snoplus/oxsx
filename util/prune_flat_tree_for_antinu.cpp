@@ -29,32 +29,35 @@
 #include <TObject.h>
 
 const TVector3 SNO_LLA_coord_ = TVector3(-81.2014, 46.4753, -1766.0);
-//const TVector3 SNO_ECEF_coord_ = TVector3(672.87, -4347.18, 4600.51);
-const TVector3 SNO_ECEF_coord_ = TVector3(-3777.14425893, 3483.58137383, 3766.0181443); // Kamland
+const TVector3 SNO_ECEF_coord_ = TVector3(672.87, -4347.18, 4600.51);
+//const TVector3 SNO_ECEF_coord_ = TVector3(-3777.14425893, 3483.58137383, 3766.0181443); // Kamland
 
-double CalculateDistance(TVector3 point1, TVector3 point2) {
+Double_t CalculateDistance(TVector3 point1, TVector3 point2) {
     return (point2 - point1).Mag();
 }
 
-TVector3 LLAtoECEF(double longitude, double latitude, double altitude) {
+TVector3 LLAtoECEF(Double_t latitude, Double_t longitude, Double_t altitude) {
     // reference http://www.mathworks.co.uk/help/aeroblks/llatoecefposition.html
-    static double toRad = TMath::Pi()/180.;
-    static double Earthradius = 6378137.0; //Radius of the Earth (in meters)
-    static double f = 1./298.257223563; //Flattening factor WGS84 Model
-    static double L, rs, x, y, z;
-    L = atan( pow((1. - f),2)*TMath::Tan(latitude*toRad))*180./TMath::Pi();
-    rs = TMath::Sqrt( pow(Earthradius,2)/(1. + (1./pow((1. - f),2) - 1.)*pow(TMath::Sin(L*toRad),2)));
-    x = (rs*TMath::Cos(L*toRad)*TMath::Cos(longitude*toRad) + altitude*TMath::Cos(latitude*toRad)*TMath::Cos(longitude*toRad))/1000; // in km
-    y = (rs*TMath::Cos(L*toRad)*TMath::Sin(longitude*toRad) + altitude*TMath::Cos(latitude*toRad)*TMath::Sin(longitude*toRad))/1000; // in km
-    z = (rs*TMath::Sin(L*toRad) + altitude*TMath::Sin(latitude*toRad))/1000; // in km
-
+    const Double_t toRad = TMath::Pi()/180.;
+    const Double_t Earthradius = 6378137.0; //Radius of the Earth (in meters)
+    const Double_t f_f = 1./298.257223563; //Flattening factor WGS84 Model
+    Double_t x, y, z;
+    latitude = latitude*toRad;
+    longitude = longitude*toRad;
+    const Double_t f_l = TMath::ATan(TMath::Power((1. - f_f),2)*TMath::Tan(latitude))/toRad;
+    const Double_t f_rs = TMath::Sqrt( TMath::Power(Earthradius,2)/(1. + (1./TMath::Power((1. - f_f),2) - 1.)*TMath::Power(TMath::Sin(f_l*toRad),2)));
+    x = (f_rs*TMath::Cos(f_l*toRad)*TMath::Cos(longitude) + altitude*TMath::Cos(latitude)*TMath::Cos(longitude))/1000.; // in km
+    y = (f_rs*TMath::Cos(f_l*toRad)*TMath::Sin(longitude) + altitude*TMath::Cos(latitude)*TMath::Sin(longitude))/1000.; // in km
+    z = (f_rs*TMath::Sin(f_l*toRad) + altitude*TMath::Sin(latitude))/1000.; // in km
     TVector3 ECEF(x,y,z);
-
+    //std::cout << " LLAtoECEF: lat:" << latitude/toRad << " long:" << longitude/toRad << " alt:" << altitude << std::endl;
+    //std::cout << " LLAtoECEF: f_f:" << f_f << " f_l:" << f_l << " f_s:" << f_rs/10000000. << std::endl;
+    //std::cout << " LLAtoECEF: x:" << x << " y:" << y << " z:" << z << std::endl;
     return ECEF;
 }
 
-double GetReactorDistanceLLA(double longitude, double latitude, double altitude) {
-    return CalculateDistance(SNO_ECEF_coord_,LLAtoECEF(longitude, latitude,altitude));
+Double_t GetReactorDistanceLLA(Double_t latitude, Double_t longitude, Double_t altitude) {
+    return CalculateDistance(SNO_ECEF_coord_,LLAtoECEF(latitude, longitude, altitude));
 }
 
 void ntload(std::string input_filename, std::string output_filename) {
@@ -65,16 +68,17 @@ void ntload(std::string input_filename, std::string output_filename) {
     std::string reactorcoreStr="";
     RAT::DB *db = RAT::DB::Get();
     RAT::DBLinkPtr fLink;
-    std::vector<double> latitude;
-    std::vector<double> longitude;
-    std::vector<double> altitude;
+    std::vector<Double_t> latitude;
+    std::vector<Double_t> longitude;
+    std::vector<Double_t> altitude;
 
     // variables for branches
     ULong64_t entry;
     Double_t mc_energy_nu, mc_pos_x_nu, mc_pos_y_nu, mc_pos_z_nu, mc_pos_r_nu, mc_quench_i;
     Double_t mc_energy_n, mc_pos_x_n, mc_pos_y_n, mc_pos_z_n, mc_pos_r_n;
     Double_t mc_energy_ep, mc_pos_x_ep, mc_pos_y_ep, mc_pos_z_ep, mc_pos_r_ep;
-    Double_t latitude_i, longitude_i, altitude_i, distance_i;
+    Double_t latitude_i, longitude_i, altitude_i;
+    Double_t distance_i;
     UInt_t mc_time_days, mc_time_seconds;
     Double_t mc_time_nanoseconds;
     Int_t ev_nhit;
