@@ -114,7 +114,7 @@ Double_t LHFit(const std::string &inPath, std::vector<std::string> &reactorNames
     lhFunction.SetBuffer(0, Buff, Buff);
     lhFunction.SetDataDist(dataSetPdf); // initialise with the data set
     
-    const ULong64_t n_pdf = reactorNames.size();
+    const ULong64_t n_pdf = 1;//reactorNames.size();
     BinnedED *reactorPdf[n_pdf];
 
     //loop over all reactor pdfs
@@ -130,7 +130,7 @@ Double_t LHFit(const std::string &inPath, std::vector<std::string> &reactorNames
         printf("ReactorPdf%llu: %s\n", i, reactorNames[i].c_str());
         reactorPdf[i] = new BinnedED(name, axes);
         reactorPdf[i]->SetObservables(0);
-        ROOTNtuple reactorNtp(UnOscfile, "nt");
+        ROOTNtuple reactorNtp(dataFile, "nt");
         for(ULong64_t j = 0; j < reactorNtp.GetNEntries(); j++)
             reactorPdf[i]->Fill(reactorNtp.GetEntry(j));
         reactorPdf[i]->Normalise();
@@ -148,10 +148,10 @@ Double_t LHFit(const std::string &inPath, std::vector<std::string> &reactorNames
 
         // Setting optimisation limits
         sprintf(name,"ReactorPdf%llu_norm", i);
-        minima[name] = 0;
-        maxima[name] = 1000;
-        initialval[name] = 10;
-        initialerr[name] = 0.1*initialval[name];
+        minima[name] = -10;
+        maxima[name] = 10;
+        initialval[name] = 1;
+        initialerr[name] = 1*initialval[name];
 
         lhFunction.AddDist(*reactorPdf[i]);
     }
@@ -159,7 +159,7 @@ Double_t LHFit(const std::string &inPath, std::vector<std::string> &reactorNames
     //Fit
     Minuit min;
     min.SetMethod("Migrad");
-    min.SetMaxCalls(10000000);
+    min.SetMaxCalls(100000);
     min.SetMinima(minima);
     min.SetMaxima(maxima);
     min.SetInitialValues(initialval);
@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
         fprintf(fOut,"fit valid: %llu\n", fitValidity);
 
         //printf("d21,s12,s13,lhValue\n");
-        fprintf(fOut,"d21,s12,s13,lhValue\n", d_21, s_12, s_13, lhValue);
+        fprintf(fOut,"d21,s12,s13,lhValue\n");
         //printf("%.9f,%.7f,%.7f,%.5f\n", d_21, s_12, s_13, lhValue);
         fprintf(fOut,"%.9f,%.7f,%.7f,%.5f\n", d_21, s_12, s_13, lhValue);
         fclose(fOut);
