@@ -13,7 +13,7 @@ public:
 
     SurvProbFitter(SurvProb* gaus,const size_t& nDims);
     // SurvProbFitter(SurvProb* gaus, const std::vector<std::string>&, const std::vector<std::string>&);
-    SurvProbFitter(SurvProb* gaus, const std::vector<std::string>&, const std::vector<std::string>&,const std::vector<std::string>&);
+    SurvProbFitter(SurvProb* gaus, const std::vector<std::string>&, const std::vector<std::string>&); //,const std::vector<std::string>&
 
     void   SetParameter(const std::string& name_, double value);
     double GetParameter(const std::string& name_) const;
@@ -27,12 +27,12 @@ public:
 
     std::vector<std::string> GetDelmsqr21Names() const;
     std::vector<std::string> GetSinsqrtheta12Names() const;
-    std::vector<std::string> GetSinsqrtheta13Names() const;
+    //std::vector<std::string> GetSinsqrtheta13Names() const;
 
 private:
     SurvProb* fOrignalFunc;
     std::vector<std::string> fDelmsqr21sNames;
     std::vector<std::string> fSinsqrtheta12sNames;
-    std::vector<std::string> fSinsqrtheta13sNames;
+    //std::vector<std::string> fSinsqrtheta13sNames;
 };
 #endif
