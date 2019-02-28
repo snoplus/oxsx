@@ -34,7 +34,7 @@
 #include <NuOsc.h>
 #include <SurvProb.h>
 
-void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &reactorNames, std::vector<double> &distances, std::vector<std::string> &reactorTypes, std::vector<int> &nCores, std::vector<double> &powers ) {
+void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &reactorNames, std::vector<Double_t> &distances, std::vector<std::string> &reactorTypes, std::vector<ULong64_t> &nCores, std::vector<Double_t> &powers ) {
     // Read couchDB run-info text file
     std::ifstream in;
     in.open(runInfoFileName.c_str());
@@ -47,7 +47,7 @@ void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &
     std::fill(powers.begin(), powers.end(), 0.);
 
     std::string reactorName,distance,reactorType,nCore,power;
-    int lineNo = 0;
+    ULong64_t lineNo = 0;
 
     // read until end of file.
     while(in.good()){
@@ -73,35 +73,34 @@ void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &
     in.close();
 }
 
-double LHFit(const std::string UnOscfile, const std::string dataFile, int numPdfs, std::vector<double> &reactorDistances, double param_d21, double param_s12, double param_s13){
+Double_t LHFit(const std::string &inPath, std::vector<std::string> &reactorNames, std::vector<Double_t> &distances, std::vector<std::string> &reactorTypes, std::vector<ULong64_t> &nCores, std::vector<Double_t> &powers, Double_t param_d21, Double_t param_s12, Double_t param_s13){
 
     char name[100];
+
+    printf("Reading data from: %s\n", inPath.c_str());
+
+    ULong64_t flux = 100;
+    sprintf(name, "/data/snoplusmc/lidgard/OXSX_kamland/flux%llu/all_flux%llu_day360_cleanround1_oxsx.root", flux, flux);
+    const std::string dataFile = std::string(name);
+    printf("Loading data pdf #%llu: %s\n",0,dataFile.c_str());
 
     // Only interested in first bit of data ntuple
     ObsSet dataRep(0);
 
     // Set up binning
     AxisCollection axes;
-    double Emin = 2;
-    double Emax = 8;
-    int numbins = 60;
-    axes.AddAxis(BinAxis("ParKE", Emin, Emax, numbins));
+    Double_t Emin = 2;
+    Double_t Emax = 8;
+    Int_t numbins = 60;
+    axes.AddAxis(BinAxis("mc_neutrino_energy", Emin, Emax, numbins));
 
-    // create and fill data ntp and pdf
+    // // create and fill data ntp and pdf
     BinnedED dataSetPdf("dataSetPdf", axes);
     dataSetPdf.SetObservables(dataRep);
     ROOTNtuple dataNtp(dataFile, "nt");
-    for(size_t i = 0; i < dataNtp.GetNEntries(); i++)
-    dataSetPdf.Fill(dataNtp.GetEntry(i));
+    for(ULong64_t j = 0; j < dataNtp.GetNEntries(); j++)
+        dataSetPdf.Fill(dataNtp.GetEntry(j));
     dataSetPdf.Normalise();
-
-    // create and fill simulated ntp and pdf
-    BinnedED *reactorPdf0 = new BinnedED(name, axes);
-    reactorPdf0->SetObservables(0);
-    ROOTNtuple reactorNtp(UnOscfile, "nt");
-    for(size_t i = 0; i < reactorNtp.GetNEntries(); i++)
-    reactorPdf0->Fill(reactorNtp.GetEntry(i));
-    reactorPdf0->Normalise();
 
     NuOsc *reactorSystematic;
     ParameterDict minima;
@@ -114,31 +113,47 @@ double LHFit(const std::string UnOscfile, const std::string dataFile, int numPdf
     int Buff = 5;
     lhFunction.SetBuffer(0, Buff, Buff);
     lhFunction.SetDataDist(dataSetPdf); // initialise with the data set
+    
+    const ULong64_t n_pdf = reactorNames.size();
+    BinnedED *reactorPdf[n_pdf];
 
     //loop over all reactor pdfs
-    for (int i = 0; i < numPdfs; i++){
-        sprintf(name, "ReactorPdf%d", i);
-        BinnedED *reactorPdf = new BinnedED(name, axes);
-        reactorPdf->SetObservables(0);
+    for (ULong64_t i = 0; i < n_pdf; i++){
+        
+        // create and fill simulated ntp and pdf
+        flux = 100;
+        sprintf(name, "flux%llu/%s_flux%llu_day360_cleanround1_oxsx.root", flux, reactorNames[i].c_str(), flux);
+        std::string UnOscfile = inPath + std::string(name);
+        printf("Loading unoscillated pdf #%llu: %s\n", i, UnOscfile.c_str());
+        
+        sprintf(name, "ReactorPdf%llu", i);
+        printf("ReactorPdf%llu: %s\n", i, reactorNames[i].c_str());
+        reactorPdf[i] = new BinnedED(name, axes);
+        reactorPdf[i]->SetObservables(0);
+        ROOTNtuple reactorNtp(UnOscfile, "nt");
+        for(ULong64_t j = 0; j < reactorNtp.GetNEntries(); j++)
+            reactorPdf[i]->Fill(reactorNtp.GetEntry(j));
+        reactorPdf[i]->Normalise();
 
         NuOsc reactorSystematic("reactorSystematic");
-        reactorSystematic.SetFunction(new SurvProb(param_d21, param_s12, param_s13, reactorDistances[i]));
+        SurvProb *surv_prob = new SurvProb(param_d21, param_s12, distances[i]);
+        surv_prob->Setsinsqrtheta13s(param_s13); // manual, fixed setting of theta13
+        reactorSystematic.SetFunction(surv_prob);
         reactorSystematic.SetAxes(axes);
         reactorSystematic.SetTransformationObs(dataRep);
         reactorSystematic.SetDistributionObs(dataRep);
         reactorSystematic.Construct();
 
-        reactorPdf->Add(reactorSystematic(*reactorPdf0), 1);
-        reactorPdf->Normalise();
+        reactorPdf[i]->Add(reactorSystematic(*reactorPdf[i]), 1);
 
         // Setting optimisation limits
-        sprintf(name,"ReactorPdf%d_norm", i);
+        sprintf(name,"ReactorPdf%llu_norm", i);
         minima[name] = 0;
         maxima[name] = 1000;
         initialval[name] = 10;
         initialerr[name] = 0.1*initialval[name];
 
-        lhFunction.AddDist(*reactorPdf);
+        lhFunction.AddDist(*reactorPdf[i]);
     }
 
     //Fit
@@ -155,55 +170,58 @@ double LHFit(const std::string UnOscfile, const std::string dataFile, int numPdf
     ParameterDict bestFit = fitResult.GetBestFit();
     fitResult.Print();
     lhFunction.SetParameters(bestFit);
-    double lhval =(-1)*lhFunction.Evaluate();
-    //double lhval = 0;
+    Double_t lhval =(-1)*lhFunction.Evaluate();
+
+    //Double_t lhval = 0;
     return lhval;
 }
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 8){
-        std::cout<<"Error: 7 arguments expected."<<std::endl;
-        return 1; // return>0 indicates error code 
+    if (argc != 7){
+        std::cout<<"Error: 6 arguments expected."<<std::endl;
+        return 1; // return>0 indicates error code
     }
     else{
-        const std::string &UnOscfile = argv[1];
-        const std::string &dataFile = argv[2];
-        const std::string &infoFile = argv[3];
-        const std::string &outFile = argv[4];
-        double d_21 = atof(argv[5]);
-        double s_12 = atof(argv[6]);
-        double s_13 = atof(argv[7]);
+        const std::string &inPath = argv[1];
+        const std::string &infoFile = argv[2];
+        const std::string &outFile = argv[3];
+        Double_t d_21 = atof(argv[4]);
+        Double_t s_12 = atof(argv[5]);
+        Double_t s_13 = atof(argv[6]);
 
         printf("LHFitting:: del_21:%.7f, sin2_12:%.7f, sin2_13:%.7f\n",d_21,s_12,s_13);
 
         std::vector<std::string> reactorNames;
-        std::vector<double> distances;
+        std::vector<Double_t> distances;
         std::vector<std::string> reactorTypes;
-        std::vector<int> nCores;
-        std::vector<double> powers;
+        std::vector<ULong64_t> nCores;
+        std::vector<Double_t> powers;
         readInfoFile(infoFile, reactorNames, distances, reactorTypes, nCores, powers); // get reactor information
-        int numPdfs = reactorNames.size();
-        //printf("numPdfs:%d\n",numPdfs);
+        //printf("numPdfs:%llu\n",reactorNames.size());
 
-        // print out read info
+        // // print out read info
         // for (size_t i=0; i<(size_t)reactorNames.size(); i++){
-            // printf("i:%d,reactorNames[i]:%s, distance: %.5f, type: %s, nCores: %d, power: %.5f \n",i,reactorNames[i].c_str(),distances[i],reactorTypes[i].c_str(),nCores[i],powers[i]);
+            // printf("i:%llu,reactorNames[i]:%s, distance: %.5f, type: %s, nCores: %llu, power: %.5f \n",i,reactorNames[i].c_str(),distances[i],reactorTypes[i].c_str(),nCores[i],powers[i]);
         // }
 
-        double lhValue = LHFit(UnOscfile,dataFile,numPdfs,distances,d_21,s_12,s_13);
+        Double_t lhValue = LHFit(inPath, reactorNames, distances, reactorTypes, nCores, powers, d_21, s_12, s_13);
+        //input_path_unosc_i = input_path_100+"all_flux100_day360_cleanround1_oxsx.root"
+        //input_path_data_i = input_path_100+osc_label+"/all_flux100_day360_cleanround1_"+osc_label+"_oxsx.root"
+
         //TRandom3 *myRand = new TRandom3() ;
         //myRand->SetSeed(0);
-        //double lhValue = myRand->Gaus(50,5);
-        int fitValidity = 1; //make this do something useful
+        //Double_t lhValue = myRand->Gaus(50,5);
+
+        ULong64_t fitValidity = 1; //make this do something useful
         printf("LHValue:%.5f\n",lhValue);
 
         //Write fit coefficients to txt file
         //printf("writing to: %s\n",outFile.c_str());
         FILE *fOut = fopen(outFile.c_str(),"w");
 
-        //printf("fit valid: %d\n",fitValidity);
-        fprintf(fOut,"fit valid: %d\n", fitValidity);
+        //printf("fit valid: %llu\n",fitValidity);
+        fprintf(fOut,"fit valid: %llu\n", fitValidity);
 
         //printf("d21,s12,s13,lhValue\n");
         fprintf(fOut,"d21,s12,s13,lhValue\n", d_21, s_12, s_13, lhValue);

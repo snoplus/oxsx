@@ -45,6 +45,7 @@ def process(file_name, tree_name, branches, out_file, n_events):
         n_events = tree.GetEntries()
 
     # loop over events and fill the branches of new ntuple
+    vals = numpy.array([]) #empty array for the case the tree has zero entries
     for index, entry in enumerate(tree):
         if index > n_events:
             break

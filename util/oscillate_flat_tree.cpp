@@ -34,7 +34,7 @@ void ntOscillate(const char* nt_in, const char* nt_out, Double_t del_m_sqr_21, D
   for (ULong64_t i = 0; i < n_entries; i++){
     in_tree->GetEntry(i);
     surv_prob = NuSurvProb(mc_energy_nu, distance, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
-    std::cout<<mc_energy_nu<<" "<<distance<<" "<<surv_prob<<" "<<del_m_sqr_21<<" "<<sin_sqr_theta_12<<" "<<sin_sqr_theta_13<<std::endl;
+    //std::cout<<mc_energy_nu<<" "<<distance<<" "<<surv_prob<<" "<<del_m_sqr_21<<" "<<sin_sqr_theta_12<<" "<<sin_sqr_theta_13<<std::endl;
     const Double_t random = CLHEP::HepUniformRand();
     //std::cout<<"Rand:   ";
     //std::cout<<random<<std::endl;

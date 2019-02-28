@@ -294,7 +294,7 @@ def lat_long_to_distance(latitude, longitude, altitude=0):
     kamland_ecef = np.array([-3777.14425893, 3483.58137383, 3766.0181443]) #using kamland (lat, long, alt) = (36.4225, 137.3153, 0.358)
     sno_ecef = np.array([672.87, -4347.18, 4600.51]) # converted numbers
     ecef = lat_long_to_ecef(latitude, longitude, altitude)
-    displacement = np.subtract(sno_ecef, ecef)
+    displacement = np.subtract(kamland_ecef, ecef) #### currently using kamland position
     distance = np.linalg.norm(displacement)
     return round(distance, 2)
 
@@ -302,7 +302,8 @@ def main(args):
     '''
     main - pass args
     '''
-    print args
+    #### currently using kamland position
+    #print args
     parser = argparse.ArgumentParser("Pulls reactor info from ratdb files, " \
         +"output txt file contains selected reactor info.")
     parser.add_argument("-n", dest="reactor_list_name",
@@ -317,11 +318,13 @@ def main(args):
     parser.add_argument("-o", dest='output_filename', type=str, nargs='?',
                         help='filename & path to output file.ratdb',
                         default="reactor_list_selection.csv")
+    parser.add_argument('--fearless',action='store_true',\
+                        help='Do not prompt the user for input - run without fear!')
     args = parser.parse_args(args)
 
     # check if the specified files exist
     if os.path.isfile(args.REACTORS_filename) and os.path.isfile(args.REACTORS_STATUS_filename):
-        if os.path.isfile(args.output_filename):
+        if os.path.isfile(args.output_filename) and not args.fearless:
             exists_query = str(raw_input("File exists, OK to append? 'y' to append," \
                 " any other key to exit..")).lower().strip()
             if exists_query != "y":
