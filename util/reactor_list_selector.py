@@ -12,7 +12,6 @@
 '''
 
 import os
-import os.path
 import sys
 import argparse
 import numpy as np
@@ -238,6 +237,7 @@ def get_reactor_info(reactor_ratdb_info, reactor_status_ratdb_info, reactor_list
         return reactor_info
     else:
         #Return the reactor info for the specified reactor list
+        #is this broken? (i always seem to be using 'all')
         reactor_info_select = {}
         for reactor_name in reactor_list: # select out reactor from the list
             reactor_info_select[reactor_name] = reactor_info[reactor_name]

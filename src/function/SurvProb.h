@@ -83,7 +83,7 @@ class SurvProb : public PDF{
     double fnsisamplei;
     double *fsi;
     TF1 *fsincfunction;
-    //double Si(double val_) const;
+    double Si(double val_) const;
     double SiSample(double val_) const;
 
 

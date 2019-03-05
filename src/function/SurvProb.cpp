@@ -245,10 +245,10 @@ SurvProb::SiSample(double val_) const{
     return fsi[val_n];
 }
 
-//double
-//SurvProb::Si(double val_) const{
-//    return (double)fsincfunction->Integral(0.,val_);
-//}
+double
+SurvProb::Si(double val_) const{
+    return (double)fsincfunction->Integral(0.,val_);
+}
 
 double SurvProb::Cdf(size_t dim_, double val_) const{
 
@@ -265,7 +265,7 @@ double SurvProb::Cdf(size_t dim_, double val_) const{
 
     rtnVal = (a*b/2)*val_*cos(e);
     rtnVal += val_*(a+d-(a*b)/2.);
-    rtnVal += a*b*c*SiSample(e);
+    rtnVal += a*b*c*Si(e);
     rtnVal -= a*b*c*TMath::Pi()/2.;
     return rtnVal;
 }
