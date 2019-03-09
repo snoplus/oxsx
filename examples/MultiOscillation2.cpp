@@ -29,7 +29,7 @@
 #include <NuOsc.h>
 #include <SurvProb.h>
 
-void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, std::vector<ULong64_t> &n_cores, std::vector<Double_t> &powers ) {
+void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, std::vector<ULong64_t> &n_cores, std::vector<Double_t> &powers, std::vector<Double_t> &power_errs ) {
     // Read couchDB run-info text file
     std::ifstream in;
     in.open(runInfoFileName.c_str());
@@ -40,8 +40,9 @@ void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &
     std::fill(reactor_types.begin(), reactor_types.end(), "");
     std::fill(n_cores.begin(), n_cores.end(), 0);
     std::fill(powers.begin(), powers.end(), 0.);
+    std::fill(power_errs.begin(), power_errs.end(), 0.);
 
-    std::string reactor_name,distance,reactor_type,n_core,power;
+    std::string reactor_name,distance,reactor_type,n_core,power,power_err;
     ULong64_t line_no = 0;
 
     // read until end of file.
@@ -50,7 +51,8 @@ void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &
         std::getline(in,distance,',');
         std::getline(in,reactor_type,',');
         std::getline(in,n_core,',');
-        std::getline(in,power,'\n');
+        std::getline(in,power,',');
+        std::getline(in,power_err,'\n');
 
         if (line_no>0){ //skip csv header
             if (strcmp(reactor_name.c_str(),"")!=0) {
@@ -59,8 +61,9 @@ void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &
                 reactor_types.push_back(reactor_type.c_str());
                 n_cores.push_back(atoi(n_core.c_str()));
                 powers.push_back(atof(power.c_str()));
+                power_errs.push_back(atof(power_err.c_str()));
 
-                //std::cout << "v: reactor_name: " << reactor_names[line_no-1] << ", distance: " << distances[line_no-1] << ", reactor_type: " << reactor_types[line_no-1] << ", n_core: " << n_cores[line_no-1] << ", power: " << powers[line_no-1] << std::endl; //debug check ('-1' for header)
+                //std::cout << "v: reactor_name: " << reactor_names[line_no-1] << ", distance: " << distances[line_no-1] << ", reactor_type: " << reactor_types[line_no-1] << ", n_core: " << n_cores[line_no-1] << ", power: " << powers[line_no-1] << ", power_err: " << power_errs[line_no-1] << std::endl; //debug check ('-1' for header)
             }
         }
         line_no++;
@@ -102,7 +105,7 @@ void readParameterFile(const std::string &runParameterFileName, std::vector<Doub
     in.close();
 }
 
-BinnedED LHFit_initialise(BinnedED **spectra_pdf, Double_t *reactor_scale, const std::string &in_path, const std::string &data_path, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types){
+BinnedED LHFit_initialise(BinnedED **spectra_pdf, Double_t *reactor_scale, const std::string &in_path, const std::string &data_path, std::vector<std::string> &reactor_names){
     
     printf("Begin init--------------------------------------\n");
     printf("LHFit_initialise...\n");
@@ -161,8 +164,8 @@ BinnedED LHFit_initialise(BinnedED **spectra_pdf, Double_t *reactor_scale, const
         for(ULong64_t j = 0; j < reactor_ntp.GetNEntries(); j++)
             reactor_pdf->Fill(reactor_ntp.GetEntry(j));
         reactor_integrals[i] = reactor_pdf->Integral(); //record the integral
-        reactor_scale[i] = data_set_integral/reactor_integrals[i];
-	printf("Loading reactor: %s integral:%.0f/data integral:%.0f => Ratio:%4f (scale:%4f)\n", reactor_names[i].c_str(), reactor_integrals[i], data_set_integral, 1./reactor_scale[i], reactor_scale[i]);
+        reactor_scale[i] = reactor_integrals[i]/data_set_integral;
+	printf("Loading reactor: %s integral:%.0f/data integral:%.0f => Ratio:%4f (scale=(1/ratio=):%4f)\n", reactor_names[i].c_str(), reactor_integrals[i], data_set_integral, reactor_scale[i], 1./reactor_scale[i]);
     }
 
     // load unoscillated spectra
@@ -190,7 +193,7 @@ BinnedED LHFit_initialise(BinnedED **spectra_pdf, Double_t *reactor_scale, const
     return data_set_pdf;
 }
 
-Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor_scale, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, Double_t param_d21, Double_t param_s12, Double_t param_s13){
+Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor_scale, Double_t *reactor_scale_err, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, Double_t param_d21, Double_t param_s12, Double_t param_s13){
 
     printf("Begin fit--------------------------------------\n");
     printf("LHFit_fit:: del_21:%.5f, sin2_12:%.5f, sin2_13:%.5f\n", param_d21, param_s12, param_s13);
@@ -251,25 +254,25 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *rea
                continue;
             }
         reactor_pdf[i]->Normalise();
-        reactor_pdf[i]->Scale(1./reactor_scale[i]); // normalise to integral for each reactor
+        reactor_pdf[i]->Scale(reactor_scale[i]); // normalise to integral for each reactor
 
         // Setting optimisation limits
+        //std::cout << " scale" << reactor_scale[i] << " err" << reactor_scale_err[i] << " min" << reactor_scale[i]-reactor_scale_err[i]*reactor_scale[i] << " max" << reactor_scale[i]+reactor_scale_err[i]*reactor_scale[i] << std::endl;
         sprintf(name, "%s_norm", reactor_names[i].c_str());
-        Double_t min = 0.99/reactor_scale[i];
-        Double_t max = 1.01/reactor_scale[i];
-        if (min < 0.0001) min = 0.0001;
-        if (max > 0.5) max = 0.5; // no reactor is more than 50% of the signal
+        Double_t min = 0;//reactor_scale[i]-reactor_scale_err[i]*reactor_scale[i];
+        Double_t max = 1.0;//reactor_scale[i]+reactor_scale_err[i]*reactor_scale[i];
+        //if (min < 0.0001) min = 0.0001;
+        //if (max > 0.5) max = 0.5; // no reactor is more than 50% of the signal
         //if (max > 1.0) max = 1.0;
         minima[name] = min;
         maxima[name] = max;
-        printf("  added reactor %d/%d: %s, min:%.3f max:%.3f\n", i+1, n_pdf, reactor_names[i].c_str(), min, max);
-        initial_val[name] = 1./reactor_scale[i];
+        printf("  added reactor %d/%d: %s, norm: %.3f (min:%.3f max:%.3f)\n", i+1, n_pdf, reactor_names[i].c_str(), reactor_scale[i], min, max);
+        initial_val[name] = reactor_scale[i];
         initial_err[name] = 0.001*initial_val[name];
 
         lh_function.AddDist(*reactor_pdf[i]);
 
-        //sprintf(name, "%s_norm", reactor_names[i].c_str());
-        //lh_function.SetConstraint(name,7591,380); // use scale information here too?
+        //lh_function.SetConstraint(name,reactor_scale[i], reactor_scale_err[i]*1.96); // use scale information here too?
     }
 
     //lh_function.SetConstraint("d21", 7e-5, 9e-5); // constraints?
@@ -305,9 +308,9 @@ int main(int argc, char *argv[]) {
     else{
         const std::string &in_path = argv[1];
         const std::string &data_path = argv[2];
-        const std::string &infoFile = argv[3];
-        const std::string &parameterFile = argv[4];
-        const std::string &outFile = argv[5];
+        const std::string &info_file = argv[3];
+        const std::string &parameter_file = argv[4];
+        const std::string &out_file = argv[5];
         printf("Begin--------------------------------------\n");
 
         // read in reactor information
@@ -316,17 +319,18 @@ int main(int argc, char *argv[]) {
         std::vector<std::string> reactor_types;
         std::vector<ULong64_t> n_cores;
         std::vector<Double_t> powers;
-        readInfoFile(infoFile, reactor_names, distances, reactor_types, n_cores, powers);
+        std::vector<Double_t> power_errs;
+        readInfoFile(info_file, reactor_names, distances, reactor_types, n_cores, powers, power_errs);
 
         // read in parameter information
         std::vector<Double_t> d_21s;
         std::vector<Double_t> s_12s;
         std::vector<Double_t> s_13s;
-        readParameterFile(parameterFile, d_21s, s_12s, s_13s);
+        readParameterFile(parameter_file, d_21s, s_12s, s_13s);
 
-        // // print out read info
-        // for (size_t i=0; i<(size_t)reactor_names.size(); i++)
-            // printf("i:%llu,reactor_names[i]:%s, distance: %.5f, type: %s, n_cores: %llu, power: %.5f \n", i, reactor_names[i].c_str(), distances[i], reactor_types[i].c_str(), n_cores[i], powers[i]);
+        // print out read info
+        //for (size_t i=0; i<(size_t)reactor_names.size(); i++)
+        //    printf("i:%llu,reactor_names[i]:%s, distance: %.5f, type: %s, n_cores: %llu, power: %.5f, power_err: %.5f \n", i, reactor_names[i].c_str(), distances[i], reactor_types[i].c_str(), n_cores[i], powers[i], power_errs[i]);
 
         // // print out read parameters
         // for (size_t i=0; i<(size_t)d_21s.size(); i++)
@@ -335,21 +339,25 @@ int main(int argc, char *argv[]) {
         const ULong64_t n_pdf = reactor_names.size();
         BinnedED **spectra_pdf = new BinnedED*[n_pdf]; // PWR=0, PHWR=1
         Double_t *reactor_scale = new Double_t[n_pdf];
+        Double_t *reactor_scale_err = new Double_t[n_pdf];
         const ULong64_t n_parameter_sets = d_21s.size();
         Double_t lh_values[n_parameter_sets];
         
-        BinnedED data_set_pdf = LHFit_initialise(spectra_pdf, reactor_scale, in_path, data_path, reactor_names, distances, reactor_types);
+        for (size_t i=0; i<(size_t)reactor_names.size(); i++)
+            reactor_scale_err[i] = power_errs[i]/powers[i];
+        
+        BinnedED data_set_pdf = LHFit_initialise(spectra_pdf, reactor_scale, in_path, data_path, reactor_names);
 
         for (ULong64_t i=0; i<n_parameter_sets; i++) {
-            lh_values[i] = LHFit_fit(data_set_pdf, spectra_pdf, reactor_scale, reactor_names, distances, reactor_types, d_21s[i], s_12s[i], s_13s[i]);
+            lh_values[i] = LHFit_fit(data_set_pdf, spectra_pdf, reactor_scale, reactor_scale_err, reactor_names, distances, reactor_types, d_21s[i], s_12s[i], s_13s[i]);
         }
 
         // write output to file
         ULong64_t fitValidity = 1; //make this do something useful.. (i.e. when minuit throws out an error this should be 0.)
 
         //Write fit coefficients to txt file
-        printf("writing to: %s\n", outFile.c_str());
-        FILE *fOut = fopen(outFile.c_str(), "w");
+        printf("writing to: %s\n", out_file.c_str());
+        FILE *fOut = fopen(out_file.c_str(), "w");
         fprintf(fOut,"d21,s12,s13,lh_value,fitValidity\n");
         for (ULong64_t i=0; i<n_parameter_sets; i++)
             fprintf(fOut,"%.9f,%.7f,%.7f,%.5f,%llu\n", d_21s[i], s_12s[i], s_13s[i], lh_values[i], fitValidity);

@@ -5,6 +5,8 @@
 # Grabs information from the REACTORS and REACTORS_STATUS ratdb files
 # for a specified reactor list and formats it into an output text file
 #
+# currently using kamland position
+#
 # Revision History:
 #  - 2018/10/19: first implementation
 #  - 2018/12/12: modification, reshaping
@@ -119,6 +121,7 @@ def get_reactor_status_ratdb_info(reactor_ratdb_status_filename):
             reactor_name = None
             cores = None
             core_powers = None
+            core_powers_err = None
             core_types = None
             next_lines = None
 
@@ -151,6 +154,12 @@ def get_reactor_status_ratdb_info(reactor_ratdb_status_filename):
                 core_powers = core_powers.split(',')
                 core_powers = map(str.strip, core_powers)
                 core_powers = map(float, core_powers)
+                
+                # get core power error information
+                core_powers_err = (next_lines.split('core_power_err: ['))[1].split('],')[0]
+                core_powers_err = core_powers_err.split(',')
+                core_powers_err = map(str.strip, core_powers_err)
+                core_powers_err = map(float, core_powers_err)
 
                 # get core type information
                 core_types = (next_lines.split('core_spectrum: ['))[1].split('],')[0]
@@ -161,6 +170,7 @@ def get_reactor_status_ratdb_info(reactor_ratdb_status_filename):
                 reactor_status_info[reactor_name] = {}
                 reactor_status_info[reactor_name]["cores"] = cores
                 reactor_status_info[reactor_name]["core_powers"] = core_powers
+                reactor_status_info[reactor_name]["core_powers_err"] = core_powers_err
                 reactor_status_info[reactor_name]["core_types"] = core_types
 
     return reactor_status_info
@@ -187,6 +197,8 @@ def get_reactor_info(reactor_ratdb_info, reactor_status_ratdb_info, reactor_list
         reactor_info[reactor_name]["cores"] = reactor_status_ratdb_info[reactor_name]["cores"]
         reactor_info[reactor_name]["core_powers"] = \
             reactor_status_ratdb_info[reactor_name]["core_powers"]
+        reactor_info[reactor_name]["core_powers_err"] = \
+            reactor_status_ratdb_info[reactor_name]["core_powers_err"]
         reactor_info[reactor_name]["core_types"] = \
             reactor_status_ratdb_info[reactor_name]["core_types"]
 
@@ -196,6 +208,11 @@ def get_reactor_info(reactor_ratdb_info, reactor_status_ratdb_info, reactor_list
             int(round(
                 sum(reactor_info[reactor_name]["core_powers"])\
                             /len(reactor_info[reactor_name]["core_powers"])
+                , 0))
+        reactor_info[reactor_name]["core_power_err"] = \
+            int(round(
+                sum(reactor_info[reactor_name]["core_powers_err"])\
+                            /len(reactor_info[reactor_name]["core_powers_err"])
                 , 0))
 
         # get latitude information
@@ -255,13 +272,14 @@ def write_output_file(filename_output, reactor_info):
     with open(filename_output, 'ab+') as file_out:
         if write_header:
             file_out.write(
-                'reactor_name,distance_km,spectrum_type,number_cores,average_core_power\n')
+                'reactor_name,distance_km,spectrum_type,number_cores,average_core_power,core_power_stderr\n')
         for key, values in reactor_info.items():
             file_out.write(key\
                 +','+str(values["distance"])\
                 +','+str(values["core_type"])\
                 +','+str(values["cores"])\
                 +','+str(values["core_power"])\
+                +','+str(values["core_power_err"])\
                 +'\n')
 
 def lat_long_to_ecef(latitude, longitude, altitude):

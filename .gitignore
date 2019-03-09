@@ -19,5 +19,4 @@ include/*
 .*
 config/userconfig.ini
 *.log
-bin/*.sh
 gsl/
