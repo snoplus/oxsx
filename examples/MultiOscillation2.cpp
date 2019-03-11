@@ -105,40 +105,40 @@ void readParameterFile(const std::string &runParameterFileName, std::vector<Doub
     in.close();
 }
 
-BinnedED LHFit_initialise(BinnedED **spectra_pdf, Double_t *reactor_scale, const std::string &in_path, const std::string &data_path, std::vector<std::string> &reactor_names){
+BinnedED LHFit_initialise(BinnedED **spectra_pdf, Double_t *reactor_scale, const std::string &in_path, const std::string &data_path, std::vector<std::string> &reactor_names, ULong64_t flux_data){
     
     printf("Begin init--------------------------------------\n");
     printf("LHFit_initialise...\n");
 
     char name[1000];
-    ULong64_t flux = 100;
+    ULong64_t flux_mc = 100;
 
     // setup spectra filenames
     const std::string pwr_file = std::string("combinedpwr");
     const std::string phwr_file = std::string("combinedphwr");
     printf("Reading individual reactor spectra from: %s\n", in_path.c_str());
-    sprintf(name, "%sflux%llu/[reactor_name]_flux%llu_day360_cleanround1_oxsx.root", in_path.c_str(), flux, flux);
+    sprintf(name, "%sflux%llu/[reactor_name]_flux%llu_day360_cleanround1_oxsx.root", in_path.c_str(), flux_mc, flux_mc);
     printf("Using unoscillated spectrum for reactors:\n\t%s\n",name);
     printf("Using unoscillated spectrum for:\n");
-    sprintf(name, "%sflux%llu/%s_flux%llu_day360_cleanround1_oxsx.root", in_path.c_str(), flux, pwr_file.c_str(), flux);
+    sprintf(name, "%sflux%llu/%s_flux%llu_day360_cleanround1_oxsx.root", in_path.c_str(), flux_mc, pwr_file.c_str(), flux_mc);
     printf("\ttype PWR & BWR: %s\n", name);
     const std::string pwr_unosc_path = std::string(name);
-    sprintf(name, "%sflux%llu/%s_flux%llu_day360_cleanround1_oxsx.root", in_path.c_str(), flux, phwr_file.c_str(), flux);
+    sprintf(name, "%sflux%llu/%s_flux%llu_day360_cleanround1_oxsx.root", in_path.c_str(), flux_mc, phwr_file.c_str(), flux_mc);
     printf("\ttype PHWR: %s\n", name);
     const std::string phwr_unosc_path = std::string(name);
 
     // setup (oscillated) data filename
     sprintf(name, "%s", data_path.c_str());
-    printf("Loading data spectrum: %s\n", name);
+    printf("Loading data spectrum: %s\n\n", name);
 
     // setup ntuple
     ObsSet data_rep(0);
 
     // set up binning
     AxisCollection axes;
-    Double_t e_min = 2;
-    Double_t e_max = 8;
-    Int_t n_bins = (8-2)*10;
+    Double_t e_min = 0.425*6;
+    Double_t e_max = 0.425*19;
+    Int_t n_bins = 13;//(8-2)*10;
     axes.AddAxis(BinAxis("mc_neutrino_energy", e_min, e_max, n_bins));
 
     // load (oscillated) data ntuple
@@ -147,25 +147,52 @@ BinnedED LHFit_initialise(BinnedED **spectra_pdf, Double_t *reactor_scale, const
     ROOTNtuple data_ntp(data_path, "nt");
     for(ULong64_t i = 0; i < data_ntp.GetNEntries(); i++)
         data_set_pdf.Fill(data_ntp.GetEntry(i));
+    
+    //data_set_pdf.Scale(1./flux_data);
+    data_set_pdf.Normalise(); //For kamland digitised ntp, normalise then scale to integral of digitised kamland data
+    data_set_pdf.Scale(54.51490); //scale by integral of digitised data
+    
     Double_t data_set_integral = data_set_pdf.Integral(); //record the integral before normalising
     data_set_pdf.Normalise();
 
     // number of reactors
     const ULong64_t n_pdf = reactor_names.size();
 
-    // load oscillated reactor ntuples (for scale factors)
-    Double_t reactor_integrals[n_pdf];
+    // // load oscillated reactor ntuples (for scale factors)
+    // Double_t reactor_integrals[n_pdf];
+    // for(ULong64_t i = 0; i < n_pdf; i++){
+        // sprintf(name, "%sflux%llu/osc2/%s_flux%llu_day360_cleanround1_osc2_oxsx.root", in_path.c_str(), flux_mc, reactor_names[i].c_str(), flux_mc);
+        // ROOTNtuple reactor_ntp(name, "nt");
+        // sprintf(name, "%s_pdf", reactor_names[i].c_str());
+        // BinnedED *reactor_pdf = new BinnedED(name, axes);
+        // reactor_pdf->SetObservables(0);
+        // for(ULong64_t j = 0; j < reactor_ntp.GetNEntries(); j++)
+            // reactor_pdf->Fill(reactor_ntp.GetEntry(j));
+        // reactor_pdf->Scale(1./flux_mc);
+        // reactor_integrals[i] = reactor_pdf->Integral(); //record the integral
+        // reactor_scale[i] = reactor_integrals[i]/data_set_integral;
+	// printf("Loading reactor: %s integral:%.0f/data integral:%.0f => Ratio:%4f (scale=(1/ratio=):%4f)\n", reactor_names[i].c_str(), reactor_integrals[i], data_set_integral, reactor_scale[i], 1./reactor_scale[i]);
+    // }
+    
+    // or use those found in reactor_sum.cpp
+    
+    reactor_scale[0] = 5.7740e-07; //shimane
+    reactor_scale[1] = 0.48582; //tsuruga
+    reactor_scale[2] = 0.10606; //ohi
+    reactor_scale[3] = 5.0267e-7; //hanul
+    reactor_scale[4] = 0.05769; //tokai
+    reactor_scale[5] = 2.4704e-8; //takahama
+    reactor_scale[6] = 6.7107e-06; //shika_norm
+    reactor_scale[7] = 0.07450; //mihama_norm
+    reactor_scale[8] = 2.333e-5; //kashiwazakikariwa_norm
+    reactor_scale[9] = 0.268; //fukushima_norm
+    reactor_scale[10] = 0.002; //genkai_norm
+    reactor_scale[11] = 1.3030e-08; //onagawa_norm
+    reactor_scale[12] = 2.157e-08; //hamaoka_norm
+    reactor_scale[13] = 0.01209; //kori_norm
+    
     for(ULong64_t i = 0; i < n_pdf; i++){
-        sprintf(name, "%sflux%llu/osc2/%s_flux%llu_day360_cleanround1_osc2_oxsx.root", in_path.c_str(), flux, reactor_names[i].c_str(), flux);
-        ROOTNtuple reactor_ntp(name, "nt");
-        sprintf(name, "%s_pdf", reactor_names[i].c_str());
-        BinnedED *reactor_pdf = new BinnedED(name, axes);
-        reactor_pdf->SetObservables(0);
-        for(ULong64_t j = 0; j < reactor_ntp.GetNEntries(); j++)
-            reactor_pdf->Fill(reactor_ntp.GetEntry(j));
-        reactor_integrals[i] = reactor_pdf->Integral(); //record the integral
-        reactor_scale[i] = reactor_integrals[i]/data_set_integral;
-	printf("Loading reactor: %s integral:%.0f/data integral:%.0f => Ratio:%4f (scale=(1/ratio=):%4f)\n", reactor_names[i].c_str(), reactor_integrals[i], data_set_integral, reactor_scale[i], 1./reactor_scale[i]);
+    	printf("Loading reactor: %s Ratio:%4f (scale=(1/ratio=):%4f)\n", reactor_names[i].c_str(), reactor_scale[i], 1./reactor_scale[i]);
     }
 
     // load unoscillated spectra
@@ -176,6 +203,7 @@ BinnedED LHFit_initialise(BinnedED **spectra_pdf, Double_t *reactor_scale, const
     spectra_pdf[0]->SetObservables(0);
     for(ULong64_t i = 0; i < pwr_spectrum_ntp.GetNEntries(); i++)
         spectra_pdf[0]->Fill(pwr_spectrum_ntp.GetEntry(i));
+    spectra_pdf[0]->Scale(1./flux_mc);
     Double_t pwr_spectrum_integral = spectra_pdf[0]->Integral(); //record the integral before normalising
     spectra_pdf[0]->Normalise();
 
@@ -186,6 +214,7 @@ BinnedED LHFit_initialise(BinnedED **spectra_pdf, Double_t *reactor_scale, const
     spectra_pdf[1]->SetObservables(0);
     for(ULong64_t i = 0; i < phwr_spectrum_ntp.GetNEntries(); i++)
         spectra_pdf[1]->Fill(phwr_spectrum_ntp.GetEntry(i));
+    spectra_pdf[1]->Scale(1./flux_mc);
     Double_t phwr_spectrum_integral = spectra_pdf[1]->Integral(); //record the integral before normalising
     spectra_pdf[1]->Normalise();
 
@@ -203,9 +232,9 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *rea
     ObsSet data_rep(0);
     // set up binning
     AxisCollection axes;
-    Double_t e_min = 2;
-    Double_t e_max = 8;
-    Int_t n_bins = (8-2)*10;
+    Double_t e_min = 0.425*6; //2
+    Double_t e_max = 0.425*19; //8
+    Int_t n_bins = 13;//(8-2)*10;
     axes.AddAxis(BinAxis("mc_neutrino_energy", e_min, e_max, n_bins));
 
     // create LH function
@@ -259,11 +288,11 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *rea
         // Setting optimisation limits
         //std::cout << " scale" << reactor_scale[i] << " err" << reactor_scale_err[i] << " min" << reactor_scale[i]-reactor_scale_err[i]*reactor_scale[i] << " max" << reactor_scale[i]+reactor_scale_err[i]*reactor_scale[i] << std::endl;
         sprintf(name, "%s_norm", reactor_names[i].c_str());
-        Double_t min = 0;//reactor_scale[i]-reactor_scale_err[i]*reactor_scale[i];
-        Double_t max = 1.0;//reactor_scale[i]+reactor_scale_err[i]*reactor_scale[i];
-        //if (min < 0.0001) min = 0.0001;
+        Double_t min = reactor_scale[i]-1.96*reactor_scale_err[i]*reactor_scale[i];
+        Double_t max = reactor_scale[i]+1.96*reactor_scale_err[i]*reactor_scale[i];
+        if (min < 0) min = 0;
         //if (max > 0.5) max = 0.5; // no reactor is more than 50% of the signal
-        //if (max > 1.0) max = 1.0;
+        if (max > 1.0) max = 1.0;
         minima[name] = min;
         maxima[name] = max;
         printf("  added reactor %d/%d: %s, norm: %.3f (min:%.3f max:%.3f)\n", i+1, n_pdf, reactor_names[i].c_str(), reactor_scale[i], min, max);
@@ -272,7 +301,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *rea
 
         lh_function.AddDist(*reactor_pdf[i]);
 
-        //lh_function.SetConstraint(name,reactor_scale[i], reactor_scale_err[i]*1.96); // use scale information here too?
+        lh_function.SetConstraint(name,reactor_scale[i], reactor_scale_err[i]*1.96); // use scale information here too?
     }
 
     //lh_function.SetConstraint("d21", 7e-5, 9e-5); // constraints?
@@ -301,8 +330,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *rea
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 6){
-        std::cout<<"Error: 5 arguments expected."<<std::endl;
+    if (argc != 7){
+        std::cout<<"Error: 6 arguments expected."<<std::endl;
         return 1; // return>0 indicates error code
     }
     else{
@@ -310,7 +339,8 @@ int main(int argc, char *argv[]) {
         const std::string &data_path = argv[2];
         const std::string &info_file = argv[3];
         const std::string &parameter_file = argv[4];
-        const std::string &out_file = argv[5];
+        const size_t flux_data = atoi(argv[5]);
+        const std::string &out_file = argv[6];
         printf("Begin--------------------------------------\n");
 
         // read in reactor information
@@ -344,9 +374,9 @@ int main(int argc, char *argv[]) {
         Double_t lh_values[n_parameter_sets];
         
         for (size_t i=0; i<(size_t)reactor_names.size(); i++)
-            reactor_scale_err[i] = power_errs[i]/powers[i];
+            reactor_scale_err[i] = 0.01;//power_errs[i]/powers[i];
         
-        BinnedED data_set_pdf = LHFit_initialise(spectra_pdf, reactor_scale, in_path, data_path, reactor_names);
+        BinnedED data_set_pdf = LHFit_initialise(spectra_pdf, reactor_scale, in_path, data_path, reactor_names, flux_data);
 
         for (ULong64_t i=0; i<n_parameter_sets; i++) {
             lh_values[i] = LHFit_fit(data_set_pdf, spectra_pdf, reactor_scale, reactor_scale_err, reactor_names, distances, reactor_types, d_21s[i], s_12s[i], s_13s[i]);
