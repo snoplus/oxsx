@@ -50,6 +50,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     TH1D h_after_cut_emc_nu("h_after_cut_emc_nu", "h_after_cut_emc_nu", 50, 0, 10);
     TH2D h2_after_cut_efit("h2_after_cut_efit", "h2_after_cut_efit", 1000, 0, 10, 1000, 0, 10);
     TH2D h2_after_cut_efit_corrected("h2_after_cut_efit_corrected", "h2_after_cut_efit_corrected", 1000, 0, 10, 1000, 0, 10);
+    TH1D h_after_cut_efit_p1("h_after_cut_efit_p1", "h_after_cut_efit_p1", 50, 0, 10);
     TH1D h_after_cut_efit_p1_corrected("h_after_cut_efit_p1_corrected", "h_after_cut_efit_p1_corrected", 50, 0, 10);
     TH2D h2_after_cut_efit_neutron("h2_after_cut_efit_neutron", "h2_after_cut_efit_neutron", 100, 0, 10, 300, 0, 3);
     TH1D h_after_cut_efit_p2("h_after_cut_efit_p2", "h_after_cut_efit_p2", 50, 0, 10);
@@ -115,8 +116,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     tree_input->SetBranchAddress("mc_ev_index_ep", &mc_ev_index_ep);
     tree_input->SetBranchAddress("mc_ev_index_n", &mc_ev_index_n);
     tree_input->SetBranchAddress("ev_index", &ev_index);
-    tree_input->SetBranchAddress("ev_fit_validity", &ev_validity);
     tree_input->SetBranchAddress("ev_fit_energy", &ev_energy);
+    tree_input->SetBranchAddress("ev_fit_validity", &ev_validity);
     tree_input->SetBranchAddress("ev_fit_position_r", &ev_pos_r);
     tree_input->SetBranchAddress("ev_fit_position_x", &ev_pos_x);
     tree_input->SetBranchAddress("ev_fit_position_y", &ev_pos_y);
@@ -130,6 +131,10 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     tree_input->SetBranchAddress("reactor_info_altitude", &altitude);
     tree_input->SetBranchAddress("reactor_info_distance", &distance);
 
+    // values to modify
+    tree_output->SetBranchAddress("ev_fit_energy_p1", &ev_energy_p1);
+    tree_output->SetBranchAddress("ev_fit_energy_p2", &ev_energy_p2);
+    
     std::vector<TString> tagged_entries;
 
     ULong64_t n_entries = tree_input->GetEntries();
@@ -214,25 +219,26 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                     //ev_index_p2 = ev_index;
                 }
                 else{
-                    ev_time_days_p1 = ev_time_days;
-                    ev_time_seconds_p1 = ev_time_seconds;
-                    ev_time_nanoseconds_p1 = ev_time_nanoseconds;
-                    ev_pos_r_p1 = ev_pos_r;
-                    ev_pos_x_p1 = ev_pos_x;
-                    ev_pos_y_p1 = ev_pos_y;
-                    ev_pos_z_p1 = ev_pos_z;
-                    ev_energy_p1 = ev_energy;
-                    //ev_index_p1 = ev_index;
+                    continue;
+                    // ev_time_days_p1 = ev_time_days;
+                    // ev_time_seconds_p1 = ev_time_seconds;
+                    // ev_time_nanoseconds_p1 = ev_time_nanoseconds;
+                    // ev_pos_r_p1 = ev_pos_r;
+                    // ev_pos_x_p1 = ev_pos_x;
+                    // ev_pos_y_p1 = ev_pos_y;
+                    // ev_pos_z_p1 = ev_pos_z;
+                    // ev_energy_p1 = ev_energy;
+                    // //ev_index_p1 = ev_index;
 
-                    ev_time_days_p2 = ev_time_days_i;
-                    ev_time_seconds_p2 = ev_time_seconds_i;
-                    ev_time_nanoseconds_p2 = ev_time_nanoseconds_i;
-                    ev_pos_r_p2 = ev_pos_r_i;
-                    ev_pos_x_p2 = ev_pos_x_i;
-                    ev_pos_y_p2 = ev_pos_y_i;
-                    ev_pos_z_p2 = ev_pos_z_i;
-                    ev_energy_p2 = ev_energy_i;
-                    //ev_index_p2 = ev_index_i;
+                    // ev_time_days_p2 = ev_time_days_i;
+                    // ev_time_seconds_p2 = ev_time_seconds_i;
+                    // ev_time_nanoseconds_p2 = ev_time_nanoseconds_i;
+                    // ev_pos_r_p2 = ev_pos_r_i;
+                    // ev_pos_x_p2 = ev_pos_x_i;
+                    // ev_pos_y_p2 = ev_pos_y_i;
+                    // ev_pos_z_p2 = ev_pos_z_i;
+                    // ev_energy_p2 = ev_energy_i;
+                    // //ev_index_p2 = ev_index_i;
                 }
 
                 // find 'other' energy and correction
@@ -307,6 +313,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                     // fill histograms with all triggers which pass cuts
                     h2_after_cut_efit.Fill(ev_energy_p1, ev_energy_p2);
                     h2_after_cut_efit_corrected.Fill(ev_energy_corrected_p1, ev_energy_p2);
+                    h_after_cut_efit_p1.Fill(ev_energy_p1);
                     h_after_cut_efit_p1_corrected.Fill(ev_energy_corrected_p1);
                     h2_after_cut_efit_neutron.Fill(ev_energy_p1, mc_energy_nu - (ev_energy_p1+e_rem) );
                     h_after_cut_efit_p2.Fill(ev_energy_p2);
@@ -365,11 +372,13 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h_after_cut_efit_ratio->Divide(&h_after_cut_emc_nu);
 
     TH1D *h_after_cut_emc_nu_n = (TH1D*)h_after_cut_emc_nu.Clone("h_after_cut_emc_nu_n");
+    TH1D *h_after_cut_efit_p1_n = (TH1D*)h_after_cut_efit_p1.Clone("h_after_cut_efit_p1_n");
     TH1D *h_after_cut_efit_p1_corrected_n = (TH1D*)h_after_cut_efit_p1_corrected.Clone("h_after_cut_efit_p1_corrected_n");
     h_after_cut_emc_nu_n->Scale(1./h_after_cut_emc_nu_n->GetMaximum());
     h_after_cut_efit_p1_corrected_n->Scale(1./h_after_cut_efit_p1_corrected_n->GetMaximum());
     h_after_cut_efit_p1_corrected.SetLineColor(kRed);
     h_after_cut_efit_p1_corrected_n->SetLineColor(kRed);
+    h_after_cut_efit_p1_n->Scale(1./h_after_cut_efit_p1_n->GetMaximum());
 
     // save file
     file_input->Close();
@@ -401,6 +410,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h_after_cut_emc.SetTitle("KE_ep");
     h_after_cut_emc_nu.SetTitle("KE_nu");
     h_after_cut_emc_nu_n->SetTitle("KE_nu (normalised (maximum = 1)");
+    h_after_cut_efit_p1.SetTitle("ev_energy_p1");
+    h_after_cut_efit_p1_n->SetTitle("ev_energy_p1_n");
     h_after_cut_efit_p1_corrected.SetTitle("ev_energy_p1+0.784MeV+E_n");
     h_after_cut_efit_p2.SetTitle("ev_energy_p2");
     h_after_cut_efit_p1_corrected_n->SetTitle("ev_energy_p1+0.784MeV+E_n");
@@ -409,6 +420,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h_after_cut_emc.GetXaxis()->SetTitle("Energy (MeV)");
     h_after_cut_emc_nu.GetXaxis()->SetTitle("Energy (MeV)");
     h_after_cut_emc_nu_n->GetXaxis()->SetTitle("Energy (MeV)");
+    h_after_cut_efit_p1.GetXaxis()->SetTitle("Energy (MeV)");
+    h_after_cut_efit_p1_n->GetXaxis()->SetTitle("Energy (MeV)");
     h_after_cut_efit_p1_corrected.GetXaxis()->SetTitle("Energy (MeV)");
     h_after_cut_efit_p2.GetXaxis()->SetTitle("Energy (MeV)");
     h_after_cut_efit_p1_corrected_n->GetXaxis()->SetTitle("Energy (MeV)");
@@ -431,6 +444,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h_after_cut_emc.Write();
     h2_after_cut_efit.Write();
     h2_after_cut_efit_corrected.Write();
+    h_after_cut_efit_p1.Write();
+    h_after_cut_efit_p1_n->Write();
     h_after_cut_efit_p1_corrected.Write();
     h_after_cut_efit_p1_corrected_n->Write();
     h2_after_cut_efit_neutron.Write();

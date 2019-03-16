@@ -15,6 +15,7 @@ import argparse
 import numpy as np
 import pandas as pd
 import ROOT
+ROOT.gROOT.SetBatch(True) # ROOT in batch mode
 
 def process(filename_input, filename_output):
     '''

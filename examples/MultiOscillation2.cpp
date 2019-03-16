@@ -28,7 +28,7 @@
 #include <ContainerTools.hpp>
 #include <NuOsc.h>
 #include <SurvProb.h>
-#include "AntinuUtils.cpp"
+#include "AntinuUtilsKamland.cpp"
 
 Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor_scale, Double_t *reactor_scale_err, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, Double_t param_d21, Double_t param_s12, Double_t param_s13){
 
@@ -40,9 +40,9 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *rea
     ObsSet data_rep(0);
     // set up binning
     AxisCollection axes;
-    Double_t e_min = 2;//0.425*2; //*6 for kamland paper #1, *2 for paper #2
-    Double_t e_max = 8;//0.425*19;
-    Int_t n_bins = (8-2)*10;//17;//17;// //13 for paper #2, 17 for paper #1
+    Double_t e_min = 0.425*6; //2; //*6 for kamland paper #1, *2 for paper #2
+    Double_t e_max = 0.425*19; //8;
+    Int_t n_bins = 13; //(8-2)*10; //13 for paper #1, 17 for paper #2
     axes.AddAxis(BinAxis("mc_neutrino_energy", e_min, e_max, n_bins));
 
     // create LH function
@@ -96,8 +96,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *rea
         // Setting optimisation limits
         //std::cout << " scale" << reactor_scale[i] << " err" << reactor_scale_err[i] << " min" << reactor_scale[i]-reactor_scale_err[i]*reactor_scale[i] << " max" << reactor_scale[i]+reactor_scale_err[i]*reactor_scale[i] << std::endl;
         sprintf(name, "%s_norm", reactor_names[i].c_str());
-        Double_t min = reactor_scale[i]-1.96*reactor_scale_err[i]*reactor_scale[i];
-        Double_t max = reactor_scale[i]+1.96*reactor_scale_err[i]*reactor_scale[i];
+        Double_t min = reactor_scale[i]-0.196*reactor_scale_err[i]*reactor_scale[i];
+        Double_t max = reactor_scale[i]+0.196*reactor_scale_err[i]*reactor_scale[i];
         if (min < 0) min = 0;
         if (max > 1.0) max = 1.0;
         minima[name] = min;

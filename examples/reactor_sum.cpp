@@ -30,7 +30,8 @@
 #include <SurvProb.h>
 #include <TH1D.h>
 #include <TRandom3.h>
-#include "AntinuUtils.cpp"
+#include "AntinuUtilsKamland.cpp"
+//#include "AntinuUtils.cpp"
 
 void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor_scale, Double_t *reactor_scale_err, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, const std::string out_filename){
 
@@ -42,9 +43,9 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
     ObsSet data_rep(0);
     // set up binning
     AxisCollection axes;
-    Double_t e_min = 2;//0.425*2; //*6 for kamland paper #1, *2 for paper #2
-    Double_t e_max = 8;//0.425*19;
-    Int_t n_bins = (8-2)*10;//17;//17;// //13 for paper #2, 17 for paper #1
+    Double_t e_min = 0.425*6; //2; //*6 for kamland paper #1, *2 for paper #2
+    Double_t e_max = 0.425*19; //8;
+    Int_t n_bins = 13; //(8-2)*10; //13 for paper #1, 17 for paper #2
     axes.AddAxis(BinAxis("mc_neutrino_energy", e_min, e_max, n_bins));
 
 
@@ -61,8 +62,8 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
     ParameterDict initial_val;
     ParameterDict initial_err;
 
-    double param_d21 = 7.58e-5;//kamland#1=6.9e-5;//us=7.58e-5;
-    double param_s12 = 0.359;
+    double param_d21 = 6.9e-5;//kamland#1=6.9e-5;//us=7.58e-5;
+    double param_s12 = 0.5359;
     double param_s13 = 0.02303;
     minima["d21"] = param_d21*0.01;
     maxima["d21"] = param_d21*100;
@@ -71,7 +72,7 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
     minima["s12"] = 0;
     maxima["s12"] = 1;
     initial_val["s12"] = param_s12;
-    initial_err["s12"] = 0.1*param_s12;
+    initial_err["s12"] = 1*param_s12;
 
     // setup survival probability
     printf("Setup survival probability...\n");
@@ -110,8 +111,8 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
         // Setting optimisation limits
         //std::cout << " scale" << reactor_scale[i] << " err" << reactor_scale_err[i] << " min" << reactor_scale[i]-reactor_scale_err[i]*reactor_scale[i] << " max" << reactor_scale[i]+reactor_scale_err[i]*reactor_scale[i] << std::endl;
         sprintf(name, "%s_norm", reactor_names[i].c_str());
-        Double_t min = reactor_scale[i]-1.96*reactor_scale_err[i]*reactor_scale[i];
-        Double_t max = reactor_scale[i]+1.96*reactor_scale_err[i]*reactor_scale[i];
+        Double_t min = reactor_scale[i]-0.196*reactor_scale_err[i]*reactor_scale[i];
+        Double_t max = reactor_scale[i]+0.196*reactor_scale_err[i]*reactor_scale[i];
         if (min < 0) min = 0;
         if (max > 1.0) max = 1.0;
         minima[name] = min;

@@ -11,7 +11,8 @@ from array import array
 import numpy
 import h5py
 try:
-    from ROOT import TChain
+    import ROOT
+    ROOT.gROOT.SetBatch(True) # ROOT in batch mode
 except ImportError:
     print "Cant find root lib is it in $PYTHONPATH?"
     sys.exit()
@@ -21,7 +22,7 @@ def process(file_name, tree_name, branches, out_file, n_events):
     read ntp make hdf5
     '''
     # Get the event tree
-    tree = TChain(tree_name)
+    tree = ROOT.TChain(tree_name)
     tree.Add(file_name)
     tree.Print()
     if not tree:

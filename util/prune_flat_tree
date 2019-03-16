@@ -9,7 +9,8 @@ import os
 import sys
 from array import array
 try:
-    from ROOT import TFile, TNtuple, TChain
+    import ROOT
+    ROOT.gROOT.SetBatch(True) # ROOT in batch mode
 except ImportError:
     print "Cant find root lib is it in $PYTHONPATH?"
     sys.exit()
@@ -24,7 +25,7 @@ def make_ntup(file_name, tree_name, branches, outfile, n_events, new_tree_name):
     print file_name
 
     # Get the event tree
-    tree = TChain(tree_name)
+    tree = ROOT.TChain(tree_name)
     tree.Add(file_name)
     if not tree:
         print "Error: No tree named %s in %s" %(tree_name, file_name)
@@ -40,8 +41,8 @@ def make_ntup(file_name, tree_name, branches, outfile, n_events, new_tree_name):
             sys.exit()
 
     # output
-    out_file = TFile(outfile, "RECREATE")
-    ntp = TNtuple(new_tree_name, "", ":".join(branches))
+    out_file = ROOT.TFile(outfile, "RECREATE")
+    ntp = ROOT.TNtuple(new_tree_name, "", ":".join(branches))
 
     if n_events < 0:
         n_events = tree.GetEntries()
