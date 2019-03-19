@@ -30,8 +30,8 @@
 #include <SurvProb.h>
 #include <TH1D.h>
 #include <TRandom3.h>
-#include "AntinuUtilsKamland.cpp"
-//#include "AntinuUtils.cpp"
+//#include "AntinuUtilsKamland.cpp"
+#include "AntinuUtils.cpp"
 
 void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor_scale, Double_t *reactor_scale_err, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, const std::string out_filename){
 
@@ -106,15 +106,13 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
         reactor_systematic[i]->SetAxes(axes);
         reactor_systematic[i]->SetTransformationObs(data_rep);
         reactor_systematic[i]->SetDistributionObs(data_rep);
-        reactor_systematic[i]->Construct();
 
         // Setting optimisation limits
         //std::cout << " scale" << reactor_scale[i] << " err" << reactor_scale_err[i] << " min" << reactor_scale[i]-reactor_scale_err[i]*reactor_scale[i] << " max" << reactor_scale[i]+reactor_scale_err[i]*reactor_scale[i] << std::endl;
         sprintf(name, "%s_norm", reactor_names[i].c_str());
-        Double_t min = reactor_scale[i]-0.196*reactor_scale_err[i]*reactor_scale[i];
-        Double_t max = reactor_scale[i]+0.196*reactor_scale_err[i]*reactor_scale[i];
+        Double_t min = reactor_scale[i]-1.96*reactor_scale_err[i]*reactor_scale[i];
+        Double_t max = reactor_scale[i]+1.96*reactor_scale_err[i]*reactor_scale[i];
         if (min < 0) min = 0;
-        if (max > 1.0) max = 1.0;
         minima[name] = min;
         maxima[name] = max;
         printf("  added reactor %d/%d: %s, norm: %.3f (min:%.3f max:%.3f)\n", i+1, n_pdf, reactor_names[i].c_str(), reactor_scale[i], min, max);
@@ -125,8 +123,8 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
         lh_function.AddSystematic(reactor_systematic[i],name);
         lh_function.AddDist(*reactor_pdf[i],std::vector<std::string>(1,name));
 
-        sprintf(name, "%s_norm", reactor_names[i].c_str());
-        lh_function.SetConstraint(name, reactor_scale[i], reactor_scale_err[i]*reactor_scale[i]);
+        //sprintf(name, "%s_norm", reactor_names[i].c_str());
+        //lh_function.SetConstraint(name, reactor_scale[i], reactor_scale_err[i]*reactor_scale[i]);
     }
 
     //lh_function.SetConstraint("d21", 6.9e-5, 1e-7); //7.58e-5;
@@ -136,7 +134,7 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
     // fit
     Minuit min;
     min.SetMethod("Migrad");
-    min.SetMaxCalls(100000000);
+    min.SetMaxCalls(1000000);
     min.SetMinima(minima);
     min.SetMaxima(maxima);
     min.SetInitialValues(initial_val);

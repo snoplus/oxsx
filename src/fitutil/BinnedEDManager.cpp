@@ -40,6 +40,20 @@ BinnedEDManager::BinProbability(size_t bin_) const{
     return sum;
 }
 
+double
+BinnedEDManager::ScaledBinProbability(size_t bin_, double normalisation_constant) const{
+    double sum = 0;
+    try{
+        for(size_t i = 0; i < fWorkingPdfs.size(); i++){
+            sum += normalisation_constant * fWorkingPdfs.at(i).GetBinContent(bin_);
+        }
+    }
+    catch(const std::out_of_range&){
+        throw LogicError("BinnedEDManager:: Normalisation vector doesn't match pdf vector - are the normalisations set?");
+    }
+    return sum;
+}
+
 
 void
 BinnedEDManager::SetNormalisations(const std::vector<double>& normalisations_){
@@ -62,6 +76,11 @@ BinnedEDManager::ApplySystematics(const SystematicManager& sysMan_){
 const BinnedED&
 BinnedEDManager::GetOriginalPdf(size_t index_) const{
     return fOriginalPdfs.at(index_);
+}
+
+const BinnedED&
+BinnedEDManager::GetWorkingPdf(size_t index_) const{
+    return fWorkingPdfs.at(index_);
 }
 
 void
@@ -98,6 +117,38 @@ BinnedEDManager::ApplyShrink(const BinnedEDShrinker& shrinker_){
     for (size_t i = 0; i < fWorkingPdfs.size(); i++){
         fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
         fWorkingPdfs[i].Normalise();
+    }
+    
+}
+
+void
+BinnedEDManager::ReverseShrink(const BinnedEDShrinker& shrinker_){
+    // if (!shrinker_.GetBuffers().size())
+        // return;
+        
+    // // only shrink if not already shrunk! FIXME: more obvious behaviour
+    // if (!fWorkingPdfs.size() || fWorkingPdfs.at(0).GetNBins() != fOriginalPdfs.at(0).GetNBins())
+        // return;
+
+    for (size_t i = 0; i < fWorkingPdfs.size(); i++){
+        fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
+        fWorkingPdfs[i].Scale(fOriginalPdfs.at(i).Integral());
+    }
+    
+}
+
+void
+BinnedEDManager::ScaledReverseShrink(const BinnedEDShrinker& shrinker_, double scale_factor){
+    // if (!shrinker_.GetBuffers().size())
+        // return;
+        
+    // // only shrink if not already shrunk! FIXME: more obvious behaviour
+    // if (!fWorkingPdfs.size() || fWorkingPdfs.at(0).GetNBins() != fOriginalPdfs.at(0).GetNBins())
+        // return;
+
+    for (size_t i = 0; i < fWorkingPdfs.size(); i++){
+        fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
+        fWorkingPdfs[i].Scale(fOriginalPdfs.at(i).Integral() * scale_factor);
     }
     
 }
