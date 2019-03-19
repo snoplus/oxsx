@@ -13,9 +13,9 @@ BinnedNLLH::Evaluate(){
     if(!fDataSet && !fCalculatedDataDist)
         throw LogicError("BinnedNNLH function called with no data set and no DataDist! set one of these first");
 
-    for (size_t i = 0; i < fPdfManager.GetNormalisations().size(); i++)
-      std::cout<<"Original Norm: "<<fPdfManager.GetNormalisations()[i]<<std::endl;
-      std::cout<<"Integral: "<<fPdfManager.GetWorkingPdf(0).Integral()<<std::endl;
+    // for (size_t i = 0; i < fPdfManager.GetNormalisations().size(); i++)
+      // std::cout<<"Original Norm: "<<fPdfManager.GetNormalisations()[i]<<std::endl;
+      // std::cout<<"Integral: "<<fPdfManager.GetWorkingPdf(0).Integral()<<std::endl;
 
     if (!fCalculatedDataDist)
         BinData();
@@ -32,7 +32,8 @@ BinnedNLLH::Evaluate(){
 
     // get reduction in normalisation after applying systematics (oscillation) before shrinking
     double normalisation_constant = fPdfManager.GetWorkingPdf(0).Integral() / fPdfManager.GetOriginalPdf(0).Integral();
-
+    std::cout << "normalisation_constant: " << normalisation_constant << std::endl;
+    
     // Apply Shrinking
     fPdfManager.ApplyShrink(fPdfShrinker);
 
@@ -55,17 +56,17 @@ BinnedNLLH::Evaluate(){
         it != fConstraints.end(); ++it)
         nLogLH += it->second.Evaluate(fComponentManager.GetParameter(it->first));
 
-    for (size_t i = 0; i < fPdfManager.GetNormalisations().size(); i++)
-      std::cout<<"Norm: "<<fPdfManager.GetNormalisations()[i]<<std::endl;
-      std::cout<<"Integral: "<<fPdfManager.GetWorkingPdf(0).Integral()<<std::endl;
+    // for (size_t i = 0; i < fPdfManager.GetNormalisations().size(); i++)
+      // std::cout<<"Norm: "<<fPdfManager.GetNormalisations()[i]<<std::endl;
+      // std::cout<<"Integral: "<<fPdfManager.GetWorkingPdf(0).Integral()<<std::endl;
 
     // Reverse Shrinking
     fPdfManager.ScaledReverseShrink(fPdfShrinker, normalisation_constant);
     fAlreadyShrunk = false;
 
-    for (size_t i = 0; i < fPdfManager.GetNormalisations().size(); i++)
-      std::cout<<"Reversed Norm: "<<fPdfManager.GetNormalisations()[i]<<std::endl;
-      std::cout<<"Integral: "<<fPdfManager.GetWorkingPdf(0).Integral()<<std::endl;
+    // for (size_t i = 0; i < fPdfManager.GetNormalisations().size(); i++)
+      // std::cout<<"Reversed Norm: "<<fPdfManager.GetNormalisations()[i]<<std::endl;
+      // std::cout<<"Integral: "<<fPdfManager.GetWorkingPdf(0).Integral()<<std::endl;
       
     // std::vector<double> normalisations_scaled = fPdfManager.GetNormalisations();
     // for (size_t i = 0; i < normalisations_scaled.size(); i++)
