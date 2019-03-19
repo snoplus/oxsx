@@ -344,7 +344,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h2_after_cut_efit_neutron.GetYaxis()->SetTitle("mc_energy_nu - (ev_energy_p1+e_rem)");
     h2_after_cut_time_diff_displacement.GetXaxis()->SetTitle("time_ns_diff");
     h2_after_cut_time_diff_displacement.GetYaxis()->SetTitle("ev_particle_distance");
-    h2_after_cut_energy_resolution.GetXaxis()->SetTitle("(ev_energy_p1+0.784MeV+E_n-mc_energy_nu)/mc_energy_nu");
+    h2_after_cut_energy_resolution.GetXaxis()->SetTitle("(ev_energy_p1+0.784MeV-mc_energy_nu)/mc_energy_nu");
     h2_after_cut_energy_resolution.GetYaxis()->SetTitle("(ev_energy_p2+0.784MeV-n_capE)/n_capE");
     h2_after_cut_position_resolution.GetXaxis()->SetTitle("(ev_pos_x_p1-mc_pos_x_ep)/mc_pos_x_ep");
     h2_after_cut_position_resolution.GetYaxis()->SetTitle("(ev_pos_x_p2-mc_pos_x_n)/mc_pos_x_n");
@@ -366,7 +366,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h_after_cut_position_displacement.GetXaxis()->SetTitle("Position (ev_fit_p1 - ev_fit_p2) (mm)");
 
     h_after_cut_emc_nu_ratio->GetYaxis()->SetTitle("KE_nu after cut / KE_nu before cut");
-    h_after_cut_efit_ratio->GetYaxis()->SetTitle("ev_energy_p1+0.784MeV+E_n / KE_nu");
+    h_after_cut_efit_ratio->GetYaxis()->SetTitle("ev_energy_p1+0.784MeV / KE_nu");
     h_after_cut_emc_nu_ratio->GetXaxis()->SetTitle("Energy (MeV)");
     h_after_cut_efit_ratio->GetXaxis()->SetTitle("Energy (MeV)");
 
