@@ -11,35 +11,17 @@
 #include <TObject.h>
 #include <math.h>
 
-void process_cuts(const std::string filename_input, const std::string filename_output, const std::string filename_input_correction, Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max, Double_t deltaT = 1000000, Double_t deltaP = 6000, Double_t deltaD = 6000, Bool_t use_mc = false){
+void process_cuts(const std::string filename_input, const std::string filename_output, Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max, Double_t deltaT = 1000000, Double_t deltaP = 6000, Double_t deltaD = 6000, Bool_t use_mc = false){
 
     // load input file
     TFile *file_input = new TFile(filename_input.c_str());
     TTree *tree_input = (TTree*)file_input->Get("nt");
 
-    // load neutron pdf
-    TFile *file_input_n = new TFile(filename_input_correction.c_str());
-    TH2D *h2_after_cut_fit_neutron = (TH2D*)file_input_n->Get("h2_after_cut_efit_neutron");
-
     // setup output file
     TFile *file_output = new TFile(filename_output.c_str(), "RECREATE");
     TTree *tree_output = tree_input->CloneTree(0);
 
-    const ULong64_t n_slices = 100;
     char *name = new char[1000];
-    TH1D *h_after_cut_fit_neutron[n_slices];
-    //TF1 *f_after_cut_fit_neutron[n_slices];
-    for (ULong64_t i=0; i<n_slices; i++){
-        sprintf(name, "h_after_cut_fit_neutron%llu",i);
-        h_after_cut_fit_neutron[i] = h2_after_cut_fit_neutron->ProjectionY(name,i*1-3,i*1+3);
-        sprintf(name, "h_after_cut_fit_neutron%llu ",i);
-        h_after_cut_fit_neutron[i]->SetTitle(name);
-        //if (h_after_cut_fit_neutron[i]->GetEntries()>0){ // to use TF1 to fit slices (no better)
-        //    sprintf(name, "f_after_cut_fit_neutron%d",i);
-            //f_after_cut_fit_neutron[i] = new TF1(name,"gaus",0,3);
-            //h_after_cut_fit_neutron[i]->Fit(f_after_cut_fit_neutron[i], "RQN");
-        //}
-    }
 
     TH2D h2_before_cut_emc("h2_before_cut_emc", "h2_before_cut_emc", 10000, 0, 10, 1000, 0, 1);
     TH1D h_before_cut_emc("h_before_cut_emc", "h_before_cut_emc", 50, 0, 10);
@@ -49,9 +31,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     TH1D h_after_cut_emc("h_after_cut_emc", "h_after_cut_emc", 50, 0, 10);
     TH1D h_after_cut_emc_nu("h_after_cut_emc_nu", "h_after_cut_emc_nu", 50, 0, 10);
     TH2D h2_after_cut_efit("h2_after_cut_efit", "h2_after_cut_efit", 1000, 0, 10, 1000, 0, 10);
-    TH2D h2_after_cut_efit_corrected("h2_after_cut_efit_corrected", "h2_after_cut_efit_corrected", 1000, 0, 10, 1000, 0, 10);
     TH1D h_after_cut_efit_p1("h_after_cut_efit_p1", "h_after_cut_efit_p1", 50, 0, 10);
-    TH1D h_after_cut_efit_p1_corrected("h_after_cut_efit_p1_corrected", "h_after_cut_efit_p1_corrected", 50, 0, 10);
     TH2D h2_after_cut_efit_neutron("h2_after_cut_efit_neutron", "h2_after_cut_efit_neutron", 100, 0, 10, 300, 0, 3);
     TH1D h_after_cut_efit_p2("h_after_cut_efit_p2", "h_after_cut_efit_p2", 50, 0, 10);
     TH1D h_after_cut_time_diff("h_after_cut_time_diff", "h_after_cut_time_diff", 1000, 0, 5000000);
@@ -76,7 +56,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     Double_t ev_pos_r_i, ev_pos_x_i, ev_pos_y_i, ev_pos_z_i;
     Double_t ev_pos_r_p1, ev_pos_x_p1, ev_pos_y_p1, ev_pos_z_p1;
     Double_t ev_pos_r_p2, ev_pos_x_p2, ev_pos_y_p2, ev_pos_z_p2;
-    Double_t ev_energy, ev_energy_i, ev_energy_p1, ev_energy_corrected_p1, ev_energy_p2;
+    Double_t ev_energy, ev_energy_i, ev_energy_p1, ev_energy_p2;
     UInt_t ev_time_seconds, ev_time_seconds_i, ev_time_days, ev_time_days_i, ev_time_days_p1, ev_time_seconds_p1, ev_time_days_p2, ev_time_seconds_p2;
     Double_t ev_time_nanoseconds, ev_time_nanoseconds_i, ev_time_nanoseconds_p1, ev_time_nanoseconds_p2;
     Int_t ev_nhit;//, ev_nhit_i;
@@ -220,35 +200,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                 }
                 else{
                     continue;
-                    // ev_time_days_p1 = ev_time_days;
-                    // ev_time_seconds_p1 = ev_time_seconds;
-                    // ev_time_nanoseconds_p1 = ev_time_nanoseconds;
-                    // ev_pos_r_p1 = ev_pos_r;
-                    // ev_pos_x_p1 = ev_pos_x;
-                    // ev_pos_y_p1 = ev_pos_y;
-                    // ev_pos_z_p1 = ev_pos_z;
-                    // ev_energy_p1 = ev_energy;
-                    // //ev_index_p1 = ev_index;
-
-                    // ev_time_days_p2 = ev_time_days_i;
-                    // ev_time_seconds_p2 = ev_time_seconds_i;
-                    // ev_time_nanoseconds_p2 = ev_time_nanoseconds_i;
-                    // ev_pos_r_p2 = ev_pos_r_i;
-                    // ev_pos_x_p2 = ev_pos_x_i;
-                    // ev_pos_y_p2 = ev_pos_y_i;
-                    // ev_pos_z_p2 = ev_pos_z_i;
-                    // ev_energy_p2 = ev_energy_i;
-                    // //ev_index_p2 = ev_index_i;
                 }
-
-                // find 'other' energy and correction
-                Double_t e_n = 0;
-                UInt_t my_n = round(ev_energy_p1*10);
-                if (my_n>=n_slices) my_n = n_slices-1;
-                if (my_n<0) my_n = 0;
-                if (h_after_cut_fit_neutron[my_n]->GetEntries()>0)
-                    e_n = h_after_cut_fit_neutron[my_n]->GetRandom();
-                ev_energy_corrected_p1 = ev_energy_p1+e_rem+e_n;
 
                 // time window cut
                 // calculate time difference
@@ -288,7 +240,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                     continue; // if this cut failed, don't go any further..
 
                 // energy cut
-                if ((ev_energy_corrected_p1 > energy_ep_min) && (ev_energy_corrected_p1 < energy_ep_max) && (ev_energy_p2 > energy_n_min) && (ev_energy_p2 < energy_n_max))
+                if ((ev_energy_p1 > energy_ep_min) && (ev_energy_p1 < energy_ep_max) && (ev_energy_p2 > energy_n_min) && (ev_energy_p2 < energy_n_max))
                     energy_pass = true;
                 else
                     continue; // if this cut failed, don't go any further..
@@ -298,7 +250,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
                 //if ((coincidence_pass)&&(mc_ev_index_ep==0)&&(mc_ev_index_n==1)&&(ev_pos_r_p1>0)&&(ev_pos_r_p2>0))
                 //debug statement
-                //std::cout << "(i," << i << " j " << j << ") mc_entry " << entry << " mc_ev " << "(" << mc_ev_index_ep << "," << mc_ev_index_n << ") ev_ev (" << ev_index_p1 << "," << ev_index_p2 << ") all_pass " << all_pass << " ev_validity " << ev_validity << " coincidence " << coincidence_pass << "(" << time_ns_diff << ") position_r " << position_r_pass << "(" << ev_pos_r_p1 << "," << ev_pos_r_p2 << ") particle_distance " << particle_distance_pass << "(" << ev_particle_distance << ") energy " << energy_pass << "(" << ev_energy_corrected_p1 << "," << ev_energy_p2 << ") nhit " << ev_nhit << std::endl;
+                //std::cout << "(i," << i << " j " << j << ") mc_entry " << entry << " mc_ev " << "(" << mc_ev_index_ep << "," << mc_ev_index_n << ") ev_ev (" << ev_index_p1 << "," << ev_index_p2 << ") all_pass " << all_pass << " ev_validity " << ev_validity << " coincidence " << coincidence_pass << "(" << time_ns_diff << ") position_r " << position_r_pass << "(" << ev_pos_r_p1 << "," << ev_pos_r_p2 << ") particle_distance " << particle_distance_pass << "(" << ev_particle_distance << ") energy " << energy_pass << "(" << ev_energy__p1 << "," << ev_energy_p2 << ") nhit " << ev_nhit << std::endl;
 
                 if (all_pass){
                     // mark this i'th trigger as passed (it and at least 1 partner passed cuts)
@@ -312,15 +264,13 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
                     // fill histograms with all triggers which pass cuts
                     h2_after_cut_efit.Fill(ev_energy_p1, ev_energy_p2);
-                    h2_after_cut_efit_corrected.Fill(ev_energy_corrected_p1, ev_energy_p2);
                     h_after_cut_efit_p1.Fill(ev_energy_p1);
-                    h_after_cut_efit_p1_corrected.Fill(ev_energy_corrected_p1);
                     h2_after_cut_efit_neutron.Fill(ev_energy_p1, mc_energy_nu - (ev_energy_p1+e_rem) );
                     h_after_cut_efit_p2.Fill(ev_energy_p2);
                     h_after_cut_time_diff.Fill(time_ns_diff);
                     h_after_cut_position_displacement.Fill(ev_particle_distance);
                     h2_after_cut_time_diff_displacement.Fill(time_ns_diff, ev_particle_distance);
-                    h2_after_cut_energy_resolution.Fill((ev_energy_corrected_p1-mc_energy_nu)/mc_energy_nu, (ev_energy_p2-neutron_capture_energy)/neutron_capture_energy);
+                    h2_after_cut_energy_resolution.Fill((ev_energy_p1-mc_energy_nu)/mc_energy_nu, (ev_energy_p2-neutron_capture_energy)/neutron_capture_energy);
                     h2_after_cut_position_resolution.Fill((ev_pos_x_p1-mc_pos_x_ep)/mc_pos_x_ep, (ev_pos_x_p2-mc_pos_x_n)/mc_pos_x_n);
                 }
             }
@@ -365,24 +315,17 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     TH1D *h_after_cut_emc_nu_ratio = (TH1D*)h_after_cut_emc_nu.Clone("h_after_cut_emc_nu_ratio");
     h_after_cut_emc_nu_ratio->Divide(&h_before_cut_emc_nu);
 
-    //TH1D *h_before_cut_efit_ratio = (TH1D*)h_before_cut_efit_p1_corrected.Clone("h_before_cut_efit_ratio");
-    //h_before_cut_efit_ratio->Divide(&h_before_cut_emc_nu);
-
-    TH1D *h_after_cut_efit_ratio = (TH1D*)h_after_cut_efit_p1_corrected.Clone("h_after_cut_efit_ratio");
+    TH1D *h_after_cut_efit_ratio = (TH1D*)h_after_cut_efit_p1.Clone("h_after_cut_efit_ratio");
     h_after_cut_efit_ratio->Divide(&h_after_cut_emc_nu);
 
     TH1D *h_after_cut_emc_nu_n = (TH1D*)h_after_cut_emc_nu.Clone("h_after_cut_emc_nu_n");
     TH1D *h_after_cut_efit_p1_n = (TH1D*)h_after_cut_efit_p1.Clone("h_after_cut_efit_p1_n");
-    TH1D *h_after_cut_efit_p1_corrected_n = (TH1D*)h_after_cut_efit_p1_corrected.Clone("h_after_cut_efit_p1_corrected_n");
     h_after_cut_emc_nu_n->Scale(1./h_after_cut_emc_nu_n->GetMaximum());
-    h_after_cut_efit_p1_corrected_n->Scale(1./h_after_cut_efit_p1_corrected_n->GetMaximum());
-    h_after_cut_efit_p1_corrected.SetLineColor(kRed);
-    h_after_cut_efit_p1_corrected_n->SetLineColor(kRed);
+    h_after_cut_efit_p1_n->SetLineColor(kRed);
     h_after_cut_efit_p1_n->Scale(1./h_after_cut_efit_p1_n->GetMaximum());
 
     // save file
     file_input->Close();
-    file_input_n->Close();
     file_output->cd();
 
     // set axes...
@@ -397,8 +340,6 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h2_after_cut_emc.GetYaxis()->SetTitle("mc_energy_n");
     h2_after_cut_efit.GetXaxis()->SetTitle("ev_energy_p1");
     h2_after_cut_efit.GetYaxis()->SetTitle("ev_energy_p2");
-    h2_after_cut_efit_corrected.GetXaxis()->SetTitle("ev_energy_p1+0.784MeV+E_n");
-    h2_after_cut_efit_corrected.GetYaxis()->SetTitle("ev_energy_p2");
     h2_after_cut_efit_neutron.GetXaxis()->SetTitle("ev_energy_p1");
     h2_after_cut_efit_neutron.GetYaxis()->SetTitle("mc_energy_nu - (ev_energy_p1+e_rem)");
     h2_after_cut_time_diff_displacement.GetXaxis()->SetTitle("time_ns_diff");
@@ -412,9 +353,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h_after_cut_emc_nu_n->SetTitle("KE_nu (normalised (maximum = 1)");
     h_after_cut_efit_p1.SetTitle("ev_energy_p1");
     h_after_cut_efit_p1_n->SetTitle("ev_energy_p1_n");
-    h_after_cut_efit_p1_corrected.SetTitle("ev_energy_p1+0.784MeV+E_n");
     h_after_cut_efit_p2.SetTitle("ev_energy_p2");
-    h_after_cut_efit_p1_corrected_n->SetTitle("ev_energy_p1+0.784MeV+E_n");
     h_after_cut_time_diff.SetTitle("time_ns_diff");
     h_after_cut_position_displacement.SetTitle("ev_particle_distance");
     h_after_cut_emc.GetXaxis()->SetTitle("Energy (MeV)");
@@ -422,9 +361,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h_after_cut_emc_nu_n->GetXaxis()->SetTitle("Energy (MeV)");
     h_after_cut_efit_p1.GetXaxis()->SetTitle("Energy (MeV)");
     h_after_cut_efit_p1_n->GetXaxis()->SetTitle("Energy (MeV)");
-    h_after_cut_efit_p1_corrected.GetXaxis()->SetTitle("Energy (MeV)");
     h_after_cut_efit_p2.GetXaxis()->SetTitle("Energy (MeV)");
-    h_after_cut_efit_p1_corrected_n->GetXaxis()->SetTitle("Energy (MeV)");
     h_after_cut_time_diff.GetXaxis()->SetTitle("Time between abs(ev_fit_p2 - ev_fit_p1) (ns)");
     h_after_cut_position_displacement.GetXaxis()->SetTitle("Position (ev_fit_p1 - ev_fit_p2) (mm)");
 
@@ -443,11 +380,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h_after_cut_emc_nu_n->Write();
     h_after_cut_emc.Write();
     h2_after_cut_efit.Write();
-    h2_after_cut_efit_corrected.Write();
     h_after_cut_efit_p1.Write();
     h_after_cut_efit_p1_n->Write();
-    h_after_cut_efit_p1_corrected.Write();
-    h_after_cut_efit_p1_corrected_n->Write();
     h2_after_cut_efit_neutron.Write();
     h_after_cut_efit_p2.Write();
     h_after_cut_time_diff.Write();
@@ -459,10 +393,6 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h_after_cut_emc_nu_ratio->Write();
     h_after_cut_efit_ratio->Write();
 
-    // write the 1D slices of the imported TH2?
-    //for (ULong64_t ii=0; ii<n_slices; ii++)
-    //    h_after_cut_fit_neutron[ii]->Write();
-
     tree_output->AutoSave();
     file_output->Close();
     std::cout<<"number of (parent) entries: "<<n_parent_entries<<std::endl;
@@ -472,40 +402,39 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     //write csv output file with event numbers
     sprintf(name, "%s.csv",filename_output.c_str());
     FILE *fOut = fopen(name,"w");
-    fprintf(fOut,"filename_input,filename_output,filename_input_correction,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,use_mc,initial_entries,final_entries,already_tagged,finished\n");
-    fprintf(fOut,"%s,%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), filename_input_correction.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD, use_mc, n_parent_entries, n_passed, already_tagged,1);
+    fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,use_mc,initial_entries,final_entries,already_tagged,finished\n");
+    fprintf(fOut,"%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD, use_mc, n_parent_entries, n_passed, already_tagged,1);
     fclose(fOut);
 }
 
 Int_t main(Int_t argc, char *argv[]) {
 
-    if (argc != 12) {
-        std::cout<<"Error: 11 arguments expected. Got: "<<argc-1<<std::endl;
+    if (argc != 11) {
+        std::cout<<"Error: 10 arguments expected. Got: "<<argc-1<<std::endl;
         return 1; // return>0 indicates error code
     }
     else {
         TH1::AddDirectory(kFALSE);
         const std::string &filename_input = argv[1];
         const std::string &filename_output = argv[2];
-        const std::string &filename_input_correction = argv[3];
-        double energy_ep_min = atof(argv[4]);
-        double energy_ep_max = atof(argv[5]);
-        double energy_n_min = atof(argv[6]);
-        double energy_n_max = atof(argv[7]);
-        double deltaT = atof(argv[8]);
-        double deltaP = atof(argv[9]);
-        double deltaD = atof(argv[10]);
-        unsigned int use_mc = atoi(argv[11]);
+        double energy_ep_min = atof(argv[3]);
+        double energy_ep_max = atof(argv[4]);
+        double energy_n_min = atof(argv[5]);
+        double energy_n_max = atof(argv[6]);
+        double deltaT = atof(argv[7]);
+        double deltaP = atof(argv[8]);
+        double deltaD = atof(argv[9]);
+        unsigned int use_mc = atoi(argv[10]);
 
         //write csv output file to show process has begun (values filled upon completion)
         char *name = new char[1000];
         sprintf(name, "%s.csv",filename_output.c_str());
         FILE *fOut = fopen(name,"w");
-        fprintf(fOut,"filename_input,filename_output,filename_input_correction,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,use_mc,initial_entries,final_entries,already_tagged,finished\n");
-        fprintf(fOut,"%s,%s,%s,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i\n", filename_input.c_str(), filename_output.c_str(), filename_input_correction.c_str(), -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000,0);
+        fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,use_mc,initial_entries,final_entries,already_tagged,finished\n");
+        fprintf(fOut,"%s,%s,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i\n", filename_input.c_str(), filename_output.c_str(), -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000,0);
         fclose(fOut);
 
-        process_cuts(filename_input, filename_output, filename_input_correction, energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD, (Bool_t)use_mc);
+        process_cuts(filename_input, filename_output, energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD, (Bool_t)use_mc);
 
         return 0; // completed successfully
     }
