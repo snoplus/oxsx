@@ -247,7 +247,7 @@ void ntload(std::string input_filename, std::string output_filename) {
                 try {
                     const RAT::DS::FitResult &fitResult = rEV.GetFitResult("scintFitter");
                     const RAT::DS::FitVertex &fitVertex = fitResult.GetVertex(0);
-                    ev_validity = fitResult.GetValid();
+                    ev_validity = fitResult.GetValid() && fitVertex.ContainsPosition() && fitVertex.ValidPosition() && fitVertex.ContainsEnergy() && fitVertex.ValidEnergy();
                     ev_energy = fitVertex.GetEnergy();
                     ev_pos_x = fitVertex.GetPosition().X();
                     ev_pos_y = fitVertex.GetPosition().Y();
