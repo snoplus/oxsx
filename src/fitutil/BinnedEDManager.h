@@ -21,18 +21,14 @@ class BinnedEDManager : public FitComponent{
 
     double Probability(const Event&) const;
     double BinProbability(size_t) const;
-    double ScaledBinProbability(size_t, double) const;
     
     const std::vector<double>& GetNormalisations() const;
     void SetNormalisations(const std::vector<double>& normalisations_);
 
     void ApplySystematics(const SystematicManager& sysMan_);
     void ApplyShrink(const BinnedEDShrinker&);
-    void ReverseShrink(const BinnedEDShrinker&);
-    void ScaledReverseShrink(const BinnedEDShrinker&, double scale_factor);
 
     const BinnedED& GetOriginalPdf(size_t index_) const;
-    const BinnedED& GetWorkingPdf(size_t index_) const;
     unsigned GetNPdfs() const;
     size_t   GetNDims() const;
     
