@@ -114,8 +114,8 @@ BinnedED LHFit_initialise(BinnedED **spectra_pdf, Double_t *reactor_scale, const
     ULong64_t flux_mc = 100;
 
     // setup spectra filenames
-    const std::string pwr_file = std::string("combinedpwr");
-    const std::string phwr_file = std::string("combinedphwr");
+    const std::string pwr_file = std::string("ohi");//std::string("combinedpwr");
+    const std::string phwr_file = std::string("ohi");//std::string("combinedphwr");
     printf("Reading individual reactor spectra from: %s\n", in_path.c_str());
     sprintf(name, "%sflux%llu/[reactor_name]_flux%llu_day360_cleanround1_ke_oxsx.root", in_path.c_str(), flux_data, flux_data);
     printf("Using unoscillated spectrum for reactors:\n\t%s\n",name);
@@ -136,9 +136,9 @@ BinnedED LHFit_initialise(BinnedED **spectra_pdf, Double_t *reactor_scale, const
 
     // set up binning
     AxisCollection axes;
-    Double_t e_min = 0.425*6; //2; //*6 for kamland paper #1, *2 for paper #2
-    Double_t e_max = 0.425*19; //8;
-    Int_t n_bins = 13; //(8-2)*10; //13 for paper #1, 17 for paper #2
+    Double_t e_min = 2;//0.425*6; //2; //*6 for kamland paper #1, *2 for paper #2
+    Double_t e_max = 8;//0.425*19; //8;
+    Int_t n_bins = 60;//13; //(8-2)*10; //13 for paper #1, 17 for paper #2
     axes.AddAxis(BinAxis("mc_neutrino_energy", e_min, e_max, n_bins));
 
     // load (oscillated) data ntuple

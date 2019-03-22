@@ -43,16 +43,16 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
     ObsSet data_rep(0);
     // set up binning
     AxisCollection axes;
-    Double_t e_min = 0.425*6; //2; //*6 for kamland paper #1, *2 for paper #2
-    Double_t e_max = 0.425*19; //8;
-    Int_t n_bins = 13; //(8-2)*10; //13 for paper #1, 17 for paper #2
+    Double_t e_min = 2;//0.425*6; //2; //*6 for kamland paper #1, *2 for paper #2
+    Double_t e_max = 8;//0.425*19; //8;
+    Int_t n_bins = 60;//13; //(8-2)*10; //13 for paper #1, 17 for paper #2
     axes.AddAxis(BinAxis("mc_neutrino_energy", e_min, e_max, n_bins));
 
 
     // create LH function
     BinnedNLLH lh_function;
     lh_function.SetBufferAsOverflow(true);
-    int buff = 0;
+    int buff = 3;
     lh_function.SetBuffer(0, buff, buff);
     lh_function.SetDataDist(data_set_pdf); // initialise withe the data set
 
@@ -62,8 +62,8 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
     ParameterDict initial_val;
     ParameterDict initial_err;
 
-    double param_d21 = 6.9e-5;//kamland#1=6.9e-5;//us=7.58e-5;
-    double param_s12 = 0.5359;
+    double param_d21 = 7.58e-5;//kamland#1=6.9e-5;//us=7.58e-5;
+    double param_s12 = 0.359;
     double param_s13 = 0.02303;
     minima["d21"] = param_d21*0.01;
     maxima["d21"] = param_d21*100;
@@ -111,7 +111,7 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
         //std::cout << " scale" << reactor_scale[i] << " err" << reactor_scale_err[i] << " min" << reactor_scale[i]-reactor_scale_err[i]*reactor_scale[i] << " max" << reactor_scale[i]+reactor_scale_err[i]*reactor_scale[i] << std::endl;
         sprintf(name, "%s_norm", reactor_names[i].c_str());
         Double_t min = 0;//reactor_scale[i]-1.96*reactor_scale_err[i]*reactor_scale[i];
-        Double_t max = reactor_scale[i]+10.96*reactor_scale_err[i]*reactor_scale[i];
+        Double_t max = reactor_scale[i]+1.96*reactor_scale_err[i]*reactor_scale[i];
         if (min < 0) min = 0;
         minima[name] = min;
         maxima[name] = max;
