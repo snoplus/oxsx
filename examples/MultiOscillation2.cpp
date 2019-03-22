@@ -28,7 +28,7 @@
 #include <ContainerTools.hpp>
 #include <NuOsc.h>
 #include <SurvProb.h>
-#include "AntinuUtilsKamland.cpp"
+#include "AntinuUtils.cpp"
 
 Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor_scale, Double_t *reactor_scale_err, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, Double_t param_d21, Double_t param_s12, Double_t param_s13){
 
@@ -57,11 +57,23 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *rea
     ParameterDict maxima;
     ParameterDict initial_val;
     ParameterDict initial_err;
+    
+    //double param_d21 = 6.9e-5;//kamland#1=6.9e-5;//us=7.58e-5;
+    //double param_s12 = 0.5359;
+    //double param_s13 = 0.02303;
+    minima["d21"] = param_d21*0.01;
+    maxima["d21"] = param_d21*100;
+    initial_val["d21"] = param_d21;
+    initial_err["d21"] = 0.1*param_d21;
+    minima["s12"] = 0;
+    maxima["s12"] = 1;
+    initial_val["s12"] = param_s12;
+    initial_err["s12"] = 1*param_s12;
 
     // setup survival probability
     printf("Setup survival probability...\n");
     SurvProb *surv_prob[n_pdf];
-    //NuOsc *reactor_systematic[n_pdf];
+    NuOsc **reactor_systematic = new NuOsc*[n_pdf];
     BinnedED **reactor_pdf = new BinnedED*[n_pdf];
     for (ULong64_t i = 0; i < n_pdf; i++){
         // for each reactor, load spectrum pdf for reactor type
@@ -70,22 +82,21 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *rea
 
         // setup survival probability
         sprintf(name, "%s_survival", reactor_names[i].c_str());
-        surv_prob[i] = new SurvProb(param_d21, param_s12, distances[i]);
+        surv_prob[i] = new SurvProb(param_d21, param_s12, distances[i],name);
         surv_prob[i]->Setsinsqrtheta13s(param_s13); // manual, fixed setting of theta13
         surv_prob[i]->RenameParameter("delmsqr21_0", "d21"); // rename all parameters to the same for the fit
         surv_prob[i]->RenameParameter("sinsqrtheta12_0", "s12");
         sprintf(name, "%s_systematic", reactor_names[i].c_str());
-        NuOsc reactor_systematic(name);
-        reactor_systematic.SetFunction(surv_prob[i]);
-        reactor_systematic.SetAxes(axes);
-        reactor_systematic.SetTransformationObs(data_rep);
-        reactor_systematic.SetDistributionObs(data_rep);
-        reactor_systematic.Construct();
+        reactor_systematic[i] = new NuOsc(name);
+        reactor_systematic[i]->SetFunction(surv_prob[i]);
+        reactor_systematic[i]->SetAxes(axes);
+        reactor_systematic[i]->SetTransformationObs(data_rep);
+        reactor_systematic[i]->SetDistributionObs(data_rep);
 
         if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR"))
-            reactor_pdf[i]->Add(reactor_systematic(*spectra_pdf[0]),1); //use PWR pdf
+            reactor_pdf[i]->Add(*spectra_pdf[0],1); //use PWR pdf
         else if (reactor_types[i]=="PHWR")
-                reactor_pdf[i]->Add(reactor_systematic(*spectra_pdf[1]),1); //use PHWR pdf
+                reactor_pdf[i]->Add(*spectra_pdf[1],1); //use PHWR pdf
             else{
                printf("Throw: Reactor doesn't match any loaded type...\n");
                continue;
@@ -96,19 +107,20 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *rea
         // Setting optimisation limits
         //std::cout << " scale" << reactor_scale[i] << " err" << reactor_scale_err[i] << " min" << reactor_scale[i]-reactor_scale_err[i]*reactor_scale[i] << " max" << reactor_scale[i]+reactor_scale_err[i]*reactor_scale[i] << std::endl;
         sprintf(name, "%s_norm", reactor_names[i].c_str());
-        Double_t min = reactor_scale[i]-0.196*reactor_scale_err[i]*reactor_scale[i];
-        Double_t max = reactor_scale[i]+0.196*reactor_scale_err[i]*reactor_scale[i];
+        Double_t min = reactor_scale[i]-1.96*reactor_scale_err[i]*reactor_scale[i];
+        Double_t max = reactor_scale[i]+1.96*reactor_scale_err[i]*reactor_scale[i];
         if (min < 0) min = 0;
-        if (max > 1.0) max = 1.0;
         minima[name] = min;
         maxima[name] = max;
         printf("  added reactor %d/%d: %s, norm: %.3f (min:%.3f max:%.3f)\n", i+1, n_pdf, reactor_names[i].c_str(), reactor_scale[i], min, max);
         initial_val[name] = reactor_scale[i];
         initial_err[name] = reactor_scale_err[i]*reactor_scale[i];
 
-        lh_function.AddDist(*reactor_pdf[i]);
+        sprintf(name,"group%d",i);
+        lh_function.AddSystematic(reactor_systematic[i], name);
+        lh_function.AddDist(*reactor_pdf[i], std::vector<std::string>(1, name));  
 
-        lh_function.SetConstraint(name,reactor_scale[i], reactor_scale_err[i]*reactor_scale[i]);
+        //lh_function.SetConstraint(name,reactor_scale[i], reactor_scale_err[i]*reactor_scale[i]);
     }
 
     //lh_function.SetConstraint("d21", 7e-5, 9e-5); // no constraints for likelihood map
