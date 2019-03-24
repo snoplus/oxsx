@@ -40,6 +40,19 @@ BinnedEDManager::BinProbability(size_t bin_) const{
     return sum;
 }
 
+double
+BinnedEDManager::BinProbability(size_t bin_, std::vector<double> osc_loss) const{
+    double sum = 0;
+    try{
+        for(size_t i = 0; i < fWorkingPdfs.size(); i++){
+            sum += fNormalisations.at(i) * osc_loss[i] * fWorkingPdfs.at(i).GetBinContent(bin_);
+        }
+    }
+    catch(const std::out_of_range&){
+        throw LogicError("BinnedEDManager:: Normalisation vector doesn't match pdf vector - are the normalisations set?");
+    }
+    return sum;
+}
 
 void
 BinnedEDManager::SetNormalisations(const std::vector<double>& normalisations_){
@@ -62,6 +75,11 @@ BinnedEDManager::ApplySystematics(const SystematicManager& sysMan_){
 const BinnedED&
 BinnedEDManager::GetOriginalPdf(size_t index_) const{
     return fOriginalPdfs.at(index_);
+}
+
+const BinnedED&
+BinnedEDManager::GetWorkingPdf(size_t index_) const{
+    return fWorkingPdfs.at(index_);
 }
 
 void
