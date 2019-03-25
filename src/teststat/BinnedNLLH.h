@@ -63,8 +63,7 @@ class BinnedNLLH : public TestStatistic{
     CutLog GetSignalCutLog() const;
     void   SetSignalCutLog(const CutLog&);
 
-    void SetWorkingNormalisations(std::vector<double>& workingNormalisations_);
-    std::vector<double> GetWorkingNormalisations();
+    std::vector<double> GetWorkingNormalisations() const;
 
     // Test statistic interface
     void RegisterFitComponents();
