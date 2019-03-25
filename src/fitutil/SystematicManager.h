@@ -28,7 +28,7 @@ class SystematicManager{
     const std::vector<Systematic*>& GetSystematicsInGroup(const std::string & name) const;
 
     const std::set<std::string> GetGroupNames() const;
-    
+
     const size_t GetNSystematics() const;
     const size_t GetNGroups() const;
 
@@ -46,7 +46,7 @@ class SystematicManager{
     void DistortEDs(std::vector<BinnedED>& OrigEDs,std::vector<BinnedED>& WorkingEDs) const;
 
     void Construct();
-    
+
  private:
     size_t fNGroups;
     std::map<std::string,SparseMatrix> fTotalReponses;

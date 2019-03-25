@@ -22,7 +22,7 @@ class BinnedEDManager : public FitComponent{
     double Probability(const Event&) const;
     double BinProbability(size_t) const;
     double BinProbability(size_t, std::vector<double>) const;
-    
+
     const std::vector<double>& GetNormalisations() const;
     void SetNormalisations(const std::vector<double>& normalisations_);
 
@@ -33,7 +33,7 @@ class BinnedEDManager : public FitComponent{
     const BinnedED& GetWorkingPdf(size_t index_) const;
     unsigned GetNPdfs() const;
     size_t   GetNDims() const;
-    
+
 
     // Make a fittable component - i.e. rescale the binned pdfs inside to fit
     void   SetParameter(const std::string& name_, double value);

@@ -5,7 +5,7 @@
 #include <Exceptions.h>
 #include <sstream>
 
-unsigned 
+unsigned
 BinnedEDManager::GetNPdfs() const{
     return fOriginalPdfs.size();
 }
@@ -15,7 +15,7 @@ BinnedEDManager::GetNDims() const{
     return fNDims;
 }
 
-double 
+double
 BinnedEDManager::Probability(const Event& data_) const{
     double sum = 0;
 
@@ -91,7 +91,7 @@ BinnedEDManager::AddPdf(const BinnedED& pdf_){
     RegisterParameters();
 }
 
-void 
+void
 BinnedEDManager::AddPdfs(const std::vector<BinnedED>& pdfs_){
     for(size_t i = 0; i < pdfs_.size(); i++){
         AddPdf(pdfs_.at(i));
@@ -108,7 +108,7 @@ void
 BinnedEDManager::ApplyShrink(const BinnedEDShrinker& shrinker_){
     if (!shrinker_.GetBuffers().size())
         return;
-        
+
     // only shrink if not already shrunk! FIXME: more obvious behaviour
     if (!fWorkingPdfs.size() || fWorkingPdfs.at(0).GetNBins() != fOriginalPdfs.at(0).GetNBins())
         return;
@@ -117,7 +117,7 @@ BinnedEDManager::ApplyShrink(const BinnedEDShrinker& shrinker_){
         fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
         fWorkingPdfs[i].Normalise();
     }
-    
+
 }
 
 ////////////////////////////////
@@ -176,4 +176,4 @@ BinnedEDManager::RegisterParameters(){
     for(size_t i = 0; i < fOriginalPdfs.size(); i++)
         parameterNames.push_back(fOriginalPdfs.at(i).GetName() + "_norm");
     fParameterManager.AddContainer(fNormalisations, parameterNames);
-}    
+}
