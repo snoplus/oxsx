@@ -26,8 +26,11 @@ BinnedNLLH::Evaluate(){
     // Apply systematics
     fPdfManager.ApplySystematics(fSystematicManager);
 
+    for (size_t i = 0; i < fWorkingNormalisations.size(); i++)
+        fWorkingNormalisations.at(i) = fPdfManager.GetWorkingPdf(i).Integral();
+
     std::vector<double> osc_loss;
-    for (size_t i = 0 ; i < fPdfManager.GetNPdfs(); i++){
+    for (size_t i = 0; i < fPdfManager.GetNPdfs(); i++){
       bool foundoscgroup = false;
       std::string pdfname = fPdfManager.GetWorkingPdf(i).GetName();
       std::vector<std::string>::iterator it = std::find(fOscPdfs.begin(),fOscPdfs.end(),pdfname);
@@ -35,9 +38,9 @@ BinnedNLLH::Evaluate(){
 	  foundoscgroup = true;
 
       if (foundoscgroup)
-	osc_loss.push_back(fPdfManager.GetWorkingPdf(i).Integral());
+	     osc_loss.push_back(fPdfManager.GetWorkingPdf(i).Integral());
       else
-	osc_loss.push_back(1.);
+	     osc_loss.push_back(1.);
     }
     
     // Apply Shrinking
@@ -79,8 +82,10 @@ void
 BinnedNLLH::AddDist(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& sys_){
     if (pdfs.size() != sys_.size())
        throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
-    for (int i = 0; i < pdfs.size(); ++i)
+    for (int i = 0; i < pdfs.size(); ++i){
         AddDist( pdfs.at(i), sys_.at(i) );
+        fWorkingNormalisations.push_back(0);
+    }
 }
 
 void
@@ -89,8 +94,9 @@ BinnedNLLH::AddDist(const std::vector<BinnedED>& pdfs, const std::vector<std::ve
        throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
     for (int i = 0; i < pdfs.size(); ++i){
         AddDist( pdfs.at(i), sys_.at(i) );
-	if (ifosc[i])
-	    fOscPdfs.push_back(pdfs.at(i).GetName());
+        fWorkingNormalisations.push_back(0);
+	    if (ifosc[i])
+	        fOscPdfs.push_back(pdfs.at(i).GetName());
     }
 }
 
@@ -98,12 +104,14 @@ void
 BinnedNLLH::AddDist(const BinnedED& pdf_, const std::vector<std::string>& syss_){
     fPdfManager.AddPdf(pdf_);
     fSystematicManager.AddDist(pdf_,syss_);
+    fWorkingNormalisations.push_back(0);
 }
 
 void
 BinnedNLLH::AddDist(const BinnedED& pdf_, const std::vector<std::string>& syss_, const bool ifosc){
     fPdfManager.AddPdf(pdf_);
     fSystematicManager.AddDist(pdf_,syss_);
+    fWorkingNormalisations.push_back(0);
     if (ifosc)
       fOscPdfs.push_back(pdf_.GetName());
 }
@@ -118,6 +126,7 @@ void
 BinnedNLLH::AddDist(const BinnedED& pdf_, const bool ifosc){
     fPdfManager.AddPdf(pdf_);
     fSystematicManager.AddDist(pdf_,"");
+    fWorkingNormalisations.push_back(0);
     if (ifosc)
       fOscPdfs.push_back(pdf_.GetName());
 }
@@ -243,6 +252,16 @@ BinnedNLLH::SetSignalCutEfficiency(double eff_){
 CutLog
 BinnedNLLH::GetSignalCutLog() const{
     return fSignalCutLog;
+}
+
+void
+BinnedNLLH::SetWorkingNormalisations(std::vector<double>& workingNormalisations_) {
+    fWorkingNormalisations = workingNormalisations_;
+}
+
+std::vector<double>
+BinnedNLLH::GetWorkingNormalisations() {
+    return fWorkingNormalisations;
 }
 
 void
