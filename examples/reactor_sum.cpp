@@ -110,8 +110,8 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
         // Setting optimisation limits
         //std::cout << " scale" << reactor_scale[i] << " err" << reactor_scale_err[i] << " min" << reactor_scale[i]-reactor_scale_err[i]*reactor_scale[i] << " max" << reactor_scale[i]+reactor_scale_err[i]*reactor_scale[i] << std::endl;
         sprintf(name, "%s_norm", reactor_names[i].c_str());
-        Double_t min = 0;//reactor_scale[i]-1.96*reactor_scale_err[i]*reactor_scale[i];
-        Double_t max = reactor_scale[i]+1.96*reactor_scale_err[i]*reactor_scale[i];
+        Double_t min = reactor_scale[i]-0.196*reactor_scale_err[i]*reactor_scale[i];
+        Double_t max = reactor_scale[i]+0.196*reactor_scale_err[i]*reactor_scale[i];
         if (min < 0) min = 0;
         minima[name] = min;
         maxima[name] = max;
