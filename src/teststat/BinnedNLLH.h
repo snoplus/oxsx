@@ -41,10 +41,13 @@ class BinnedNLLH : public TestStatistic{
     DataSet* GetDataSet();
 
     void AddDist(const BinnedED& pdf);
-
+    void AddDist(const BinnedED& pdf, const bool ifosc);
+    
     void AddDist(const BinnedED& pdf, const std::vector<std::string>& syss_);
+    void AddDist(const BinnedED& pdf, const std::vector<std::string>& syss_, const bool ifosc);
 
     void AddDist(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& syss_);
+    void AddDist(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& syss_, const std::vector<bool> ifosc);
 
     void SetBuffer(size_t dim_, unsigned lower_, unsigned upper_);
     std::pair<unsigned, unsigned> GetBuffer(size_t dim_) const;
@@ -75,7 +78,9 @@ class BinnedNLLH : public TestStatistic{
     DataSet*             fDataSet;
     CutCollection        fCuts;
     std::map<std::string, QuadraticConstraint> fConstraints;
-
+    
+    std::vector<std::string> fOscPdfs;
+    
     double  fSignalCutEfficiency;
     CutLog  fSignalCutLog;
 
