@@ -130,7 +130,7 @@ void LHFit(const std::string UnOscfile, const std::string dataFile, int numPdfs,
   maxima["d21"] = 9e-5;
   maxima["s12"] = 0.4;
   initialval["d21"] = 7.0e-5;//(r1->Uniform(minima["d21"],maxima["d21"]));//5.5e-5;//6.5e-5;
-  initialval["s12"] = 0.5;//(r1->Uniform(minima["s12"],maxima["s12"]));//0.3;
+  initialval["s12"] = 0.35;//(r1->Uniform(minima["s12"],maxima["s12"]));//0.3;
   std::cout<<"\n Initial d21:  "<<initialval["d21"]<<"\n"<<std::endl;
   std::cout<<" Initial s12:  "<<initialval["s12"]<<"\n"<<std::endl;
   initialerr["d21"] = 0.1*initialval["d21"];
@@ -255,7 +255,9 @@ void LHFit(const std::string UnOscfile, const std::string dataFile, int numPdfs,
   // fitvalid flag
   
   BinnedED * Result = new BinnedED("Result",axes);
+  Result->SetObservables(0);
   BinnedED TotalResult("TotalResult",axes);
+  TotalResult.SetObservables(0);
   ROOTMultiPlot* Plot = new ROOTMultiPlot;
   
   TPaveText pt(0.75,0.35,1.0,0.65,"NDC");
