@@ -79,13 +79,8 @@ class SurvProb : public PDF{
     int fNDims;
     std::string fName;
 
-    size_t fnsisample;
-    double fnsisamplei;
-    double *fsi;
     TF1 *fsincfunction;
     double Si(double val_) const;
-    double SiSample(double val_) const;
-
 
     void   Initialise(const std::vector<double>& delmsqr21s_,
                       const std::vector<double>& sinsqrtheta12s_,

@@ -7,6 +7,7 @@
 #include <Exceptions.h>
 #include <Formatter.hpp>
 #include <iostream>
+#include <vector>
 
 double
 BinnedNLLH::Evaluate(){
@@ -26,7 +27,10 @@ BinnedNLLH::Evaluate(){
     // Apply systematics
     fPdfManager.ApplySystematics(fSystematicManager);
 
-    fWorkingNormalisations.clear();
+    //fWorkingNormalisations.clear();
+    //fWorkingNormalisations.resize(0);
+    //std::fill(fWorkingNormalisations.begin(), fWorkingNormalisations.end(), 0);
+    std::vector<double> fWorkingNormalisations;
     for (size_t i = 0; i < fPdfManager.GetNPdfs(); i++){
       bool foundoscgroup = false;
       std::string pdfname = fPdfManager.GetWorkingPdf(i).GetName();
@@ -55,7 +59,7 @@ BinnedNLLH::Evaluate(){
     // Extended LH correction
     const std::vector<double>& normalisations = fPdfManager.GetNormalisations();
     for(size_t i = 0; i < normalisations.size(); i++)
-        nLogLH += fWorkingNormalisations[i] * normalisations.at(i);
+        nLogLH += fWorkingNormalisations.at(i) * normalisations.at(i);
 
     // Constraints
     for(std::map<std::string, QuadraticConstraint>::iterator it = fConstraints.begin();
@@ -90,7 +94,7 @@ BinnedNLLH::AddDist(const std::vector<BinnedED>& pdfs, const std::vector<std::ve
        throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
     for (int i = 0; i < pdfs.size(); ++i){
         AddDist( pdfs.at(i), sys_.at(i) );
-	    if (ifosc[i])
+	    if (ifosc.at(i))
 	        fOscPdfs.push_back(pdfs.at(i).GetName());
     }
 }
@@ -246,10 +250,10 @@ BinnedNLLH::GetSignalCutLog() const{
     return fSignalCutLog;
 }
 
-std::vector<double>
-BinnedNLLH::GetWorkingNormalisations() const{
-    return fWorkingNormalisations;
-}
+//std::vector<double>
+//BinnedNLLH::GetWorkingNormalisations() const{
+//    return fWorkingNormalisations;
+//}
 
 void
 BinnedNLLH::SetSignalCutLog(const CutLog& lg_){
