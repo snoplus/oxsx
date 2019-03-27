@@ -163,6 +163,7 @@ void LHFit(const std::string UnOscfile, const std::string dataFile, int numPdfs,
     
     sprintf(name,"%s_Survival",reactorNames[i].c_str());
     SurvProb* survprob = new SurvProb(0.1,0.1,reactorDistances[i],name);
+    survprob->Setsinsqrtheta13s(0.0215);
     survprob->RenameParameter("delmsqr21_0","d21");
     survprob->RenameParameter("sinsqrtheta12_0","s12");
     sprintf(name,"%s_Systematic",reactorNames[i].c_str());
@@ -263,7 +264,9 @@ void LHFit(const std::string UnOscfile, const std::string dataFile, int numPdfs,
   TPaveText pt(0.75,0.35,1.0,0.65,"NDC");
   for (int i = 0; i< numPdfs; i++){    
     NuOsc OscResult("OscResult");
-    OscResult.SetFunction(new SurvProb(bestFit.at("d21"),bestFit.at("s12"),reactorDistances[i]));
+    SurvProb* survprob = new SurvProb(bestFit.at("d21"),bestFit.at("s12"),reactorDistances[i]);
+    survprob->Setsinsqrtheta13s(0.0215);
+    OscResult.SetFunction(survprob);
     OscResult.SetAxes(axes);
     OscResult.SetTransformationObs(dataRep);
     OscResult.SetDistributionObs(dataRep);
