@@ -156,7 +156,7 @@ BinnedED LHFit_initialise(BinnedED **spectra_pdf, Double_t *reactor_scale, const
     for(ULong64_t i = 0; i < data_ntp.GetNEntries(); i++)
         data_set_pdf.Fill(data_ntp.GetEntry(i));
     data_set_pdf.Scale(1./flux_data);
-    //Double_t data_set_integral = data_set_pdf.Integral(); //record the integral before normalising
+    Double_t data_set_integral = data_set_pdf.Integral(); //record the integral before normalising
     //data_set_pdf.Normalise();
     printf("Loading data: %s (osc)integral:%.3f\n", data_path.c_str(), data_set_pdf.Integral());
 
@@ -166,7 +166,7 @@ BinnedED LHFit_initialise(BinnedED **spectra_pdf, Double_t *reactor_scale, const
     // load unoscillated reactor ntuples (for scale factors)
     Double_t reactor_integrals[n_pdf];
     for(ULong64_t i = 0; i < n_pdf; i++){
-        sprintf(name, "%sflux%llu/%s_flux%llu_day360_cleanround1_ke_oxsx.root", in_path.c_str(), flux_data, reactor_names[i].c_str(), flux_data);
+        sprintf(name, "%sflux%llu/%s_flux%llu_day360_cleanround1_ke_oxsx.root", in_path.c_str(), flux_mc, reactor_names[i].c_str(), flux_mc);
         ROOTNtuple reactor_ntp(name, "nt");
         sprintf(name, "%s_pdf", reactor_names[i].c_str());
         BinnedED *reactor_pdf = new BinnedED(name, axes);
@@ -244,8 +244,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, BinnedNLLH &l
     maxima["d21"] = param_d21*100;
     initial_val["d21"] = param_d21;
     initial_err["d21"] = 1*param_d21;
-    minima["s12"] = 0;
-    maxima["s12"] = 1;
+    minima["s12"] = 0.2;
+    maxima["s12"] = 0.4;
     initial_val["s12"] = param_s12;
     initial_err["s12"] = 1*param_s12;
 
@@ -254,6 +254,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, BinnedNLLH &l
     //SurvProb *surv_prob[n_pdf];
     //NuOsc *reactor_systematic[n_pdf];
     //BinnedED **reactor_pdf = new BinnedED*[n_pdf];
+
     for (ULong64_t i = 0; i < n_pdf; i++){
         // for each reactor, load spectrum pdf for reactor type
         reactor_pdf[i] = new BinnedED(reactor_names[i], axes);
@@ -267,7 +268,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, BinnedNLLH &l
                continue;
             }
         reactor_pdf[i]->Normalise();
-        reactor_pdf[i]->Scale(reactor_scale[i]); // normalise to integral for each reactor
+        //reactor_pdf[i]->Scale(reactor_scale[i]); // normalise to integral for each reactor
 
         // setup survival probability
         sprintf(name, "%s_survival", reactor_names[i].c_str());
@@ -285,8 +286,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, BinnedNLLH &l
         // Setting optimisation limits
         //std::cout << " scale" << reactor_scale[i] << " err" << reactor_scale_err[i] << " min" << reactor_scale[i]-reactor_scale_err[i]*reactor_scale[i] << " max" << reactor_scale[i]+reactor_scale_err[i]*reactor_scale[i] << std::endl;
         sprintf(name, "%s_norm", reactor_names[i].c_str());
-        Double_t min = reactor_scale[i]-0.196*reactor_scale_err[i]*reactor_scale[i];
-        Double_t max = reactor_scale[i]+0.196*reactor_scale_err[i]*reactor_scale[i];
+        Double_t min = reactor_scale[i]-1.96*reactor_scale_err[i]*reactor_scale[i];
+        Double_t max = reactor_scale[i]+1.96*reactor_scale_err[i]*reactor_scale[i];
         if (min < 0) min = 0;
         minima[name] = min;
         maxima[name] = max;
@@ -296,10 +297,10 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, BinnedNLLH &l
 
         sprintf(name,"group%d",i);
         lh_function.AddSystematic(reactor_systematic[i], name);
-        lh_function.AddDist(*reactor_pdf[i], std::vector<std::string>(1, name));  
+        lh_function.AddDist(*reactor_pdf[i], std::vector<std::string>(1, name),true);
 
         sprintf(name, "%s_norm", reactor_names[i].c_str());
-        //lh_function.SetConstraint(name,reactor_scale[i], reactor_scale_err[i]*reactor_scale[i]);
+        lh_function.SetConstraint(name, reactor_scale[i], reactor_scale_err[i]*reactor_scale[i]);
     }
 
     //lh_function.SetConstraint("d21", 7e-5, 9e-5); // no constraints for likelihood map
@@ -345,16 +346,11 @@ void LHFit_produce_histograms(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Bi
     axes.AddAxis(BinAxis("mc_neutrino_energy", e_min, e_max, n_bins));
 
     double param_s13 = 0.02303;
-
     // determine the oscillated normalisation (the fit returns normalisation of unoscillated spectra)
-    printf("bestFit[d21]:%.4e bestFit[s12]:%.4f\n", best_fit["d21"], best_fit["s12"]);
-    double normalisation_constants[n_pdf];
-    double normalisation_osc[n_pdf];
+    std::vector<double> normalisation_osc = lh_function.GetWorkingNormalisations();
     for (ULong64_t i = 0; i < n_pdf; i++){
         sprintf(name, "%s_norm", reactor_names[i].c_str());
-        normalisation_constants[i] = lh_function.GetParameters().at(name) / reactor_scale[i];
-        normalisation_osc[i] = normalisation_constants[i]*best_fit[name];
-        printf("%s:\tscale:%.4f\tnorm_fit:%.4f\tosc_constant:%.3f\tnorm_osc: %.3f\n", name, reactor_scale[i], lh_function.GetParameters().at(name), normalisation_constants[i], normalisation_osc[i]);
+        printf("%s:\tscale:%.4f\tnorm_unosc: %.3f\tnorm_osc: %.4f\n", name, reactor_scale[i], normalisation_osc.at(i), reactor_scale[i]*normalisation_osc.at(i));
     }
 
     // apply fitted oscillations to reactor pdf's
@@ -362,6 +358,7 @@ void LHFit_produce_histograms(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Bi
     BinnedED **reactor_pdf_fitosc = new BinnedED*[n_pdf];
     BinnedED reactor_pdf_fitosc_sum("reactor_pdf_fitosc_sum",axes);
     reactor_pdf_fitosc_sum.SetObservables(data_rep);
+
     for (ULong64_t i = 0; i < n_pdf; i++){
         sprintf(name, "%s_pdf_fitosc", reactor_names[i].c_str());
         reactor_pdf_fitosc[i] = new BinnedED(name, axes);
@@ -372,7 +369,6 @@ void LHFit_produce_histograms(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Bi
         surv_prob_fit[i] = new SurvProb(best_fit.at("d21"), best_fit.at("s12"), distances[i], name);
         surv_prob_fit[i]->Setsinsqrtheta13s(param_s13); // manual, fixed setting of theta13
         OscResult.SetFunction(surv_prob_fit[i]);
-
         OscResult.SetAxes(axes);
         OscResult.SetTransformationObs(data_rep);
         OscResult.SetDistributionObs(data_rep);
@@ -380,9 +376,8 @@ void LHFit_produce_histograms(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Bi
 
         reactor_pdf_fitosc[i]->Add(OscResult(*reactor_pdf[i]),1);
 
-        //sprintf(name,"%s_norm",reactor_names[i].c_str()); //don't use the value directly from the fit, use the oscillated normalisation
-        //reactor_pdf_fitosc[i]->Scale(best_fit.at(name));
-        reactor_pdf_fitosc[i]->Scale(normalisation_osc[i]);
+        sprintf(name,"%s_norm",reactor_names[i].c_str());
+        reactor_pdf_fitosc[i]->Scale(best_fit.at(name)*normalisation_osc.at(i));
 
         reactor_pdf_fitosc_sum.Add(*reactor_pdf_fitosc[i],1);
     }

@@ -115,7 +115,7 @@ GridSearch::Optimise(TestStatistic* testStat_){
         }
        
     }
-    fFitResult.SetBestFit(bestFit);
+    fFitResult.SetBestFit(setParams); // is this bestFit or setParams
     fFitResult.SetExtremeVal(fMinVal);
     return fFitResult;
 }
@@ -135,7 +135,7 @@ GridSearch::Increment(ParameterDict::iterator it_,
         fParamVals[paramToChange] = fMinima.at(paramToChange);
 
         // if its the last index no rippling to do
-        if (it_ == end_--)
+        if (it_ == end_) // is this end_ or end_-- ??
             return false;
 
         // ripple up to next index

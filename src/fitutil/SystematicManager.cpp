@@ -73,10 +73,10 @@ SystematicManager::checkAllOtherGroups(const Systematic* syss_){
           allname.insert(fGroups.at("").at(j)->GetName());
       else
           throw NotFoundError(Formatter()<<
-                  "SystematicManager :: Systematic: "<< 
+                  "SystematicManager :: Systematic: "<<
                   fGroups.at("").at(j)->GetName()<<
                   " is in the global systematic group more than once.");
-  } 
+  }
   for (std::map<std::string, std::vector<Systematic*> >::const_iterator i = fGroups.begin(); i != fGroups.end(); ++i) {
     if( i->first == "")
       continue;
@@ -86,7 +86,7 @@ SystematicManager::checkAllOtherGroups(const Systematic* syss_){
       }
       else
         throw NotFoundError(Formatter()<<
-            "SystematicManager :: Systematic: "<< 
+            "SystematicManager :: Systematic: "<<
             (*sys)->GetName()<<
             " is in the another group and therefore can't be added to the global systematics.");
     }
@@ -108,10 +108,10 @@ SystematicManager::UniqueSystematics(const std::vector<std::string>& syss_){
                 allname.insert(group.at(j)->GetName());
             else
                 throw NotFoundError(Formatter()<<
-                        "SystematicManager :: Systematic: "<< 
+                        "SystematicManager :: Systematic: "<<
                         group.at(i)->GetName()<<
                         " is in more than one group.");
-        } 
+        }
     }
     // Check the "" group only after everything else has been checked and
     // allnames has been populated.
@@ -122,10 +122,10 @@ SystematicManager::UniqueSystematics(const std::vector<std::string>& syss_){
           allname.insert(group.at(j)->GetName());
         else
           throw NotFoundError(Formatter()<<
-              "SystematicManager :: Systematic: "<< 
+              "SystematicManager :: Systematic: "<<
               group.at(j)->GetName()<<
               " is in the global (\"\") group, and therefore would be applied twice.");
-      } 
+      }
     }
 }
 
@@ -150,7 +150,7 @@ SystematicManager::DistortEDs(std::vector<BinnedED>& OrignalEDs_,std::vector<Bin
 
         //Apply everything else.
         for (int i = 0; i < fEDGroups.at(name).size(); ++i) {
-            //Check that the group has systematics in it. 
+            //Check that the group has systematics in it.
             std::string groupName = fEDGroups.at(name).at(i);
             //If "" is empty the do nothing.
             if( groupName =="" && fGroups.at("").size() == 0 ) {
@@ -163,7 +163,7 @@ SystematicManager::DistortEDs(std::vector<BinnedED>& OrignalEDs_,std::vector<Bin
                         <<" has a systematic group of zero size acting on it");
             // Copy EDs because WorkingED_s have to have the same binning as OrignalEDs_s.
             WorkingEDs_[j] = OrignalEDs_.at(j);
-            
+
             // Logic overview:
             //    - Check whether fGroups has more that just the "" group in it. If
             //      not then apply the group as you would expect.
@@ -193,12 +193,12 @@ SystematicManager::DistortEDs(std::vector<BinnedED>& OrignalEDs_,std::vector<Bin
 
 const size_t
 SystematicManager::GetNSystematicsInGroup(const std::string& name_) const{
-    try{        
+    try{
         return fGroups.find(name_)->second.size();
     }
     catch(const std::out_of_range& e_){
         throw NotFoundError(Formatter()<<
-                "SystematicManager :: name : "<< 
+                "SystematicManager :: name : "<<
                 name_ <<
                 " not known to the SystematicManager.");
     }
@@ -215,13 +215,13 @@ SystematicManager::GetSystematicsNamesInGroup(const std::string& name) const{
         std::vector<Systematic*> sys = fGroups.at(name);
         std::vector<std::string> names;
         for (int i = 0; i < sys.size(); ++i) {
-            names.push_back(sys.at(i)->GetName());    
+            names.push_back(sys.at(i)->GetName());
         }
         return names;
     }
     catch(const std::out_of_range& e_){
         throw NotFoundError(Formatter()<<
-                "SystematicManager :: name : "<< 
+                "SystematicManager :: name : "<<
                 name <<
                 " not known to the SystematicManager.");
     }
@@ -234,7 +234,7 @@ SystematicManager::GetSystematicsInGroup(const std::string& name) const{
         return fGroups.at(name);
     }catch(const std::out_of_range& e_){
         throw NotFoundError(Formatter()<<
-                "SystematicManager :: name : "<< 
+                "SystematicManager :: name : "<<
                 name <<
                 " not known to the SystematicManager.");
     }
@@ -252,7 +252,7 @@ SystematicManager::GetGroup(const std::string& name) const{
     return names;
 }
 
-const std::map<std::string, std::vector<Systematic*> >& 
+const std::map<std::string, std::vector<Systematic*> >&
 SystematicManager::GetSystematicsGroup() const{
     return fGroups;
 }

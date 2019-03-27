@@ -33,16 +33,16 @@ class SurvProb : public PDF{
     double Getsinsqrtheta12(size_t dimension_) const;
     //double Getsinsqrtheta13(size_t dimension_) const;
 
-    void Setdelmsqr21(const size_t dim_ , const double value_);
-    void Setsinsqrtheta12(const size_t dim_ , const double value_);
-    void Setsinsqrtheta13(const size_t dim_ , const double value_);
+    void Setdelmsqr21(const size_t& dim_ , const double& value_);
+    void Setsinsqrtheta12(const size_t& dim_ , const double& value_);
+    void Setsinsqrtheta13(const size_t& dim_ , const double& value_);
 
     std::vector<double> Getdelmsqr21s() const;
     std::vector<double> Getsinsqrtheta12s() const;
     //std::vector<double> Getsinsqrtheta13s() const;
     double Getsinsqrtheta13s();
     double GetCdfCutOff() const;
-    void   SetCdfCutOff(double cutOff_);
+    void   SetCdfCutOff(double);
     int    GetNDims() const;
 
     // Make this object fittable
@@ -79,13 +79,8 @@ class SurvProb : public PDF{
     int fNDims;
     std::string fName;
 
-    size_t fnsisample;
-    double fnsisamplei;
-    double *fsi;
     TF1 *fsincfunction;
     double Si(double val_) const;
-    double SiSample(double val_) const;
-
 
     void   Initialise(const std::vector<double>& delmsqr21s_,
                       const std::vector<double>& sinsqrtheta12s_,

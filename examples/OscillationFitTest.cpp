@@ -45,11 +45,7 @@ void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &
   std::ifstream in;
   in.open(runInfoFileName.c_str());
   std::cout << "opening file: " << runInfoFileName.c_str() << std::endl;
-  if (!in) {
-    std::cout << "Unable to open file"<<std::endl;
-    exit(1);
-  }
-  
+
   std::fill(reactorNames.begin(), reactorNames.end(), "");
   std::fill(distances.begin(), distances.end(), 0.);
   std::fill(reactorTypes.begin(), reactorTypes.end(), "");
@@ -125,20 +121,39 @@ void LHFit(const std::string UnOscfile, const std::string dataFile, int numPdfs,
   
   BinnedNLLH lhFunction;
   lhFunction.SetBufferAsOverflow(true);
-  int Buff = 2;
-  lhFunction.SetBuffer(0,Buff,Buff);
+  int Buff = 1;
+  lhFunction.SetBuffer(1,Buff,Buff);
   lhFunction.SetDataDist(dataSetPdf); // initialise withe the data set
   
   minima["d21"] = 5e-5;
   minima["s12"] = 0.2;
   maxima["d21"] = 9e-5;
   maxima["s12"] = 0.4;
-  initialval["d21"] = (r1->Uniform(minima["d21"],maxima["d21"]));//6.5e-5;
-  initialval["s12"] = (r1->Uniform(minima["s12"],maxima["s12"]));//0.3;
+  initialval["d21"] = 7.0e-5;//(r1->Uniform(minima["d21"],maxima["d21"]));//5.5e-5;//6.5e-5;
+  initialval["s12"] = 0.35;//(r1->Uniform(minima["s12"],maxima["s12"]));//0.3;
   std::cout<<"\n Initial d21:  "<<initialval["d21"]<<"\n"<<std::endl;
   std::cout<<" Initial s12:  "<<initialval["s12"]<<"\n"<<std::endl;
   initialerr["d21"] = 0.1*initialval["d21"];
   initialerr["s12"] = 0.1*initialval["s12"];
+  
+  /*
+  minima["mean"] = 2;
+  minima["stdDev"] = 1;
+  maxima["mean"] = 6;
+  maxima["stdDev"] = 4;
+  initialval["mean"] = (r1->Uniform(minima["mean"],maxima["mean"]));//6.5e-5;
+  initialval["stdDev"] = (r1->Uniform(minima["stdDev"],maxima["stdDev"]));//0.3;
+  std::cout<<"\n Initial mean:  "<<initialval["mean"]<<"\n"<<std::endl;
+  std::cout<<" Initial stdDev:  "<<initialval["stdDev"]<<"\n"<<std::endl;
+  initialerr["mean"] = 0.1*initialval["mean"];
+  initialerr["stdDev"] = 0.1*initialval["stdDev"];
+  */
+  /*Rand::SetSeed(0);
+  Gaussian gaus1(5, 1);
+  BinnedED BG("BG", DistTools::ToHist(gaus1, axes));
+  BG.Normalise();
+  BG.Scale(200000);
+  */
     
   for (int i = 0; i< numPdfs; i++){
     double rand = r1->Rndm();
@@ -148,6 +163,7 @@ void LHFit(const std::string UnOscfile, const std::string dataFile, int numPdfs,
     
     sprintf(name,"%s_Survival",reactorNames[i].c_str());
     SurvProb* survprob = new SurvProb(0.1,0.1,reactorDistances[i],name);
+    survprob->Setsinsqrtheta13s(0.0215);
     survprob->RenameParameter("delmsqr21_0","d21");
     survprob->RenameParameter("sinsqrtheta12_0","s12");
     sprintf(name,"%s_Systematic",reactorNames[i].c_str());
@@ -162,13 +178,42 @@ void LHFit(const std::string UnOscfile, const std::string dataFile, int numPdfs,
     minima[name] = 0;//Normmin;
     maxima[name] = 50000;//Normmax;
     initialval[name] = (rand*(maxima[name]-minima[name]))+minima[name];//flux*2000;
-    initialerr[name] = 0.1*initialval[name];
+    initialerr[name] = 0.5*initialval[name];
 
     sprintf(name,"osc_%s",reactorNames[i].c_str());
     std::cout<<name<<std::endl;
     //lhFunction.AddSystematic(reactorSystematic,name,true);
     lhFunction.AddSystematic(reactorSystematic,name);
     lhFunction.AddDist(*reactorPdf,std::vector<std::string>(1,name),true);  
+    /*
+    if (i == 0){
+      Convolution* convsys = new Convolution("conv_Systematic");
+      Gaussian* gaussian = new Gaussian(0,1,"gaus");
+      gaussian->RenameParameter("means_0","mean");
+      gaussian->RenameParameter("stddevs_0","stdDev");
+      convsys->SetFunction(gaussian);
+      convsys->SetAxes(axes);
+      convsys->SetTransformationObs(dataRep);
+      convsys->SetDistributionObs(dataRep);
+      convsys->Construct();
+
+      
+      sprintf(name,"osc_%s",reactorNames[i].c_str());
+      std::cout<<name<<std::endl;
+      lhFunction.AddSystematic(reactorSystematic,name,true);
+      lhFunction.AddSystematic(convsys,"Conv1",false);
+      std::vector<std::string> groups;
+      groups.push_back(name);
+      groups.push_back("Conv1");
+      lhFunction.AddDist(*reactorPdf,groups);
+    }else{
+      sprintf(name,"osc_%s",reactorNames[i].c_str());
+      std::cout<<name<<std::endl;
+      lhFunction.AddSystematic(reactorSystematic,name,true);
+      lhFunction.AddDist(*reactorPdf,std::vector<std::string>(1,name));  
+    
+    }
+    */
   }
 
   lhFunction.SetConstraint("BRUCE_norm",25000,500);
@@ -202,17 +247,26 @@ void LHFit(const std::string UnOscfile, const std::string dataFile, int numPdfs,
   FitResult fitResult = min.Optimise(&lhFunction);
   ParameterDict bestFit = fitResult.GetBestFit();
   fitResult.SetPrintPrecision(6);
-  fitResult.Print();
+  //fitResult.Print();
+  bool fitValid = fitResult.GetValid();
+  if (fitValid)
+    fitResult.Print();
+  else
+    std::cout<<"INVALID FIT!!"<<std::endl;
   // fitvalid flag
   
   BinnedED * Result = new BinnedED("Result",axes);
+  Result->SetObservables(0);
   BinnedED TotalResult("TotalResult",axes);
+  TotalResult.SetObservables(0);
   ROOTMultiPlot* Plot = new ROOTMultiPlot;
   
   TPaveText pt(0.75,0.35,1.0,0.65,"NDC");
   for (int i = 0; i< numPdfs; i++){    
     NuOsc OscResult("OscResult");
-    OscResult.SetFunction(new SurvProb(bestFit.at("d21"),bestFit.at("s12"),reactorDistances[i]));
+    SurvProb* survprob = new SurvProb(bestFit.at("d21"),bestFit.at("s12"),reactorDistances[i]);
+    survprob->Setsinsqrtheta13s(0.0215);
+    OscResult.SetFunction(survprob);
     OscResult.SetAxes(axes);
     OscResult.SetTransformationObs(dataRep);
     OscResult.SetDistributionObs(dataRep);

@@ -28,7 +28,7 @@ class BinnedNLLH : public TestStatistic{
     void   AddSystematics(const std::vector<Systematic*>, const std::vector<std::string>&);
 
     void   SetConstraint(const std::string& paramName_, double mean_, double sigma_);
-    
+
     void SetNormalisations(const std::vector<double>& norms_);
     std::vector<double> GetNormalisations() const;
 
@@ -42,7 +42,7 @@ class BinnedNLLH : public TestStatistic{
 
     void AddDist(const BinnedED& pdf);
     void AddDist(const BinnedED& pdf, const bool ifosc);
-    
+
     void AddDist(const BinnedED& pdf, const std::vector<std::string>& syss_);
     void AddDist(const BinnedED& pdf, const std::vector<std::string>& syss_, const bool ifosc);
 
@@ -63,8 +63,10 @@ class BinnedNLLH : public TestStatistic{
     CutLog GetSignalCutLog() const;
     void   SetSignalCutLog(const CutLog&);
 
+    std::vector<double> GetWorkingNormalisations() const;
+
     // Test statistic interface
-    void RegisterFitComponents(); 
+    void RegisterFitComponents();
     void SetParameters(const ParameterDict&);
     ParameterDict GetParameters() const;
     int  GetParameterCount() const;
@@ -78,15 +80,16 @@ class BinnedNLLH : public TestStatistic{
     DataSet*             fDataSet;
     CutCollection        fCuts;
     std::map<std::string, QuadraticConstraint> fConstraints;
-    
+
     std::vector<std::string> fOscPdfs;
-    
+
     double  fSignalCutEfficiency;
     CutLog  fSignalCutLog;
 
     BinnedED         fDataDist;
     bool             fCalculatedDataDist;
     bool             fAlreadyShrunk;
-    ComponentManager fComponentManager;    
+    ComponentManager fComponentManager;
+    std::vector<double> fWorkingNormalisations;
 };
 #endif

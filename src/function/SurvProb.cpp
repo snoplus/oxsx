@@ -9,7 +9,6 @@
 #include <sstream>
 #include <math.h>
 #include <TF1.h>
-#include <TMath.h>
 
 /////////////////////////
 // Constructory Things //
@@ -67,14 +66,7 @@ SurvProb::Initialise(const std::vector<double>& delmsqr21s_, const std::vector<d
     fsinsqrtheta12s = sinsqrtheta12s_;
     //fsinsqrtheta13s = sinsqrtheta13s_;
     fCdfCutOff = 6; // default val
-
-    fnsisamplei = 0.01;
-    fnsisample = 10000; // this many values samples the integral to within 0.01%
-    fsi = new double[fnsisample];
     fsincfunction = new TF1("sinc_function","sin(x)/x",0,1000);
-    for (size_t i=0; i<fnsisample; i++){
-	fsi[i]=fsincfunction->Integral(1e-9,i*fnsisamplei);
-    }
 }
 
 Function* 
@@ -121,12 +113,12 @@ SurvProb::Getsinsqrtheta13s() {
 }
 
 void
-SurvProb::Setdelmsqr21(const size_t dim_ , const double value_) {
+SurvProb::Setdelmsqr21(const size_t& dim_ , const double& value_) {
     fdelmsqr21s[dim_]= value_;
 }
 
 void
-SurvProb::Setsinsqrtheta12(const size_t dim_ , const double value_) {
+SurvProb::Setsinsqrtheta12(const size_t& dim_ , const double& value_) {
     fsinsqrtheta12s[dim_]= value_;
 }
 
@@ -150,7 +142,7 @@ SurvProb::Setsinsqrtheta12s(const std::vector<double>& sinsqrtheta12s_) {
 //    fsinsqrtheta13s = sinsqrtheta13s_;
 //}
 void
-SurvProb::Setsinsqrtheta13s(double sinsqrtheta13s_) {
+SurvProb::Setsinsqrtheta13s(const double sinsqrtheta13s_) {
     fsinsqrtheta13s = sinsqrtheta13s_;
 }
 
@@ -238,14 +230,6 @@ SurvProb::operator() (const std::vector<double>& vals_) const{
 }
 
 double
-SurvProb::SiSample(double val_) const{
-    size_t val_n = round(val_/fnsisamplei);
-    if (val_n>=fnsisample) val_n = fnsisample-1;
-    if (val_<0) val_n = 0;
-    return fsi[val_n];
-}
-
-double
 SurvProb::Si(double val_) const{
     return (double)fsincfunction->Integral(0.,val_);
 }
@@ -266,7 +250,7 @@ double SurvProb::Cdf(size_t dim_, double val_) const{
     rtnVal = (a*b/2)*val_*cos(e);
     rtnVal += val_*(a+d-(a*b)/2.);
     rtnVal += a*b*c*Si(e);
-    rtnVal -= a*b*c*TMath::Pi()/2.;
+    rtnVal -= a*b*c*3.1415926535898/2.;
     return rtnVal;
 }
 

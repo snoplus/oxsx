@@ -1,0 +1,4 @@
+reactorName,distance_km,spectrum_type,number_cores,average_core_power
+BRUCE,240.22,PHWR,8,2309
+PICKERING,340.37,PHWR,6,1371
+DARLINGTON,349.15,PHWR,4,2116
