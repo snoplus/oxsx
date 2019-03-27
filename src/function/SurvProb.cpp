@@ -130,10 +130,10 @@ SurvProb::Setsinsqrtheta12(const size_t& dim_ , const double& value_) {
     fsinsqrtheta12s[dim_]= value_;
 }
 
-void
-SurvProb::Setsinsqrtheta13(const size_t& dim_ , const double& value_) {
-    fsinsqrtheta13s[dim_]= value_;
-}
+//void
+//SurvProb::Setsinsqrtheta13(const size_t& dim_ , const double& value_) {
+//    fsinsqrtheta13s[dim_]= value_;
+//}
 
 void
 SurvProb::Setdelmsqr21s(const std::vector<double>& delmsqr21s_) {
@@ -150,7 +150,7 @@ SurvProb::Setsinsqrtheta12s(const std::vector<double>& sinsqrtheta12s_) {
 //    fsinsqrtheta13s = sinsqrtheta13s_;
 //}
 void
-SurvProb::Setsinsqrtheta13s(double sinsqrtheta13s_) {
+SurvProb::Setsinsqrtheta13s(const double sinsqrtheta13s_) {
     fsinsqrtheta13s = sinsqrtheta13s_;
 }
 
