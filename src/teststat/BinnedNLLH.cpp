@@ -27,10 +27,7 @@ BinnedNLLH::Evaluate(){
     // Apply systematics
     fPdfManager.ApplySystematics(fSystematicManager);
 
-    //fWorkingNormalisations.clear();
-    //fWorkingNormalisations.resize(0);
-    //std::fill(fWorkingNormalisations.begin(), fWorkingNormalisations.end(), 0);
-    std::vector<double> fWorkingNormalisations;
+    fWorkingNormalisations.clear();
     for (size_t i = 0; i < fPdfManager.GetNPdfs(); i++){
       bool foundoscgroup = false;
       std::string pdfname = fPdfManager.GetWorkingPdf(i).GetName();
@@ -174,7 +171,6 @@ BinnedNLLH::GetDataDist() const{
     return fDataDist;
 }
 
-
 void
 BinnedNLLH::SetBuffer(size_t dim_, unsigned lower_, unsigned upper_){
     fPdfShrinker.SetBuffer(dim_, lower_, upper_);
@@ -234,7 +230,6 @@ BinnedNLLH::SetConstraint(const std::string& paramName_, double mean_, double si
     fConstraints[paramName_] = QuadraticConstraint(mean_, sigma_);
 }
 
-
 double
 BinnedNLLH::GetSignalCutEfficiency() const{
     return fSignalCutEfficiency;
@@ -250,10 +245,10 @@ BinnedNLLH::GetSignalCutLog() const{
     return fSignalCutLog;
 }
 
-//std::vector<double>
-//BinnedNLLH::GetWorkingNormalisations() const{
-//    return fWorkingNormalisations;
-//}
+std::vector<double>
+BinnedNLLH::GetWorkingNormalisations() const{
+   return fWorkingNormalisations;
+}
 
 void
 BinnedNLLH::SetSignalCutLog(const CutLog& lg_){
@@ -280,7 +275,6 @@ BinnedNLLH::RegisterFitComponents(){
         }//End of group
     }//End of groups
 }
-
 
 void
 BinnedNLLH::SetParameters(const ParameterDict& params_){
