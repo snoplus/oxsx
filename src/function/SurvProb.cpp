@@ -121,19 +121,19 @@ SurvProb::Getsinsqrtheta13s() {
 }
 
 void
-SurvProb::Setdelmsqr21(const size_t dim_ , const double value_) {
+SurvProb::Setdelmsqr21(const size_t& dim_ , const double& value_) {
     fdelmsqr21s[dim_]= value_;
 }
 
 void
-SurvProb::Setsinsqrtheta12(const size_t dim_ , const double value_) {
+SurvProb::Setsinsqrtheta12(const size_t& dim_ , const double& value_) {
     fsinsqrtheta12s[dim_]= value_;
 }
 
-//void
-//SurvProb::Setsinsqrtheta13(const size_t& dim_ , const double& value_) {
-//    fsinsqrtheta13s[dim_]= value_;
-//}
+void
+SurvProb::Setsinsqrtheta13(const size_t& dim_ , const double& value_) {
+    fsinsqrtheta13s[dim_]= value_;
+}
 
 void
 SurvProb::Setdelmsqr21s(const std::vector<double>& delmsqr21s_) {
