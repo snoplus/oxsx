@@ -88,6 +88,7 @@ int main(int argc, char *argv[]) {
             BinnedNLLH lh_function;
 
             // fit
+            printf("Fit number: %llu of %llu\n", i, n_parameter_sets);
             LHFit_fit(data_set_pdf, spectra_pdf, lh_function, surv_prob, reactor_systematic, reactor_pdf, reactor_scale, reactor_scale_err, reactor_names, distances, reactor_types, d_21s[i], s_12s[i], s_13s[i], fit_validity, best_fit);
 
             // evaluate LH (this changes parameters - must get parameters for oscillation norm before doing this)
@@ -95,7 +96,7 @@ int main(int argc, char *argv[]) {
                 lh_values[i] =(-1)*lh_function.Evaluate();
             else
                 lh_values[i] = 9999; // positive non-sensical value to return if fit is not valid
-            printf("fit_validity: %d\td_21^2: %.9f\ts_12^2: %.5f\ts_13^2: %.5f\tlh_value: %.4f\n", fit_validity, d_21s[i], s_12s[i], s_13s[i], lh_values[i]);
+            printf("fit_validity: %d\td_21^2: %.9f\ts_12^2: %.5f\ts_13^2: %.5f\tlh_value: %.7f\n", fit_validity, d_21s[i], s_12s[i], s_13s[i], lh_values[i]);
         }
 
 
@@ -104,7 +105,7 @@ int main(int argc, char *argv[]) {
         FILE *fOut = fopen(out_file.c_str(), "w");
         fprintf(fOut,"d21,s12,s13,lh_value,fitValidity\n");
         for (ULong64_t i=0; i<n_parameter_sets; i++)
-            fprintf(fOut,"%.9f,%.7f,%.7f,%.5f,%llu\n", d_21s[i], s_12s[i], s_13s[i], lh_values[i], fit_validity);
+            fprintf(fOut,"%.9f,%.7f,%.7f,%.7f,%llu\n", d_21s[i], s_12s[i], s_13s[i], lh_values[i], fit_validity);
         fclose(fOut);
 
         printf("End--------------------------------------\n");

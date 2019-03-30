@@ -27,7 +27,9 @@ BinnedNLLH::Evaluate(){
     // Apply systematics
     fPdfManager.ApplySystematics(fSystematicManager);
 
-    fWorkingNormalisations.clear();
+    std::fill(fWorkingNormalisations.begin(), fWorkingNormalisations.end(), 0);
+    fWorkingNormalisations.resize(0);
+    //fWorkingNormalisations.clear();
     for (size_t i = 0; i < fPdfManager.GetNPdfs(); i++){
       bool foundoscgroup = false;
       std::string pdfname = fPdfManager.GetWorkingPdf(i).GetName();

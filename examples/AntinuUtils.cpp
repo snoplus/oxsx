@@ -144,9 +144,9 @@ BinnedED LHFit_initialise(BinnedED **spectra_pdf, Double_t *reactor_scale, const
 
     // set up binning
     AxisCollection axes;
-    Double_t e_min = 2;//0.425*2; //2; //*6 for kamland paper #1, *2 for paper #2
-    Double_t e_max = 8;//0.425*19; //8;
-    Int_t n_bins = 60;//17; //(8-2)*10; //13 for paper #1, 17 for paper #2
+    Double_t e_min = 0.425*2;//0.425*2; //2; //*6 for kamland paper #1, *2 for paper #2
+    Double_t e_max = 0.425*19;//0.425*19; //8;
+    Int_t n_bins = 17;//17; //(8-2)*10; //13 for paper #1, 17 for paper #2
     axes.AddAxis(BinAxis("mc_neutrino_energy", e_min, e_max, n_bins));
 
     // load (oscillated) data ntuple
@@ -219,9 +219,9 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, BinnedNLLH &l
     ObsSet data_rep(0);
     // set up binning
     AxisCollection axes;
-    Double_t e_min = 2;//0.425*2; //2; //*6 for kamland paper #1, *2 for paper #2
-    Double_t e_max = 8;//0.425*19; //8;
-    Int_t n_bins = 60;//17; //(8-2)*10; //13 for paper #1, 17 for paper #2
+    Double_t e_min = 0.425*2;//0.425*2; //2; //*6 for kamland paper #1, *2 for paper #2
+    Double_t e_max = 0.425*19;//0.425*19; //8;
+    Int_t n_bins = 17;//17; //(8-2)*10; //13 for paper #1, 17 for paper #2
     axes.AddAxis(BinAxis("mc_neutrino_energy", e_min, e_max, n_bins));
 
     // create LH function
@@ -267,7 +267,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, BinnedNLLH &l
                printf("Throw: Reactor doesn't match any loaded type...\n");
                continue;
             }
-        reactor_pdf[i]->Normalise();
+        //reactor_pdf[i]->Normalise();
         //reactor_pdf[i]->Scale(reactor_scale[i]); // normalise to integral for each reactor
 
         // setup survival probability
@@ -340,9 +340,9 @@ void LHFit_produce_histograms(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Bi
     ObsSet data_rep(0);
     // set up binning
     AxisCollection axes;
-    Double_t e_min = 2;//0.425*2; //2; //*6 for kamland paper #1, *2 for paper #2
-    Double_t e_max = 8;//0.425*19; //8;
-    Int_t n_bins = 60;//17; //(8-2)*10; //13 for paper #1, 17 for paper #2
+    Double_t e_min = 0.425*2;//0.425*2; //2; //*6 for kamland paper #1, *2 for paper #2
+    Double_t e_max = 0.425*19;//0.425*19; //8;
+    Int_t n_bins = 17;//17; //(8-2)*10; //13 for paper #1, 17 for paper #2
     axes.AddAxis(BinAxis("mc_neutrino_energy", e_min, e_max, n_bins));
 
     double param_s13 = 0.02303;
