@@ -11,7 +11,7 @@
 #include <TObject.h>
 #include <math.h>
 
-void process_cuts(const std::string filename_input, const std::string filename_output, Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max, Double_t deltaT = 1000000, Double_t deltaP = 6000, Double_t deltaD = 6000, Bool_t use_mc = false){
+void process_cuts(const std::string filename_input, const std::string filename_output, Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max, Double_t deltaT = 1000000, Double_t deltaP = 6000, Double_t deltaD = 6000){
 
     // load input file
     TFile *file_input = new TFile(filename_input.c_str());
@@ -402,15 +402,15 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     //write csv output file with event numbers
     sprintf(name, "%s.csv",filename_output.c_str());
     FILE *fOut = fopen(name,"w");
-    fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,use_mc,initial_entries,final_entries,already_tagged,finished\n");
-    fprintf(fOut,"%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD, use_mc, n_parent_entries, n_passed, already_tagged,1);
+    fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,initial_entries,final_entries,already_tagged,finished\n");
+    fprintf(fOut,"%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD, n_parent_entries, n_passed, already_tagged,1);
     fclose(fOut);
 }
 
 Int_t main(Int_t argc, char *argv[]) {
 
-    if (argc != 11) {
-        std::cout<<"Error: 10 arguments expected. Got: "<<argc-1<<std::endl;
+    if (argc != 10) {
+        std::cout<<"Error: 9 arguments expected. Got: "<<argc-1<<std::endl;
         return 1; // return>0 indicates error code
     }
     else {
@@ -424,17 +424,16 @@ Int_t main(Int_t argc, char *argv[]) {
         double deltaT = atof(argv[7]);
         double deltaP = atof(argv[8]);
         double deltaD = atof(argv[9]);
-        unsigned int use_mc = atoi(argv[10]);
 
         //write csv output file to show process has begun (values filled upon completion)
         char *name = new char[1000];
         sprintf(name, "%s.csv",filename_output.c_str());
         FILE *fOut = fopen(name,"w");
-        fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,use_mc,initial_entries,final_entries,already_tagged,finished\n");
+        fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,initial_entries,final_entries,already_tagged,finished\n");
         fprintf(fOut,"%s,%s,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i\n", filename_input.c_str(), filename_output.c_str(), -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000,0);
         fclose(fOut);
 
-        process_cuts(filename_input, filename_output, energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD, (Bool_t)use_mc);
+        process_cuts(filename_input, filename_output, energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD);
 
         return 0; // completed successfully
     }

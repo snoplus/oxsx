@@ -29,8 +29,8 @@
 #include <TObject.h>
 
 const TVector3 SNO_LLA_coord_ = TVector3(-81.2014, 46.4753, -1766.0);
-const TVector3 SNO_ECEF_coord_ = TVector3(672.87, -4347.18, 4600.51);
-//const TVector3 SNO_ECEF_coord_ = TVector3(-3777.14425893, 3483.58137383, 3766.0181443); // Kamland
+//const TVector3 SNO_ECEF_coord_ = TVector3(672.87, -4347.18, 4600.51);
+const TVector3 SNO_ECEF_coord_ = TVector3(-3777.14425893, 3483.58137383, 3766.0181443); // Kamland
 
 Double_t CalculateDistance(TVector3 point1, TVector3 point2) {
     return (point2 - point1).Mag();
