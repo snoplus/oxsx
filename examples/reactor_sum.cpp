@@ -254,16 +254,17 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
 
 int main(int argc, char *argv[]){
 
-    if (argc != 6){
-        printf("Error: 5 arguments expected.\n");
+    if (argc != 7){
+        printf("Error: 6 arguments expected.\n");
         return 1; // return>0 indicates error code
     }
     else{
         const std::string &in_path = argv[1];
         const std::string &data_path = argv[2];
         const std::string &info_file = argv[3];
-        const size_t flux_data = atoi(argv[4]);
-        const std::string &out_file = argv[5];
+        const std::string &constraints_info_file = argv[4];
+        const size_t flux_data = atoi(argv[5]);
+        const std::string &out_file = argv[6];
 
         printf("--------------------------------------\n");
 
@@ -275,19 +276,33 @@ int main(int argc, char *argv[]){
         std::vector<Double_t> powers;
         std::vector<Double_t> power_errs;
         readInfoFile(info_file, reactor_names, distances, reactor_types, n_cores, powers, power_errs);
+        
+        std::vector<std::string> reactor_names2;
+        std::vector<Double_t> fit_means;
+        std::vector<Double_t> fit_mean_errs;
+        std::vector<Double_t> fit_sigmas;
+        std::vector<Double_t> fit_sigma_errs;
+
+        // do a check to make sure reactor_names == reactor_names2
+        for (size_t i=0; i<(size_t)reactor_names.size(); i++){
+            double fit_mean, fit_mean_err, fit_sigma, fit_sigma_err;
+            readConstraintsInfoFile(constraints_info_file, reactor_names[i].c_str(), fit_mean, fit_mean_err, fit_sigma, fit_sigma_err);
+            fit_means.push_back(fit_mean);
+            fit_mean_errs.push_back(fit_mean_err);
+            fit_sigmas.push_back(fit_sigma);
+            fit_sigma_errs.push_back(fit_sigma_err);
+        }
+        for (size_t i=0; i<(size_t)reactor_names.size(); i++)
+            printf("i:%llu, reactor_name:%s, fit_mean: %.3f, fit_mean_err: %.3f, fit_sigma: %.3f, fit_sigma_err: %.3f\n", i, reactor_names[i].c_str(), fit_means[i], fit_mean_errs[i], fit_sigmas[i], fit_sigma_errs[i]);
 
         const ULong64_t n_pdf = reactor_names.size();
         BinnedED **spectra_pdf = new BinnedED*[n_pdf]; // PWR=0, PHWR=1
-        Double_t *reactor_scale = new Double_t[n_pdf];
-        Double_t *reactor_scale_err = new Double_t[n_pdf];
         bool fit_validity = false;
 
-        for (size_t i=0; i<(size_t)reactor_names.size(); i++)
-            reactor_scale_err[i] = power_errs[i]/powers[i];
+        //BinnedED data_set_pdf = LHFit_initialise(spectra_pdf, in_path, data_path, flux_data);
 
-        BinnedED data_set_pdf = LHFit_initialise(spectra_pdf, reactor_scale, in_path, data_path, reactor_names, flux_data);
-
-        LHFit_fit(data_set_pdf, spectra_pdf, reactor_scale, reactor_scale_err, reactor_names, distances, reactor_types, out_file, fit_validity);
+        //LHFit_fit(data_set_pdf, spectra_pdf, reactor_names, distances, reactor_types, fit_means, fit_mean_errs, fit_sigmas, fit_sigma_errs, out_file, fit_validity);
+        printf("Fit Validity: %llu\n", fit_validity);
 
         printf("--------------------------------------\n");
         return 0;
