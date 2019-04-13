@@ -175,7 +175,7 @@ def get_reactor_status_ratdb_info(reactor_ratdb_status_filename):
 
     return reactor_status_info
 
-def get_reactor_info(reactor_ratdb_info, reactor_status_ratdb_info, reactor_list="All"):
+def get_reactor_info(reactor_ratdb_info, reactor_status_ratdb_info, reactor_list="All", position = "sno"):
     '''
     Returns the combined, averaged info from the reactors.ratdb and reactors_status.ratdb files
     '''
@@ -236,7 +236,7 @@ def get_reactor_info(reactor_ratdb_info, reactor_status_ratdb_info, reactor_list
         reactor_info[reactor_name]["longitude"] = longitude
 
         # convert lat and long to distance
-        reactor_info[reactor_name]["distance"] = lat_long_to_distance(latitude, longitude)
+        reactor_info[reactor_name]["distance"] = lat_long_to_distance(position, latitude, longitude)
 
         # get core type information
         # assumption that all cores are the same type
@@ -304,7 +304,7 @@ def lat_long_to_ecef(latitude, longitude, altitude):
     #print x,y,z
     return np.array([x_coord, y_coord, z_coord])
 
-def lat_long_to_distance(latitude, longitude, altitude=0):
+def lat_long_to_distance(position, latitude, longitude, altitude=0):
     '''
     Returns the distance (km) from a lat,long to SNOLAB
     '''
@@ -312,7 +312,10 @@ def lat_long_to_distance(latitude, longitude, altitude=0):
     kamland_ecef = np.array([-3777.14425893, 3483.58137383, 3766.0181443]) #using kamland (lat, long, alt) = (36.4225, 137.3153, 0.358)
     sno_ecef = np.array([672.87, -4347.18, 4600.51]) # converted numbers
     ecef = lat_long_to_ecef(latitude, longitude, altitude)
-    displacement = np.subtract(kamland_ecef, ecef) #### currently using kamland position
+    if position == "sno":
+        displacement = np.subtract(sno_ecef, ecef)
+    if position == "kamland":
+        displacement = np.subtract(kamland_ecef, ecef)
     distance = np.linalg.norm(displacement)
     return round(distance, 2)
 
@@ -320,7 +323,6 @@ def main(args):
     '''
     main - pass args
     '''
-    #### currently using kamland position
     #print args
     parser = argparse.ArgumentParser("Pulls reactor info from ratdb files, " \
         +"output txt file contains selected reactor info.")
@@ -329,13 +331,16 @@ def main(args):
                         default="All")
     parser.add_argument("-i", dest='REACTORS_filename', type=str, nargs='?',
                         help='filename & path to REACTORS.ratdb',
-                        default="/home/lidgard/rat3/data/REACTORS.ratdb")
+                        default="/home/lidgard/rat-7/data/REACTORS.ratdb")
     parser.add_argument("-s", dest='REACTORS_STATUS_filename', type=str, nargs='?',
                         help='filename & path to REACTORS_STATUS.ratdb',
-                        default="/home/lidgard/rat3/data/REACTORS_STATUS.ratdb")
+                        default="/home/lidgard/rat-7/data/REACTORS_STATUS.ratdb")
     parser.add_argument("-o", dest='output_filename', type=str, nargs='?',
                         help='filename & path to output file.ratdb',
                         default="reactor_list_selection.csv")
+    parser.add_argument("-p", dest='position', type=str, nargs='?',
+                        help='location to take distance to, options: \'sno\' or \'kamland\'',
+                        default="sno")
     parser.add_argument('--fearless',action='store_true',\
                         help='Do not prompt the user for input - run without fear!')
     args = parser.parse_args(args)
@@ -362,7 +367,8 @@ def main(args):
 
         reactor_info = get_reactor_info(reactor_ratdb_info, \
             reactor_status_ratdb_info,\
-            reactor_list_name)
+            reactor_list_name, \
+            position)
         write_output_file(args.output_filename, reactor_info)
     else:
         print "One of the specified ratdb files cannot be found, check paths. Exiting..."
