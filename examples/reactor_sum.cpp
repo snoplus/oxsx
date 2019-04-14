@@ -31,8 +31,9 @@
 #include <TH1D.h>
 #include <TRandom3.h>
 #include "AntinuUtils.cpp"
+#include "../util/oscillate_util.cpp"
 
-void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, std::vector<Double_t> &fit_means, std::vector<Double_t> &fit_mean_errs, std::vector<Double_t> &fit_sigmas, std::vector<Double_t> &fit_sigma_errs, const std::string &out_filename, bool &fit_validity){
+void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, std::vector<Double_t> &fit_means, std::vector<Double_t> &fit_mean_errs, std::vector<Double_t> &fit_sigmas, std::vector<Double_t> &fit_sigma_errs, const std::string &out_filename, bool &fit_validity){
 
     printf("Begin fit--------------------------------------\n");
     printf("LHFit_fit...\n");
@@ -76,15 +77,16 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, std::vector<std::
     printf("Setup survival probability...\n");
     SurvProb *surv_prob[n_pdf];
     NuOsc *reactor_systematic[n_pdf];
-    BinnedED **reactor_pdf = new BinnedED*[n_pdf];
+    BinnedED **unosc_reactor_pdf = new BinnedED*[n_pdf];
+    BinnedED **unosc_reactor_ev_pdf = new BinnedED*[n_pdf];
     for (ULong64_t i = 0; i < n_pdf; i++){
         // for each reactor, load spectrum pdf for reactor type
-        reactor_pdf[i] = new BinnedED(reactor_names[i], axes);
-        reactor_pdf[i]->SetObservables(0);
+        unosc_reactor_pdf[i] = new BinnedED(reactor_names[i], axes);
+        unosc_reactor_pdf[i]->SetObservables(0);
         if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR"))
-            reactor_pdf[i]->Add(*spectra_pdf[0],1); //use PWR pdf
+            unosc_reactor_pdf[i]->Add(*spectra_ke_pdf[0],1); //use PWR pdf
         else if (reactor_types[i]=="PHWR")
-                reactor_pdf[i]->Add(*spectra_pdf[1],1); //use PHWR pdf
+                unosc_reactor_pdf[i]->Add(*spectra_ke_pdf[1],1); //use PHWR pdf
             else{
                printf("Throw: Reactor doesn't match any loaded type...\n");
                continue;
@@ -115,15 +117,12 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, std::vector<std::
         initial_err[name] = fit_sigmas[i];
 
         sprintf(name,"group%d",i);
-        lh_function.AddSystematic(reactor_systematic[i],name);
-        lh_function.AddDist(*reactor_pdf[i],std::vector<std::string>(1,name), true);
+        lh_function.AddSystematic(reactor_systematic[i], name);
+        lh_function.AddDist(*unosc_reactor_pdf[i], std::vector<std::string>(1,name), true);
 
         sprintf(name, "%s_norm", reactor_names[i].c_str());
         lh_function.SetConstraint(name, fit_means[i], fit_sigmas[i]); // constrain normalisation
     }
-
-    //lh_function.SetConstraint("d21", 6.9e-5, 1e-7); //7.58e-5;
-    //lh_function.SetConstraint("s12", 0.45, 0.3); //0.359;
 
     printf("Built LH function, fitting...\n");
     // fit
@@ -155,7 +154,7 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, std::vector<std::
     BinnedED **reactor_pdf_fitosc = new BinnedED*[n_pdf];
     BinnedED reactor_pdf_fitosc_sum("reactor_pdf_fitosc_sum",axes);
     reactor_pdf_fitosc_sum.SetObservables(data_rep);
-    
+
     for (ULong64_t i = 0; i < n_pdf; i++){
         sprintf(name, "%s_pdf_fitosc", reactor_names[i].c_str());
         reactor_pdf_fitosc[i] = new BinnedED(name, axes);
@@ -172,7 +171,7 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, std::vector<std::
         OscResult.SetDistributionObs(data_rep);
         OscResult.Construct();
 
-        reactor_pdf_fitosc[i]->Add(OscResult(*reactor_pdf[i]),1);
+        reactor_pdf_fitosc[i]->Add(OscResult(*unosc_reactor_pdf[i]),1);
 
         sprintf(name,"%s_norm",reactor_names[i].c_str());
         reactor_pdf_fitosc[i]->Scale(best_fit.at(name)*normalisation_osc.at(i));
@@ -188,7 +187,7 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, std::vector<std::
     TH1D *reactor_hist = new TH1D[n_pdf];
     TH1D *reactor_hist_fitosc = new TH1D[n_pdf];
     for (ULong64_t i = 0; i< n_pdf; i++){
-        reactor_hist[i] = DistTools::ToTH1D(*reactor_pdf[i]);
+        reactor_hist[i] = DistTools::ToTH1D(*unosc_reactor_pdf[i]);
         sprintf(name, "%s_hist", reactor_names[i].c_str());
         reactor_hist[i].SetName(name);
         reactor_hist[i].Write();
@@ -220,7 +219,7 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, std::vector<std::
     data_set_hist.Write();
 
     // pdfs of spectra
-    TH1D pwr_spectrum_hist = DistTools::ToTH1D(*spectra_pdf[0]);
+    TH1D pwr_spectrum_hist = DistTools::ToTH1D(*spectra_ke_pdf[0]);
     // pwr_spectrum_hist.Sumw2();
     sprintf(name, "pwr_spectrum_hist");
     pwr_spectrum_hist.SetName(name);
@@ -228,7 +227,7 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, std::vector<std::
     pwr_spectrum_hist.GetXaxis()->SetTitle("Energy (MeV)");
     pwr_spectrum_hist.Write();
 
-    TH1D phwr_spectrum_hist = DistTools::ToTH1D(*spectra_pdf[1]);
+    TH1D phwr_spectrum_hist = DistTools::ToTH1D(*spectra_ke_pdf[1]);
     // phwr_spectrum_hist.Sumw2();
     sprintf(name, "phwr_spectrum_hist");
     phwr_spectrum_hist.SetName(name);
@@ -272,14 +271,15 @@ int main(int argc, char *argv[]){
         std::vector<Double_t> powers;
         std::vector<Double_t> power_errs;
         readInfoFile(info_file, reactor_names, distances, reactor_types, n_cores, powers, power_errs);
-        
+
+        // read in constraint information
         std::vector<std::string> reactor_names2;
         std::vector<Double_t> fit_means;
         std::vector<Double_t> fit_mean_errs;
         std::vector<Double_t> fit_sigmas;
         std::vector<Double_t> fit_sigma_errs;
 
-        // do a check to make sure reactor_names == reactor_names2
+        // read constraint info for each reactor in the info file (one at time to ensure they match correctly)
         for (size_t i=0; i<(size_t)reactor_names.size(); i++){
             double fit_mean, fit_mean_err, fit_sigma, fit_sigma_err;
             readConstraintsInfoFile(constraints_info_file, reactor_names[i].c_str(), fit_mean, fit_mean_err, fit_sigma, fit_sigma_err);
@@ -292,12 +292,13 @@ int main(int argc, char *argv[]){
             printf("i:%llu, reactor_name:%s, fit_mean: %.3f, fit_mean_err: %.3f, fit_sigma: %.3f, fit_sigma_err: %.3f\n", i, reactor_names[i].c_str(), fit_means[i], fit_mean_errs[i], fit_sigmas[i], fit_sigma_errs[i]);
 
         const ULong64_t n_pdf = reactor_names.size();
-        BinnedED **spectra_pdf = new BinnedED*[n_pdf]; // PWR=0, PHWR=1
+        BinnedED **spectra_ke_pdf = new BinnedED*[n_pdf]; // PWR=0, PHWR=1
+        BinnedED **spectra_ev_pdf = new BinnedED*[n_pdf]; // PWR=0, PHWR=1
         bool fit_validity = false;
 
-        BinnedED data_set_pdf = LHFit_initialise(spectra_pdf, in_path, data_path, flux_data);
+        BinnedED data_set_pdf = LHFit_initialise(spectra_ke_pdf, spectra_ev_pdf, in_path, data_path, flux_data);
 
-        LHFit_fit(data_set_pdf, spectra_pdf, reactor_names, distances, reactor_types, fit_means, fit_mean_errs, fit_sigmas, fit_sigma_errs, out_file, fit_validity);
+        LHFit_fit(data_set_pdf, spectra_ke_pdf, spectra_ev_pdf, reactor_names, distances, reactor_types, fit_means, fit_mean_errs, fit_sigmas, fit_sigma_errs, out_file, fit_validity);
         printf("Fit Validity: %llu\n", fit_validity);
 
         printf("--------------------------------------\n");

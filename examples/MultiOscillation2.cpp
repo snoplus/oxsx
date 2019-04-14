@@ -30,7 +30,7 @@
 #include <SurvProb.h>
 #include "AntinuUtils.cpp"
 
-Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor_scale, Double_t *reactor_scale_err, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, Double_t param_d21, Double_t param_s12, Double_t param_s13, bool &fit_validity){
+Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, Double_t *reactor_scale, Double_t *reactor_scale_err, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, Double_t param_d21, Double_t param_s12, Double_t param_s13, bool &fit_validity){
 
     printf("Begin fit--------------------------------------\n");
     printf("LHFit_fit:: del_21:%.9f, sin2_12:%.7f, sin2_13:%.7f\n", param_d21, param_s12, param_s13);
@@ -79,9 +79,9 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *rea
         reactor_systematic.Construct();
 
         if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR"))
-            reactor_pdf[i]->Add(reactor_systematic(*spectra_pdf[0]),1); //use PWR pdf
+            reactor_pdf[i]->Add(reactor_systematic(*spectra_ke_pdf[0]),1); //use PWR pdf
         else if (reactor_types[i]=="PHWR")
-                reactor_pdf[i]->Add(reactor_systematic(*spectra_pdf[1]),1); //use PHWR pdf
+                reactor_pdf[i]->Add(reactor_systematic(*spectra_ke_pdf[1]),1); //use PHWR pdf
             else{
                printf("Throw: Reactor doesn't match any loaded type...\n");
                continue;
@@ -152,6 +152,25 @@ int main(int argc, char *argv[]) {
         std::vector<Double_t> power_errs;
         readInfoFile(info_file, reactor_names, distances, reactor_types, n_cores, powers, power_errs);
 
+        // read in constraint information
+        std::vector<std::string> reactor_names2;
+        std::vector<Double_t> fit_means;
+        std::vector<Double_t> fit_mean_errs;
+        std::vector<Double_t> fit_sigmas;
+        std::vector<Double_t> fit_sigma_errs;
+
+        // read constraint info for each reactor in the info file (one at time to ensure they match correctly)
+        for (size_t i=0; i<(size_t)reactor_names.size(); i++){
+            double fit_mean, fit_mean_err, fit_sigma, fit_sigma_err;
+            readConstraintsInfoFile(constraints_info_file, reactor_names[i].c_str(), fit_mean, fit_mean_err, fit_sigma, fit_sigma_err);
+            fit_means.push_back(fit_mean);
+            fit_mean_errs.push_back(fit_mean_err);
+            fit_sigmas.push_back(fit_sigma);
+            fit_sigma_errs.push_back(fit_sigma_err);
+        }
+        for (size_t i=0; i<(size_t)reactor_names.size(); i++)
+            printf("i:%llu, reactor_name:%s, fit_mean: %.3f, fit_mean_err: %.3f, fit_sigma: %.3f, fit_sigma_err: %.3f\n", i, reactor_names[i].c_str(), fit_means[i], fit_mean_errs[i], fit_sigmas[i], fit_sigma_errs[i]);
+
         // read in parameter information
         std::vector<Double_t> d_21s;
         std::vector<Double_t> s_12s;
@@ -159,7 +178,8 @@ int main(int argc, char *argv[]) {
         readParameterFile(parameter_file, d_21s, s_12s, s_13s);
 
         const ULong64_t n_pdf = reactor_names.size();
-        BinnedED **spectra_pdf = new BinnedED*[n_pdf]; // PWR=0, PHWR=1
+        BinnedED **spectra_ke_pdf = new BinnedED*[n_pdf]; // PWR=0, PHWR=1
+        BinnedED **spectra_ev_pdf = new BinnedED*[n_pdf]; // PWR=0, PHWR=1
         Double_t *reactor_scale = new Double_t[n_pdf];
         Double_t *reactor_scale_err = new Double_t[n_pdf];
         const ULong64_t n_parameter_sets = d_21s.size();
@@ -168,12 +188,12 @@ int main(int argc, char *argv[]) {
         for (size_t i=0; i<(size_t)reactor_names.size(); i++)
             reactor_scale_err[i] = power_errs[i]/powers[i];
 
-        BinnedED data_set_pdf = LHFit_initialise(spectra_pdf, reactor_scale, in_path, data_path, reactor_names, flux_data);
+        BinnedED data_set_pdf = LHFit_initialise(spectra_ke_pdf, spectra_ev_pdf, in_path, data_path, flux_data);
 
         bool fit_validity = 0;
         for (ULong64_t i=0; i<n_parameter_sets; i++) {
             printf("Fit number: %llu of %llu\n", i+1, n_parameter_sets);
-            lh_values[i] = LHFit_fit(data_set_pdf, spectra_pdf, reactor_scale, reactor_scale_err, reactor_names, distances, reactor_types, d_21s[i], s_12s[i], s_13s[i], fit_validity);
+            lh_values[i] = LHFit_fit(data_set_pdf, spectra_ke_pdf, spectra_ev_pdf, reactor_names, distances, reactor_types, fit_means, fit_mean_errs, fit_sigmas, fit_sigma_errs, d_21s[i], s_12s[i], s_13s[i], fit_validity);
         }
 
         //Write fit coefficients to txt file
