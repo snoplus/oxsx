@@ -24,7 +24,7 @@ def process(file_name, tree_name, branches, out_file, n_events):
     # Get the event tree
     tree = ROOT.TChain(tree_name)
     tree.Add(file_name)
-    tree.Print()
+    #tree.Print()
     if not tree:
         print "Error: No tree named %s in %s" %(tree_name, file_name)
         sys.exit()
