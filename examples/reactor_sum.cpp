@@ -32,7 +32,7 @@
 #include <TRandom3.h>
 #include "AntinuUtils.cpp"
 
-void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor_scale, Double_t *reactor_scale_err, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, const std::string out_filename, bool fit_validity){
+void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, std::vector<Double_t> &fit_means, std::vector<Double_t> &fit_mean_errs, std::vector<Double_t> &fit_sigmas, std::vector<Double_t> &fit_sigma_errs, const std::string &out_filename, bool &fit_validity){
 
     printf("Begin fit--------------------------------------\n");
     printf("LHFit_fit...\n");
@@ -46,7 +46,6 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
     Double_t e_max = 0.425*19; //8;
     Int_t n_bins = 17; //(8-2)*10; //13 for paper #1, 17 for paper #2
     axes.AddAxis(BinAxis("mc_neutrino_energy", e_min, e_max, n_bins));
-
 
     // create LH function
     BinnedNLLH lh_function;
@@ -90,8 +89,6 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
                printf("Throw: Reactor doesn't match any loaded type...\n");
                continue;
             }
-        //reactor_pdf[i]->Normalise();
-        //reactor_pdf[i]->Scale(reactor_scale[i]); // normalise to integral for each reactor
 
         // setup survival probability
         sprintf(name, "%s_survival", reactor_names[i].c_str());
@@ -107,23 +104,22 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
         reactor_systematic[i]->SetDistributionObs(data_rep);
 
         // Setting optimisation limits
-        //std::cout << " scale" << reactor_scale[i] << " err" << reactor_scale_err[i] << " min" << reactor_scale[i]-reactor_scale_err[i]*reactor_scale[i] << " max" << reactor_scale[i]+reactor_scale_err[i]*reactor_scale[i] << std::endl;
         sprintf(name, "%s_norm", reactor_names[i].c_str());
-        Double_t min = reactor_scale[i]-0.196*reactor_scale_err[i]*reactor_scale[i];
-        Double_t max = reactor_scale[i]+0.196*reactor_scale_err[i]*reactor_scale[i];
+        Double_t min = fit_means[i]-2*fit_sigmas[i]; // let min and max float within 2 sigma (but constrained later)
+        Double_t max = fit_means[i]+2*fit_sigmas[i];
         if (min < 0) min = 0;
         minima[name] = min;
         maxima[name] = max;
-        printf("  added reactor %d/%d: %s, norm: %.3f (min:%.3f max:%.3f)\n", i+1, n_pdf, reactor_names[i].c_str(), reactor_scale[i], min, max);
-        initial_val[name] = reactor_scale[i];
-        initial_err[name] = reactor_scale_err[i]*reactor_scale[i];
+        printf("  added reactor %d/%d: %s, norm: %.3f (min:%.3f max:%.3f) err: %.3f\n", i+1, n_pdf, reactor_names[i].c_str(), fit_means[i], min, max, fit_sigmas[i]);
+        initial_val[name] = fit_means[i];
+        initial_err[name] = fit_sigmas[i];
 
         sprintf(name,"group%d",i);
         lh_function.AddSystematic(reactor_systematic[i],name);
         lh_function.AddDist(*reactor_pdf[i],std::vector<std::string>(1,name), true);
 
         sprintf(name, "%s_norm", reactor_names[i].c_str());
-        lh_function.SetConstraint(name, reactor_scale[i], reactor_scale_err[i]*reactor_scale[i]);
+        lh_function.SetConstraint(name, fit_means[i], fit_sigmas[i]); // constrain normalisation
     }
 
     //lh_function.SetConstraint("d21", 6.9e-5, 1e-7); //7.58e-5;
@@ -133,8 +129,8 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
     // fit
     Minuit min;
     min.SetMethod("Migrad");
-    min.SetMaxCalls(10000);
-    min.SetTolerance(0.01);
+    min.SetMaxCalls(100000);
+    min.SetTolerance(0.001);
     min.SetMinima(minima);
     min.SetMaxima(maxima);
     min.SetInitialValues(initial_val);
@@ -151,7 +147,7 @@ void LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_pdf, Double_t *reactor
     std::vector<double> normalisation_osc = lh_function.GetWorkingNormalisations();
     for (ULong64_t i = 0; i < n_pdf; i++){
         sprintf(name, "%s_norm", reactor_names[i].c_str());
-        printf("%s:\tscale:%.4f\tnorm_unosc: %.3f\tnorm_osc: %.4f\n", name, reactor_scale[i], normalisation_osc.at(i), reactor_scale[i]*normalisation_osc.at(i));
+        printf("%s:\tscale:%.4f\tnorm_unosc: %.3f\tnorm_osc: %.4f\n", name, fit_means[i], normalisation_osc.at(i), fit_means[i]*normalisation_osc.at(i));
     }
 
     // apply fitted oscillations to reactor pdf's
@@ -299,9 +295,9 @@ int main(int argc, char *argv[]){
         BinnedED **spectra_pdf = new BinnedED*[n_pdf]; // PWR=0, PHWR=1
         bool fit_validity = false;
 
-        //BinnedED data_set_pdf = LHFit_initialise(spectra_pdf, in_path, data_path, flux_data);
+        BinnedED data_set_pdf = LHFit_initialise(spectra_pdf, in_path, data_path, flux_data);
 
-        //LHFit_fit(data_set_pdf, spectra_pdf, reactor_names, distances, reactor_types, fit_means, fit_mean_errs, fit_sigmas, fit_sigma_errs, out_file, fit_validity);
+        LHFit_fit(data_set_pdf, spectra_pdf, reactor_names, distances, reactor_types, fit_means, fit_mean_errs, fit_sigmas, fit_sigma_errs, out_file, fit_validity);
         printf("Fit Validity: %llu\n", fit_validity);
 
         printf("--------------------------------------\n");
