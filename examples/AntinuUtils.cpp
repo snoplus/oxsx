@@ -216,8 +216,14 @@ BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, 
     ROOTNtuple data_ntp(data_path, "nt");
     for(ULong64_t i = 0; i < data_ntp.GetNEntries(); i++)
         data_set_pdf.Fill(data_ntp.GetEntry(i));
+
+    // for kamland reproduction change:
     data_set_pdf.Scale(1./flux_data);
+    data_set_pdf.Normalise();
+    data_set_pdf.Scale(1.27844983315467830e+003);
+    
     printf("Loading data: %s (osc)integral:%.3f\n", data_path.c_str(), data_set_pdf.Integral());
+
 
     // load unoscillated spectra
     // pwr spectrum

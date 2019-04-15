@@ -18,6 +18,33 @@ Double_t NuSurvProb(Double_t nuE, Double_t baseline, Double_t del_m_sqr_21, Doub
     return f_osc_prob;
 }
 
+void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_ke, TNtuple *out_tree_prompt, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
+
+    //
+    // takes a TTree with multiple branches, oscillates using KE branch, fills two TNtuples each with a single branch
+    //
+
+    ULong64_t n_entries = in_tree->GetEntries();
+    Double_t surv_prob, mc_energy_nu, ev_energy_p1, distance;
+    in_tree->SetBranchAddress("mc_neutrino_energy", &mc_energy_nu);
+    in_tree->SetBranchAddress("ev_fit_energy", &ev_energy_p1); //ev_energy_p1
+    in_tree->SetBranchAddress("reactor_info_distance", &distance);
+    TRandom3 *random_generator = new TRandom3();
+
+    for (ULong64_t i = 0; i < n_entries; i++){
+        in_tree->GetEntry(i);
+        surv_prob = NuSurvProb(mc_energy_nu, distance, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
+
+        //const Double_t random = CLHEP::HepUniformRand();
+        Double_t random = random_generator->Uniform();
+
+        if (surv_prob > random){
+            out_tree_ke->Fill((Float_t)mc_energy_nu);
+            out_tree_prompt->Fill((Float_t)ev_energy_p1);
+        }
+    }
+}
+
 void ntOscillate(TTree *in_tree, TTree *out_tree, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
 
     ULong64_t n_entries = in_tree->GetEntries();
@@ -48,4 +75,33 @@ void write_file(const char* nt_in, const char* nt_out, Double_t del_m_sqr_21, Do
 
     TFile *f_out = new TFile(nt_out, "RECREATE");
     out_tree->Write();
+}
+
+void write_file_pruned(const char* nt_in, const char* nt_ke_out, const char* nt_prompt_out, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
+
+    TFile *f_in = new TFile(nt_in);
+    TTree *in_tree = (TTree*)f_in->Get("nt");
+    
+    // the ordering of things here to keep ROOT happy is exactly the following (TFile then TTree, TFile again TTree) 
+    TFile *f_ke_out = new TFile(nt_ke_out, "RECREATE");
+    TNtuple *out_tree_ke = new TNtuple("nt","Anti-neutrino processed tree", "mc_neutrino_energy");
+    
+    TFile *f_prompt_out = new TFile(nt_prompt_out, "RECREATE");
+    TNtuple *out_tree_prompt = new TNtuple("nt","Anti-neutrino processed tree", "ev_fit_energy_p1");
+
+    ntOscillate_pruned(in_tree, out_tree_ke, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
+
+    f_ke_out->cd();
+    out_tree_ke->Write();
+    f_ke_out->Close();
+    delete f_ke_out;
+    
+    f_prompt_out->cd();
+    out_tree_prompt->Write();
+    f_prompt_out->Close();
+    delete f_prompt_out;
+    
+    f_in->cd();
+    f_in->Close();
+    delete f_in;
 }

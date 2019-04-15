@@ -29,6 +29,7 @@
 #include <NuOsc.h>
 #include <SurvProb.h>
 #include "AntinuUtils.cpp"
+#include "../util/oscillate_util.cpp"
 
 Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types, std::vector<Double_t> &fit_means, std::vector<Double_t> &fit_mean_errs, std::vector<Double_t> &fit_sigmas, std::vector<Double_t> &fit_sigma_errs, Double_t param_d21, Double_t param_s12, Double_t param_s13, bool &fit_validity){
 
@@ -36,13 +37,14 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_ke_pdf, BinnedED *
     printf("LHFit_fit:: del_21:%.9f, sin2_12:%.7f, sin2_13:%.7f\n", param_d21, param_s12, param_s13);
 
     char name[1000];
+    char name2[1000];
     const ULong64_t n_pdf = reactor_names.size();
     ObsSet data_rep(0);
     // set up binning
     AxisCollection axes;
-    Double_t e_min = 0.425*3; //2; //*6 for kamland paper #1, *2 for paper #2
+    Double_t e_min = 0.425*2; //2; //*6 for kamland paper #1, *2 for paper #2
     Double_t e_max = 0.425*19; //8;
-    Int_t n_bins = 16; //(8-2)*10; //13 for paper #1, 17 for paper #2
+    Int_t n_bins = 17; //(8-2)*10; //13 for paper #1, 17 for paper #2
     axes.AddAxis(BinAxis("mc_neutrino_energy", e_min, e_max, n_bins));
 
     // create LH function
@@ -60,32 +62,36 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_ke_pdf, BinnedED *
 
     // setup survival probability
     printf("Setup survival probability...\n");
-    SurvProb *surv_prob[n_pdf];
+    //SurvProb *surv_prob[n_pdf];
     BinnedED **reactor_pdf = new BinnedED*[n_pdf];
     for (ULong64_t i = 0; i < n_pdf; i++){
         // for each reactor, load spectrum pdf for reactor type
         reactor_pdf[i] = new BinnedED(reactor_names[i], axes);
         reactor_pdf[i]->SetObservables(0);
 
-        // setup survival probability
-        surv_prob[i] = new SurvProb(param_d21, param_s12, distances[i]);
-        surv_prob[i]->Setsinsqrtheta13s(param_s13); // manual, fixed setting of theta13
-        sprintf(name, "%s_systematic", reactor_names[i].c_str());
-        NuOsc reactor_systematic = NuOsc(name);
-        reactor_systematic.SetFunction(surv_prob[i]);
-        reactor_systematic.SetAxes(axes);
-        reactor_systematic.SetTransformationObs(data_rep);
-        reactor_systematic.SetDistributionObs(data_rep);
-        reactor_systematic.Construct();
+        sprintf(name, "/home/lidgard/antinu_analysis/sensitivity_plot/processed/data/osc_ntp_ke_%s_%0.9f_%0.7f_%0.7f.root", reactor_names[i].c_str(), param_d21, param_s12, param_s13);
+        sprintf(name2, "/home/lidgard/antinu_analysis/sensitivity_plot/processed/data/osc_ntp_prompt_%s_%0.9f_%0.7f_%0.7f.root", reactor_names[i].c_str(), param_d21, param_s12, param_s13);
+        if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR")){
+            printf("adding pwr reactor: ");
+            write_file_pruned("/data/snoplusmc/lidgard/OXSX_kamland/flux100/combinedpwr_flux100_day360_cleanround1.root", name, name2, param_d21, param_s12, param_s13);
+        }
 
-        if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR"))
-            reactor_pdf[i]->Add(reactor_systematic(*spectra_ke_pdf[0]),1); //use PWR pdf
-        else if (reactor_types[i]=="PHWR")
-                reactor_pdf[i]->Add(reactor_systematic(*spectra_ke_pdf[1]),1); //use PHWR pdf
-            else{
-               printf("Throw: Reactor doesn't match any loaded type...\n");
-               continue;
-            }
+        else if (reactor_types[i]=="PHWR"){
+            printf("adding phwr reactor: ");
+            
+            write_file_pruned("/data/snoplusmc/lidgard/OXSX_kamland/flux100/combinedphwr_flux100_day360_cleanround1.root", name, name2, param_d21, param_s12, param_s13);
+        }
+        else{
+            printf("Throw: Reactor doesn't match any loaded type...\n");
+            exit(0); // throw std::exception(); //continue;
+        }
+
+        ROOTNtuple reactor_ntp(name2, "nt");
+        for(size_t j = 0; j < reactor_ntp.GetNEntries(); j++)
+            reactor_pdf[i]->Fill(reactor_ntp.GetEntry(j));
+
+        reactor_pdf[i]->Normalise();
+        reactor_pdf[i]->Scale(fit_means[i]);
 
         // Setting optimisation limits
         sprintf(name, "%s_norm", reactor_names[i].c_str());
@@ -98,7 +104,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_ke_pdf, BinnedED *
         initial_val[name] = fit_means[i];
         initial_err[name] = fit_sigmas[i];
 
-        lh_function.AddDist(*reactor_pdf[i], true);
+        lh_function.AddDist(*reactor_pdf[i]);
         lh_function.SetConstraint(name, fit_means[i], fit_sigmas[i]);
     }
 
