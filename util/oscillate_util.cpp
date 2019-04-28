@@ -69,11 +69,12 @@ void write_file(const char* nt_in, const char* nt_out, Double_t del_m_sqr_21, Do
 
     TFile *f_in = new TFile(nt_in);
     TTree *in_tree = (TTree*)f_in->Get("nt");
+    TFile *f_out = new TFile(nt_out, "RECREATE");
     TTree *out_tree = in_tree->CloneTree(0);
 
     ntOscillate(in_tree, out_tree, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
 
-    TFile *f_out = new TFile(nt_out, "RECREATE");
+    f_out->cd();
     out_tree->Write();
 }
 

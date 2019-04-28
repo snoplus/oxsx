@@ -4,7 +4,6 @@
 #include <TNtuple.h>
 #include <iostream>
 #include <TObject.h>
-//#include <CLHEP/Random/Randomize.h>
 #include <TRandom3.h>
 #include "oscillate_util.cpp"
 
