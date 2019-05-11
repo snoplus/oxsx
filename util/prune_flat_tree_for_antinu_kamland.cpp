@@ -249,24 +249,27 @@ void ntload(std::string input_filename, std::string output_filename) {
             ev_pos_z = -9000;
             ev_pos_r = -9000;
 
-            if (rEV.GetFitNames().size()>0){ //use this to avoid trivial NoFitResultError exceptions
-                try {
-                    const RAT::DS::FitResult &fitResult = rEV.GetFitResult("scintFitter");
-                    const RAT::DS::FitVertex &fitVertex = fitResult.GetVertex(0);
-                    ev_validity = fitResult.GetValid() && fitVertex.ContainsPosition() && fitVertex.ValidPosition() && fitVertex.ContainsEnergy() && fitVertex.ValidEnergy();
-                    ev_energy = fitVertex.GetEnergy();
-                    ev_pos_x = fitVertex.GetPosition().X();
-                    ev_pos_y = fitVertex.GetPosition().Y();
-                    ev_pos_z = fitVertex.GetPosition().Z();
-                    ev_pos_r = fitVertex.GetPosition().Mag();
+            const class vector<std::string> &fit_names = rEV.GetFitNames();
+            for (ULong64_t i = 0; i < fit_names.size(); i++){ //ensure fit exists by going through all fits and ..
+                if (fit_names.at(i) == "penergy") { // ..selecting the desired name
+                    try {
+                        const RAT::DS::FitResult &fitResult = rEV.GetFitResult("penergy");
+                        const RAT::DS::FitVertex &fitVertex = fitResult.GetVertex(0);
+                        ev_validity = fitResult.GetValid() && fitVertex.ContainsPosition() && fitVertex.ValidPosition() && fitVertex.ContainsEnergy() && fitVertex.ValidEnergy();
+                        ev_energy = fitVertex.GetEnergy();
+                        ev_pos_x = fitVertex.GetPosition().X();
+                        ev_pos_y = fitVertex.GetPosition().Y();
+                        ev_pos_z = fitVertex.GetPosition().Z();
+                        ev_pos_r = fitVertex.GetPosition().Mag();
+                    }
+                    catch (RAT::DS::FitResult::NoVertexError &e){;}
+                    catch (RAT::DS::FitResult::NoFitResultError &e){;}
+                    catch (RAT::DS::FitVertex::NoValueError &e){;}
                 }
-                catch (RAT::DS::FitResult::NoFitResultError &e){;}
-                catch (RAT::DS::FitVertex::NoValueError &e){;}
+                else{
+                    ev_validity = false; // left for illustration (already is false)
+                }
             }
-            else{
-                ev_validity = false; // left for illustration (already is false)
-            }
-
             tree_output->Fill();
             n_total_events++;
         }
