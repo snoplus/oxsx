@@ -40,7 +40,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     TH1D h_after_cut_position_displacement("h_after_cut_position_displacement", "h_after_cut_position_displacement", 1000, 0, 10000);
     TH2D h2_after_cut_time_diff_displacement("h2_after_cut_time_diff_displacement", "h2_after_cut_time_diff_displacement", 1000, 0, 5000000, 1000, 0, 10000);
 
-    Double_t neutron_capture_energy = 1.857;
+    Double_t neutron_capture_energy = 2.19;//1.857;
     Double_t e_rem = 0.784;
 
     ULong64_t n_passed = 0;
@@ -118,7 +118,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     std::vector<TString> tagged_entries;
 
     ULong64_t n_entries = tree_input->GetEntries();
-    Int_t i_percent = (n_entries/100)*10;
+    ULong64_t percent_interval = n_entries/10;
     std::cout<<"total initial events (entries * events/entry): "<<n_entries<<std::endl;
     if (n_entries>1){
         for (ULong64_t i=0; i < (n_entries-1); i++){ // since we're comparing partners we go to entry n-1
@@ -126,8 +126,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
             //if (i>100) break; // testing
 
             // print progress
-            if(i_percent && !(i%i_percent))
-                std::cout << i/i_percent*10 << "% done " << std::endl;
+            if (i%percent_interval==0)
+                std::cout << (Double_t)i/n_entries*100. << "% done.. " << std::endl;
 
             tree_input->GetEntry(i);
 
@@ -414,7 +414,7 @@ Int_t main(Int_t argc, char *argv[]) {
         return 1; // return>0 indicates error code
     }
     else {
-        TH1::AddDirectory(kFALSE);
+        //TH1::AddDirectory(kFALSE);
         const std::string &filename_input = argv[1];
         const std::string &filename_output = argv[2];
         double energy_ep_min = atof(argv[3]);

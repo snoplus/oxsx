@@ -60,7 +60,7 @@ Double_t GetReactorDistanceLLA(Double_t latitude, Double_t longitude, Double_t a
     return CalculateDistance(SNO_ECEF_coord_,LLAtoECEF(latitude, longitude, altitude));
 }
 
-void ntload(std::string input_filename, std::string output_filename) {
+void ntload(std::string input_filename, std::string output_filename, std::string fitter_name) {
 
     TTree *tree_output = new TTree("nt","Anti-neutrino processed tree");
     ULong64_t n_total_events = 0;
@@ -134,7 +134,7 @@ void ntload(std::string input_filename, std::string output_filename) {
 
     // load ds
     RAT::DU::DSReader ds_reader(input_filename.c_str());
-    Int_t i_percent = (ds_reader.GetEntryCount()/100)*10;
+    ULong64_t percent_interval = ds_reader.GetEntryCount()/10;
 
     for (ULong64_t i_entry = 0; i_entry < ds_reader.GetEntryCount(); i_entry++) {
 
@@ -251,9 +251,9 @@ void ntload(std::string input_filename, std::string output_filename) {
 
             const class vector<std::string> &fit_names = rEV.GetFitNames();
             for (ULong64_t i = 0; i < fit_names.size(); i++){ //ensure fit exists by going through all fits and ..
-                if (fit_names.at(i) == "penergy") { // ..selecting the desired name
+                if (fit_names.at(i) == fitter_name.c_str()) { // ..selecting the desired name
                     try {
-                        const RAT::DS::FitResult &fitResult = rEV.GetFitResult("penergy");
+                        const RAT::DS::FitResult &fitResult = rEV.GetFitResult(fitter_name.c_str());
                         const RAT::DS::FitVertex &fitVertex = fitResult.GetVertex(0);
                         ev_validity = fitResult.GetValid() && fitVertex.ContainsPosition() && fitVertex.ValidPosition() && fitVertex.ContainsEnergy() && fitVertex.ValidEnergy();
                         ev_energy = fitVertex.GetEnergy();
@@ -265,18 +265,19 @@ void ntload(std::string input_filename, std::string output_filename) {
                     catch (RAT::DS::FitResult::NoVertexError &e){;}
                     catch (RAT::DS::FitResult::NoFitResultError &e){;}
                     catch (RAT::DS::FitVertex::NoValueError &e){;}
+                    break;
                 }
-                else{
-                    ev_validity = false; // left for illustration (already is false)
-                }
+                //else{
+                //    ev_validity = false; // left for illustration (already is false)
+                //}
             }
             tree_output->Fill();
             n_total_events++;
         }
 
         // print progress
-        if(i_percent && !(i_entry%i_percent))
-            std::cout << i_entry/i_percent*10 << "% done " << std::endl;
+        if (i_entry%percent_interval==0)
+            std::cout << (Double_t)i_entry/ds_reader.GetEntryCount()*100. << "% done " << std::endl;
     }
     std::cout << " Processed events: " << ds_reader.GetEntryCount() << std::endl;
     std::cout << " Total number of events (all ev's): " << n_total_events << std::endl;
@@ -288,7 +289,15 @@ void ntload(std::string input_filename, std::string output_filename) {
 }
 
 int main(int argc, char* argv[]) {
-  std::string input_filename = argv[1];
-  std::string output_filename = argv[2];
-  ntload(input_filename, output_filename);
+    if (argc != 4) {
+        std::cout<<"Error: 3 arguments expected. Got: "<<argc-1<<std::endl;
+        return 1; // return>0 indicates error code
+    }
+    else{
+        std::string input_filename = argv[1];
+        std::string output_filename = argv[2];
+        std::string fitter_name = argv[3];
+        ntload(input_filename, output_filename, fitter_name);
+        return 0; // return=0 indicates no error
+    }
 }
