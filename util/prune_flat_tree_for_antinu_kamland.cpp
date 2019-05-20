@@ -249,7 +249,7 @@ void ntload(std::string input_filename, std::string output_filename, std::string
             ev_pos_z = -9000;
             ev_pos_r = -9000;
 
-            const class vector<std::string> &fit_names = rEV.GetFitNames();
+            const vector<std::string> fit_names = rEV.GetFitNames();
             for (ULong64_t i = 0; i < fit_names.size(); i++){ //ensure fit exists by going through all fits and ..
                 if (fit_names.at(i) == fitter_name.c_str()) { // ..selecting the desired name
                     try {
