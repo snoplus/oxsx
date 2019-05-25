@@ -1,13 +1,12 @@
 #include <TFile.h>
-#include <RAT/DB.hh>
 #include <TF1.h>
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TMath.h>
 #include <string>
 #include <TTree.h>
+#include <TVector3.h>
 #include <iostream>
-#include <RAT/DU/Utility.hh>
 #include <TObject.h>
 #include <math.h>
 
@@ -118,16 +117,22 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     std::vector<TString> tagged_entries;
 
     ULong64_t n_entries = tree_input->GetEntries();
-    ULong64_t percent_interval = n_entries/10;
+    ULong64_t percent_interval = n_entries/10; //print every 10%
+    if (percent_interval<=0) percent_interval = 1;
+    ULong64_t progress_countdown = percent_interval;
     std::cout<<"total initial events (entries * events/entry): "<<n_entries<<std::endl;
+    
     if (n_entries>1){
         for (ULong64_t i=0; i < (n_entries-1); i++){ // since we're comparing partners we go to entry n-1
 
             //if (i>100) break; // testing
 
             // print progress
-            if (i%percent_interval==0)
-                std::cout << (Double_t)i/n_entries*100. << "% done.. " << std::endl;
+            progress_countdown--;
+            if (progress_countdown==0){
+                progress_countdown = percent_interval;
+                printf("%.0f%% done\n",(Double_t)(i+1)/n_entries*100);
+            }
 
             tree_input->GetEntry(i);
 
@@ -397,7 +402,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     file_output->Close();
     std::cout<<"number of (parent) entries: "<<n_parent_entries<<std::endl;
     std::cout<<"final entries: "<<n_passed<<std::endl;
-    std::cout<<"already_tagged: "<<already_tagged<<std::endl;
+    //std::cout<<"already_tagged: "<<already_tagged<<std::endl; //implement this!
 
     //write csv output file with event numbers
     sprintf(name, "%s.csv",filename_output.c_str());

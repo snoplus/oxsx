@@ -5,11 +5,7 @@
 #include <RAT/DS/PMT.hh>
 #include <RAT/DS/FitResult.hh>
 #include <RAT/DB.hh>
-#include <TH1D.h>
-#include <TH2D.h>
-#include <TLine.h>
 #include <TMath.h>
-#include <TCanvas.h>
 #include <string>
 #include <stdlib.h>
 #include <fstream>
@@ -19,14 +15,7 @@
 #include <sstream>
 #include <stdio.h>
 #include <RAT/DU/Utility.hh>
-#include <RAT/TrackNav.hh>
-#include <RAT/TrackCursor.hh>
-#include <RAT/TrackNode.hh>
-#include "TView.h"
-#include "TPolyMarker3D.h"
-#include "TPolyLine3D.h"
 #include <RAT/DB.hh>
-#include <TObject.h>
 
 const TVector3 SNO_LLA_coord_ = TVector3(-81.2014, 46.4753, -1766.0);
 const TVector3 SNO_ECEF_coord_ = TVector3(672.87, -4347.18, 4600.51);
@@ -134,13 +123,23 @@ void ntload(std::string input_filename, std::string output_filename, std::string
 
     // load ds
     RAT::DU::DSReader ds_reader(input_filename.c_str());
-    ULong64_t percent_interval = ds_reader.GetEntryCount()/10;
+    ULong64_t percent_interval = ds_reader.GetEntryCount()/10; //print every 10%
+    if (percent_interval<=0) percent_interval = 1;
+    ULong64_t progress_countdown = percent_interval;
+    std::cout << "Number of events: " << ds_reader.GetEntryCount() << std::endl;
 
     for (ULong64_t i_entry = 0; i_entry < ds_reader.GetEntryCount(); i_entry++) {
 
         // entry index
         const RAT::DS::Entry& ds_entry = ds_reader.GetEntry(i_entry);
         entry = i_entry;
+
+        // print progress
+        progress_countdown--;
+        if (progress_countdown==0){
+            progress_countdown = percent_interval;
+            printf("%.0f%% done\n",(Double_t)(i_entry+1)/ds_reader.GetEntryCount()*100);
+        }
 
         //*** MC entries
         // pdg code -12 = anti electron neutrino, see http://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf
@@ -271,10 +270,6 @@ void ntload(std::string input_filename, std::string output_filename, std::string
             tree_output->Fill();
             n_total_events++;
         }
-
-        // print progress
-        if (i_entry%percent_interval==0)
-            std::cout << (Double_t)i_entry/ds_reader.GetEntryCount()*100. << "% done " << std::endl;
     }
     std::cout << " Processed events: " << ds_reader.GetEntryCount() << std::endl;
     std::cout << " Total number of events (all ev's): " << n_total_events << std::endl;
