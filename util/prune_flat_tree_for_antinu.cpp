@@ -76,7 +76,7 @@ void ntload(std::string input_filename, std::string output_filename, std::string
     UInt_t ev_time_seconds;
     Double_t ev_energy, ev_pos_x, ev_pos_y, ev_pos_z, ev_pos_r, ev_energy_p1, ev_energy_p2;
     Bool_t ev_validity;
-    ULong64_t ev_index, mc_ev_index_ep, mc_ev_index_n;
+    ULong64_t ev_index, mc_ev_index_ep, mc_ev_index_n, ev_index_p1, ev_index_p2;
 
     // set branches
     tree_output->Branch("entry", &entry, "entry/l");
@@ -120,6 +120,8 @@ void ntload(std::string input_filename, std::string output_filename, std::string
     // values to modify
     tree_output->Branch("ev_fit_energy_p1", &ev_energy_p1, "ev_energy_p1/D");
     tree_output->Branch("ev_fit_energy_p2", &ev_energy_p2, "ev_energy_p2/D");
+    tree_output->Branch("ev_index_p1", &ev_index_p1, "ev_index_p1/l");
+    tree_output->Branch("ev_index_p2", &ev_index_p2, "ev_index_p2/l");
 
     // load ds
     RAT::DU::DSReader ds_reader(input_filename.c_str());
@@ -174,6 +176,8 @@ void ntload(std::string input_filename, std::string output_filename, std::string
         mc_ev_index_n = -9000;
         ev_energy_p1 = -9000;
         ev_energy_p2 = -9000;
+        ev_index_p1 = -9000;
+        ev_index_p2 = -9000;
 
         if ((rMC.GetMCParticleCount()==2)&&(rMC.GetMCParent(n_mcparent).GetPDGCode()==-12)){ // check the parent is an anti-neutrino and there are two child particles
 

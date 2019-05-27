@@ -39,7 +39,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     TH1D h_after_cut_position_displacement("h_after_cut_position_displacement", "h_after_cut_position_displacement", 1000, 0, 10000);
     TH2D h2_after_cut_time_diff_displacement("h2_after_cut_time_diff_displacement", "h2_after_cut_time_diff_displacement", 1000, 0, 5000000, 1000, 0, 10000);
 
-    Double_t neutron_capture_energy = 2.19;//1.857;
+    Double_t neutron_capture_energy = 2.2;//1.857;
     Double_t e_rem = 0.784;
 
     ULong64_t n_passed = 0;
@@ -50,7 +50,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     Bool_t all_pass, energy_pass, coincidence_pass, position_r_pass, particle_distance_pass, any_ev_passed;
 
     // properties to load from tree
-    ULong64_t entry;
+    ULong64_t entry, entry_i;
     Double_t ev_pos_r, ev_pos_x, ev_pos_y, ev_pos_z, ev_particle_distance;
     Double_t ev_pos_r_i, ev_pos_x_i, ev_pos_y_i, ev_pos_z_i;
     Double_t ev_pos_r_p1, ev_pos_x_p1, ev_pos_y_p1, ev_pos_z_p1;
@@ -60,8 +60,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     Double_t ev_time_nanoseconds, ev_time_nanoseconds_i, ev_time_nanoseconds_p1, ev_time_nanoseconds_p2;
     Int_t ev_nhit;//, ev_nhit_i;
     Bool_t ev_validity;
-    ULong64_t ev_index, mc_ev_index_ep, mc_ev_index_n; 
-    //ULong64_t ev_index_i, ev_index_p1, ev_index_p2;
+    ULong64_t ev_index, mc_ev_index_ep, mc_ev_index_n, ev_index_p1, ev_index_p2;
 
     Double_t mc_pos_r_nu, mc_pos_x_nu, mc_pos_y_nu, mc_pos_z_nu;
     Double_t mc_pos_n_r, mc_pos_x_n, mc_pos_y_n, mc_pos_z_n;
@@ -113,7 +112,9 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     // values to modify
     tree_output->SetBranchAddress("ev_fit_energy_p1", &ev_energy_p1);
     tree_output->SetBranchAddress("ev_fit_energy_p2", &ev_energy_p2);
-    
+    tree_output->SetBranchAddress("ev_index_p1", &ev_index_p1);
+    tree_output->SetBranchAddress("ev_index_p2", &ev_index_p2);
+
     std::vector<TString> tagged_entries;
 
     ULong64_t n_entries = tree_input->GetEntries();
@@ -121,7 +122,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     if (percent_interval<=0) percent_interval = 1;
     ULong64_t progress_countdown = percent_interval;
     std::cout<<"total initial events (entries * events/entry): "<<n_entries<<std::endl;
-    
+
     if (n_entries>1){
         for (ULong64_t i=0; i < (n_entries-1); i++){ // since we're comparing partners we go to entry n-1
 
@@ -135,36 +136,54 @@ void process_cuts(const std::string filename_input, const std::string filename_o
             }
 
             tree_input->GetEntry(i);
+            
+            // for events which pass most basic cut
+            // get data for this trigger
+            // p1 is first (prompt particle i.e. assumed positron)
+            ev_time_days_p1 = ev_time_days;
+            ev_time_seconds_p1 = ev_time_seconds;
+            ev_time_nanoseconds_p1 = ev_time_nanoseconds;
+            ev_pos_r_p1 = ev_pos_r;
+            ev_pos_x_p1 = ev_pos_x;
+            ev_pos_y_p1 = ev_pos_y;
+            ev_pos_z_p1 = ev_pos_z;
+            ev_energy_p1 = ev_energy;
+            ev_index_p1 = ev_index;
 
             if (ev_index==0) {
-                n_parent_entries++; //count parent entries (not second triggers)
+                n_parent_entries++; //count parent entries (always ev_index=0)
                 // fill with all events (ev_index == 0 and in this outer loop since there's only one parent per event)
                 h_before_cut_emc_nu.Fill(mc_energy_nu);
                 h_before_cut_emc.Fill(mc_energy_ep);
                 h2_before_cut_emc.Fill(mc_energy_ep, mc_energy_n);
             }
 
+            // begin cuts on first particle
+            // first reset master flag
             any_ev_passed = false;
 
-            // basic cuts to remove junk
-            if ((ev_validity==false)||(ev_nhit<=20)||(ev_pos_r>6000))
+            // basic nhit and position cuts to remove junk
+            if ((ev_validity==false)||(ev_nhit<=20)||(ev_pos_r>6000)){
                 continue;
+            }
 
-            // for events which pass most basic cut, compare events within 1s
-            // first test all ev entries, then test between entries
-            ev_time_days_i = ev_time_days;
-            ev_time_seconds_i = ev_time_seconds;
-            ev_time_nanoseconds_i = ev_time_nanoseconds;
-            ev_pos_r_i = ev_pos_r;
-            ev_pos_x_i = ev_pos_x;
-            ev_pos_y_i = ev_pos_y;
-            ev_pos_z_i = ev_pos_z;
-            ev_energy_i = ev_energy;
-            //ev_index_i = ev_index;
+            // particle to be fitted within radius
+            if ((ev_pos_r_p1 < 0)||(ev_pos_r_p1 > deltaP)){
+                continue; // if this cut failed, don't go any further..
+            }
 
+            // energy cut
+            if ((ev_energy_p1 < energy_ep_min)||(ev_energy_p1 > energy_ep_max)){
+                continue; // if this cut failed, don't go any further..
+            }
+
+            entry_i = entry;
             j = i; // go forward from i'th event
-            while ((j <= (i+10)) && (j < (n_entries-1))){ // look through events (next 100)
 
+            while ((entry_i==entry_i) && (j <= (i+10)) && (j < (n_entries-1))){ // for MC data test triggers only within the same event
+            //((j <= (i+10)) && (j < (n_entries-1))){ // look through events (next 100)
+
+                
                 j++; // test the next trigger
                 tree_input->GetEntry(j);
 
@@ -176,46 +195,52 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                 particle_distance_pass = false;
 
                 // basic cuts to remove junk
-                if ((ev_validity==false)||(ev_nhit<=20)||(ev_pos_r>6000))
+                if ((ev_validity==false)||(ev_nhit<=20)||(ev_pos_r>6000)){
                     continue;
+                }
 
-                // get data from vectors for this trigger
+                // for MC data, the positron and neutron are within the same event
+                if (entry!=entry_i){
+                    continue;
+                }
+                //printf("entry %llu entry_i %llu\n", entry, entry_i);
+
+                // get data for this trigger
                 // p1 is first (prompt particle i.e. assumed positron)
-                // check to see if nanoseconds are reversed (and switch if needed)
-                if (ev_time_nanoseconds_i <= ev_time_nanoseconds){ //
-                    ev_time_days_p1 = ev_time_days_i;
-                    ev_time_seconds_p1 = ev_time_seconds_i;
-                    ev_time_nanoseconds_p1 = ev_time_nanoseconds_i;
-                    ev_pos_r_p1 = ev_pos_r_i;
-                    ev_pos_x_p1 = ev_pos_x_i;
-                    ev_pos_y_p1 = ev_pos_y_i;
-                    ev_pos_z_p1 = ev_pos_z_i;
-                    ev_energy_p1 = ev_energy_i;
-                    //ev_index_p1 = ev_index_i;
+                // p2 is second (delayed particle i.e. assumed neutron)
+                ev_time_days_p2 = ev_time_days;
+                ev_time_seconds_p2 = ev_time_seconds;
+                ev_time_nanoseconds_p2 = ev_time_nanoseconds;
+                ev_pos_r_p2 = ev_pos_r;
+                ev_pos_x_p2 = ev_pos_x;
+                ev_pos_y_p2 = ev_pos_y;
+                ev_pos_z_p2 = ev_pos_z;
+                ev_energy_p2 = ev_energy;
+                ev_index_p2 = ev_index;
 
-                    ev_time_days_p2 = ev_time_days;
-                    ev_time_seconds_p2 = ev_time_seconds;
-                    ev_time_nanoseconds_p2 = ev_time_nanoseconds;
-                    ev_pos_r_p2 = ev_pos_r;
-                    ev_pos_x_p2 = ev_pos_x;
-                    ev_pos_y_p2 = ev_pos_y;
-                    ev_pos_z_p2 = ev_pos_z;
-                    ev_energy_p2 = ev_energy;
-                    //ev_index_p2 = ev_index;
+                // both particles to be fitted within a fiducial radius
+                if ((ev_pos_r_p2 >= 0)&&(ev_pos_r_p2 < deltaP)){
+                    position_r_pass = true;
                 }
                 else{
-                    continue;
+                    continue; // if this cut failed, don't go any further..
+                }
+
+                // energy cut
+                if ((ev_energy_p2 > energy_n_min)&&(ev_energy_p2 < energy_n_max)){
+                    energy_pass = true;
+                }
+                else{
+                    continue; // if this cut failed, don't go any further..
                 }
 
                 // time window cut
                 // calculate time difference
                 if(std::abs(ev_time_days_p2 - ev_time_days_p1) > 0){ //begin time tests
-                    coincidence_pass = false;
                     time_ns_diff = std::abs(ev_time_days_p2 - ev_time_days_p1)*24*60*60*1e9 + std::abs(ev_time_seconds_p2 - ev_time_seconds_p1)*1e9 + std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds_p1);
                 }
                 else { // days are equal
                     if(std::abs(ev_time_seconds_p2 - ev_time_seconds_p1) > 0){
-                        coincidence_pass = false;
                         time_ns_diff = std::abs(ev_time_seconds_p2 - ev_time_seconds_p1)*1e9 + std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds_p1);
                     }
                     else { // seconds are equal
@@ -223,32 +248,21 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                         if(std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds_p1) < deltaT) // nanosec are to within deltaT
                             coincidence_pass = true;
                         else{
-                            coincidence_pass = false; // so close..
-                            continue; // if this cut failed, don't go any further..
+                            continue; // so close.. if this cut failed, don't go any further..
                         }
                     }
                 }
-
-                // both particles to be fitted within radius
-                if ((ev_pos_r_p1 >= 0)&&(ev_pos_r_p2 >= 0)&&(ev_pos_r_p1 < deltaP)&&(ev_pos_r_p2 < deltaP))
-                    position_r_pass = true;
-                else
-                    continue; // if this cut failed, don't go any further..
 
                 // Inter-particle distance cut
                 TVector3 position_p1_pos(ev_pos_x_p1, ev_pos_y_p1, ev_pos_z_p1);
                 TVector3 position_p2_pos(ev_pos_x_p2, ev_pos_y_p2, ev_pos_z_p2);
                 ev_particle_distance = (position_p2_pos - position_p1_pos).Mag();
-                if ((ev_particle_distance >= 0)&&(ev_particle_distance < deltaD))
+                if ((ev_particle_distance >= 0)&&(ev_particle_distance < deltaD)){
                     particle_distance_pass = true;
-                else
+                }
+                else{
                     continue; // if this cut failed, don't go any further..
-
-                // energy cut
-                if ((ev_energy_p1 > energy_ep_min) && (ev_energy_p1 < energy_ep_max) && (ev_energy_p2 > energy_n_min) && (ev_energy_p2 < energy_n_max))
-                    energy_pass = true;
-                else
-                    continue; // if this cut failed, don't go any further..
+                }
 
                 // reached master cut flag
                 all_pass = ev_validity && coincidence_pass && position_r_pass && particle_distance_pass && energy_pass;
@@ -278,10 +292,18 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                     h2_after_cut_energy_resolution.Fill((ev_energy_p1-mc_energy_nu)/mc_energy_nu, (ev_energy_p2-neutron_capture_energy)/neutron_capture_energy);
                     h2_after_cut_position_resolution.Fill((ev_pos_x_p1-mc_pos_x_ep)/mc_pos_x_ep, (ev_pos_x_p2-mc_pos_x_n)/mc_pos_x_n);
                 }
+                else{ //reset variables to nonsense
+                    ev_time_days_p2 = -9000;
+                    ev_time_seconds_p2 = -9000;
+                    ev_time_nanoseconds_p2 = -9000;
+                    ev_pos_r_p2 = -9000;
+                    ev_pos_x_p2 = -9000;
+                    ev_pos_y_p2 = -9000;
+                    ev_pos_z_p2 = -9000;
+                    ev_energy_p2 = -9000;
+                    ev_index_p2 = -9000;
+                }
             }
-
-            // load the original event (not the j'th)
-            tree_input->GetEntry(i);
 
             // if at least one ev passed, then fill the output tree
             if (any_ev_passed){
@@ -289,6 +311,9 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                 tree_output->Fill();
                 n_passed++;
             }
+
+            // load the original event (not the j'th)
+            tree_input->GetEntry(i);
 
             // fill mc event histograms
             if ((ev_index==0)&&(any_ev_passed)){ // fill with only those which had a trigger which passed cuts
