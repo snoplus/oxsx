@@ -46,8 +46,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     ULong64_t already_tagged = 0;
     ULong64_t n_parent_entries = 0;
     Double_t time_ns_diff;
-    ULong64_t j;
-    Bool_t all_pass, energy_pass, coincidence_pass, position_r_pass, particle_distance_pass, any_ev_passed;
+    ULong64_t i_original, j;
+    Bool_t all_pass, energy_pass, coincidence_pass, position_r_pass, particle_distance_pass, partner_passed;
 
     // properties to load from tree
     ULong64_t entry, entry_i;
@@ -160,7 +160,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
             // begin cuts on first particle
             // first reset master flag
-            any_ev_passed = false;
+            partner_passed = false;
 
             // basic nhit and position cuts to remove junk
             if ((ev_validity==false)||(ev_nhit<=20)||(ev_pos_r>6000)){
@@ -176,11 +176,17 @@ void process_cuts(const std::string filename_input, const std::string filename_o
             if ((ev_energy_p1 < energy_ep_min)||(ev_energy_p1 > energy_ep_max)){
                 continue; // if this cut failed, don't go any further..
             }
+            
+            // cheating with MC data
+            if (ev_index_p1>0){
+                continue;
+            }
 
             entry_i = entry;
             j = i; // go forward from i'th event
+            i_original = i;
 
-            while ((entry_i==entry_i) && (j <= (i+10)) && (j < (n_entries-1))){ // for MC data test triggers only within the same event
+            while ((j <= (i+10)) && (j < (n_entries-1))){ // for MC data test triggers only within the same event (+ a hard limit on loop entries)
             //((j <= (i+10)) && (j < (n_entries-1))){ // look through events (next 100)
 
                 
@@ -201,8 +207,9 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
                 // for MC data, the positron and neutron are within the same event
                 if (entry!=entry_i){
-                    continue;
+                    break;
                 }
+
                 //printf("entry %llu entry_i %llu\n", entry, entry_i);
 
                 // get data for this trigger
@@ -217,6 +224,11 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                 ev_pos_z_p2 = ev_pos_z;
                 ev_energy_p2 = ev_energy;
                 ev_index_p2 = ev_index;
+                
+                // ensure we're not looking at the same particle
+                if (ev_index_p1==ev_index_p2){
+                    continue;
+                }
 
                 // both particles to be fitted within a fiducial radius
                 if ((ev_pos_r_p2 >= 0)&&(ev_pos_r_p2 < deltaP)){
@@ -252,6 +264,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                         }
                     }
                 }
+                
 
                 // Inter-particle distance cut
                 TVector3 position_p1_pos(ev_pos_x_p1, ev_pos_y_p1, ev_pos_z_p1);
@@ -273,7 +286,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
                 if (all_pass){
                     // mark this i'th trigger as passed (it and at least 1 partner passed cuts)
-                    any_ev_passed = true;
+                    partner_passed = true;
 
                     // whats unique about each entry? the event number and the ev number - record these to check for duplicates.
                     //sprintf(name, "%llu-%llu",entry, ev_index_p1);
@@ -291,6 +304,11 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                     h2_after_cut_time_diff_displacement.Fill(time_ns_diff, ev_particle_distance);
                     h2_after_cut_energy_resolution.Fill((ev_energy_p1-mc_energy_nu)/mc_energy_nu, (ev_energy_p2-neutron_capture_energy)/neutron_capture_energy);
                     h2_after_cut_position_resolution.Fill((ev_pos_x_p1-mc_pos_x_ep)/mc_pos_x_ep, (ev_pos_x_p2-mc_pos_x_n)/mc_pos_x_n);
+                    
+                    tree_output->Fill();
+                    n_passed++;
+                    
+                    i=j+1; // set outer (positron) loop to jump beyond the found neutron
                 }
                 else{ //reset variables to nonsense
                     ev_time_days_p2 = -9000;
@@ -305,18 +323,11 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                 }
             }
 
-            // if at least one ev passed, then fill the output tree
-            if (any_ev_passed){
-                // fill tree
-                tree_output->Fill();
-                n_passed++;
-            }
-
             // load the original event (not the j'th)
-            tree_input->GetEntry(i);
+            tree_input->GetEntry(i_original);
 
             // fill mc event histograms
-            if ((ev_index==0)&&(any_ev_passed)){ // fill with only those which had a trigger which passed cuts
+            if ((ev_index==0)&&(partner_passed)){ // fill with only those which had a trigger which passed cuts
                     h_after_cut_emc_nu.Fill(mc_energy_nu);
                     h_after_cut_emc.Fill(mc_energy_ep);
                     h2_after_cut_emc.Fill(mc_energy_ep, mc_energy_n);

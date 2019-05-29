@@ -69,17 +69,19 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_ke_pdf, BinnedED *
         reactor_pdf[i] = new BinnedED(reactor_names[i], axes);
         reactor_pdf[i]->SetObservables(0);
 
-        sprintf(name, "/home/lidgard/antinu_analysis/sensitivity_plot/processed/data/osc_ntp_ke_%s_%0.9f_%0.7f_%0.7f.root", reactor_names[i].c_str(), param_d21, param_s12, param_s13);
-        sprintf(name2, "/home/lidgard/antinu_analysis/sensitivity_plot/processed/data/osc_ntp_prompt_%s_%0.9f_%0.7f_%0.7f.root", reactor_names[i].c_str(), param_d21, param_s12, param_s13);
+        sprintf(name, "/home/lidgard/antinu_analysis/sensitivity_plot/processed/data/osc_ntp_ke_%s_%d_%d_%d.root", reactor_names[i].c_str(), (int)(param_d21*1e9), (int)(param_s12*1e7), (int)(param_s13*1e7));
+        sprintf(name2, "/home/lidgard/antinu_analysis/sensitivity_plot/processed/data/osc_ntp_prompt_%s_%d_%d_%d.root", reactor_names[i].c_str(), (int)(param_d21*1e9), (int)(param_s12*1e7), (int)(param_s13*1e7));
         if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR")){
             printf("adding pwr reactor: ");
-            write_file_pruned("/data/snoplusmc/lidgard/OXSX_kamland/flux100/combinedpwr_flux100_day360_cleanround1.root", name, name2, param_d21, param_s12, param_s13);
+            if (test_file_exists(name2)==false)
+                write_file_pruned("/data/snoplusmc/lidgard/OXSX_kamland_rat6169_penergy_un/flux100/combinedpwr_flux100_day360_pass1_cleanround1.root", name, name2, param_d21, param_s12, param_s13, distances[i]);
         }
 
         else if (reactor_types[i]=="PHWR"){
             printf("adding phwr reactor: ");
             
-            write_file_pruned("/data/snoplusmc/lidgard/OXSX_kamland/flux100/combinedphwr_flux100_day360_cleanround1.root", name, name2, param_d21, param_s12, param_s13);
+            if (test_file_exists(name2)==false)
+                write_file_pruned("/data/snoplusmc/lidgard/OXSX_kamland_rat6169_penergy_un/flux100/combinedpwr_flux100_day360_pass1_cleanround1.root", name, name2, param_d21, param_s12, param_s13, distances[i]); // currently using PWR!!!!
         }
         else{
             printf("Throw: Reactor doesn't match any loaded type...\n");
