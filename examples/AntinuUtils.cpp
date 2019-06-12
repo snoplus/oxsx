@@ -30,13 +30,15 @@
 #include <SurvProb.h>
 
 bool test_file_exists(const std::string& name) {
+    bool flag = false;
     if (FILE *file = fopen(name.c_str(), "r")) {
         fclose(file);
-        return true;
+        flag = true;
     }
     else {
-        return false;
+        flag = false;
     }
+    return flag;
 }
 
 void readConstraintsInfoFile(const std::string &runConstraintsInfoFileName, std::string reactor_name, Double_t &fit_mean, Double_t &fit_mean_err, Double_t &fit_sigma, Double_t &fit_sigma_err ) {
@@ -183,26 +185,26 @@ BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, 
     printf("LHFit_initialise...\n");
 
     char name[1000];
-    ULong64_t flux_mc = 100;
+    ULong64_t flux_mc = 1;
 
     // setup spectra filenames
-    const std::string pwr_file = std::string("combinedpwr");//std::string("ohi");//std::string("combinedpwr");
-    const std::string phwr_file = std::string("combinedpwr");//std::string("ohi");//std::string("combinedphwr");
+    const std::string pwr_file = std::string("combinedpwr");
+    const std::string phwr_file = std::string("combinedpwr");//std::string("combinedphwr");
 
     // ke filenames
     printf("Using unoscillated spectrum for:\n");
-    sprintf(name, "%sflux%llu/%s_flux%llu_day360_pass1_cleanround1_ke_oxsx.root", in_path.c_str(), flux_mc, pwr_file.c_str(), flux_mc);
+    sprintf(name, "%sflux%llu/%s_flux%llu_year100_cleanround1_ke_oxsx.root", in_path.c_str(), flux_mc, pwr_file.c_str(), flux_mc);
     printf("\ttype PWR & BWR: %s\n", name);
     const std::string pwr_unosc_ke_path = std::string(name);
-    sprintf(name, "%sflux%llu/%s_flux%llu_day360_pass1_cleanround1_ke_oxsx.root", in_path.c_str(), flux_mc, phwr_file.c_str(), flux_mc);
+    sprintf(name, "%sflux%llu/%s_flux%llu_year100_cleanround1_ke_oxsx.root", in_path.c_str(), flux_mc, phwr_file.c_str(), flux_mc);
     printf("\ttype PHWR: %s\n", name);
     const std::string phwr_unosc_ke_path = std::string(name);
 
     // ev filename
-    sprintf(name, "%sflux%llu/%s_flux%llu_day360_pass1_cleanround1_prompt_oxsx.root", in_path.c_str(), flux_mc, pwr_file.c_str(), flux_mc);
+    sprintf(name, "%sflux%llu/%s_flux%llu_year100_cleanround1_prompt_oxsx.root", in_path.c_str(), flux_mc, pwr_file.c_str(), flux_mc);
     printf("\ttype PWR & BWR: %s\n", name);
     const std::string pwr_unosc_ev_path = std::string(name);
-    sprintf(name, "%sflux%llu/%s_flux%llu_day360_pass1_cleanround1_prompt_oxsx.root", in_path.c_str(), flux_mc, phwr_file.c_str(), flux_mc);
+    sprintf(name, "%sflux%llu/%s_flux%llu_year100_cleanround1_prompt_oxsx.root", in_path.c_str(), flux_mc, phwr_file.c_str(), flux_mc);
     printf("\ttype PHWR: %s\n", name);
     const std::string phwr_unosc_ev_path = std::string(name);
 
@@ -228,14 +230,13 @@ BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, 
         data_set_pdf.Fill(data_ntp.GetEntry(i));
 
     // for kamland reproduction change:
-    data_set_pdf.Scale(1./flux_data);
     data_set_pdf.Normalise();
-    data_set_pdf.Scale(1.27844983315467830e+003);
+    Double_t scale_factor = 1.27845e+003; // integral of kamland oscillated spectrum
+    Double_t scale_factor_unosc = 2.15808e+003; // integral of kamland unoscillated spectrum
+    data_set_pdf.Scale(scale_factor);
 
     printf("Loading data: %s (osc)integral:%.3f\n", data_path.c_str(), data_set_pdf.Integral());
 
-
-    // load unoscillated spectra
     // pwr spectrum
     // KE branch
     ROOTNtuple pwr_spectrum_ke_ntp(pwr_unosc_ke_path, "nt");
@@ -244,8 +245,9 @@ BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, 
     spectra_ke_pdf[0]->SetObservables(0);
     for(ULong64_t i = 0; i < pwr_spectrum_ke_ntp.GetNEntries(); i++)
         spectra_ke_pdf[0]->Fill(pwr_spectrum_ke_ntp.GetEntry(i));
-    spectra_ke_pdf[0]->Scale(1./flux_mc);
-    spectra_ke_pdf[0]->Normalise();
+    //spectra_ke_pdf[0]->Scale(1./flux_mc);
+    spectra_ke_pdf[0]->Normalise(); 
+    spectra_ke_pdf[0]->Scale(scale_factor_unosc);
 
     // EV branch
     ROOTNtuple pwr_spectrum_ev_ntp(pwr_unosc_ev_path, "nt");
@@ -254,8 +256,9 @@ BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, 
     spectra_ev_pdf[0]->SetObservables(0);
     for(ULong64_t i = 0; i < pwr_spectrum_ev_ntp.GetNEntries(); i++)
         spectra_ev_pdf[0]->Fill(pwr_spectrum_ev_ntp.GetEntry(i));
-    spectra_ev_pdf[0]->Scale(1./flux_mc);
-    spectra_ev_pdf[0]->Normalise();
+    //spectra_ev_pdf[0]->Scale(1./flux_mc);
+    spectra_ev_pdf[0]->Normalise(); 
+    spectra_ev_pdf[0]->Scale(scale_factor_unosc);
 
     // phwr spectrum
     ROOTNtuple phwr_spectrum_ke_ntp(phwr_unosc_ke_path, "nt");
@@ -264,8 +267,9 @@ BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, 
     spectra_ke_pdf[1]->SetObservables(0);
     for(ULong64_t i = 0; i < phwr_spectrum_ke_ntp.GetNEntries(); i++)
         spectra_ke_pdf[1]->Fill(phwr_spectrum_ke_ntp.GetEntry(i));
-    spectra_ke_pdf[1]->Scale(1./flux_mc);
-    spectra_ke_pdf[1]->Normalise();
+    //spectra_ke_pdf[1]->Scale(1./flux_mc);
+    spectra_ke_pdf[1]->Normalise(); 
+    spectra_ke_pdf[1]->Scale(scale_factor_unosc);
 
     // phwr spectrum
     ROOTNtuple phwr_spectrum_ev_ntp(phwr_unosc_ev_path, "nt");
@@ -274,8 +278,9 @@ BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, 
     spectra_ev_pdf[1]->SetObservables(0);
     for(ULong64_t i = 0; i < phwr_spectrum_ev_ntp.GetNEntries(); i++)
         spectra_ev_pdf[1]->Fill(phwr_spectrum_ev_ntp.GetEntry(i));
-    spectra_ev_pdf[1]->Scale(1./flux_mc);
-    spectra_ev_pdf[1]->Normalise();
+    //spectra_ev_pdf[1]->Scale(1./flux_mc);
+    spectra_ev_pdf[1]->Normalise(); 
+    spectra_ev_pdf[1]->Scale(scale_factor_unosc);
 
     printf("End init--------------------------------------\n");
     return data_set_pdf;

@@ -45,9 +45,9 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_ke_pdf, BinnedED *
     ObsSet data_rep(0);
     // set up binning
     AxisCollection axes;
-    Double_t e_min = 0.425*2; //2; //*6 for kamland paper #1, *2 for paper #2
-    Double_t e_max = 0.425*19; //8;
-    Int_t n_bins = 17; //(8-2)*10; //13 for paper #1, 17 for paper #2
+    Double_t e_min = 0.5; //2; //*6 for kamland paper #1, *2 for paper #2
+    Double_t e_max = 8; //8;
+    Int_t n_bins = (8-0.5)*10; //(8-2)*10; //13 for paper #1, 17 for paper #2
     axes.AddAxis(BinAxis("mc_neutrino_energy", e_min, e_max, n_bins));
 
     // create LH function
@@ -62,13 +62,6 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_ke_pdf, BinnedED *
     ParameterDict maxima;
     ParameterDict initial_val;
     ParameterDict initial_err;
-
-    //scale factor to normalise to kamland
-    Double_t scale_factor = 1.27844983e+003; // integral of kamland oscillated spectrum
-    Double_t scale_factor_unosc = 2.15807667374610900e+003; // integral of kamland unoscillated spectrum
-
-    // get unoscillated normalisation
-    //Double_t normalisation_unosc = spectra_ev_pdf[0]->Integral(); //make this a vector
 
     TH1D *reactor_hist = new TH1D[n_pdf];
 
@@ -85,7 +78,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, BinnedED **spectra_ke_pdf, BinnedED *
         reactor_pdf[i] = new BinnedED(reactor_names[i], axes);
         reactor_pdf[i]->SetObservables(0);
 
-        sprintf(spectrum_unosc_filepath, "/data/snoplusmc/lidgard/OXSX_kamland_rat6169_penergy_un/flux1/combinedpwr_flux1_year100_cleanround1.root");
+        sprintf(spectrum_unosc_filepath, "/data/snoplusmc/lidgard/OXSX_rat6169_penergy_un/flux1/combinedpwr_flux1_year100_cleanround1.root");
         sprintf(spectrum_ke_filepath, "/home/lidgard/antinu_analysis/sensitivity_plot/processed/data/osc_ntp_ke_%s_%d_%d_%d.root", reactor_names[i].c_str(), (int)(param_d21*1e9), (int)(param_s12*1e7), (int)(param_s13*1e7));
         sprintf(spectrum_prompt_filepath, "/home/lidgard/antinu_analysis/sensitivity_plot/processed/data/osc_ntp_prompt_%s_%d_%d_%d.root", reactor_names[i].c_str(), (int)(param_d21*1e9), (int)(param_s12*1e7), (int)(param_s13*1e7));
 
