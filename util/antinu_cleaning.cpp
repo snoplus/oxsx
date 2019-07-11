@@ -232,7 +232,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                             entries_positrons2.push_back(j);
                             //std::cout<<"e: ev_index_p1: "<<ev_index_p1<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy<<" n_pairs: "<<n_pairs<<std::endl;
                             //std::cout<<"n: ev_index_p2: "<<ev_index_p2<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy_p2<<" n_pairs: "<<n_pairs<<std::endl;
-                            if (ev_index == 1) std::cout<<"n: ev_index_p2: "<<ev_index_p2<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy_p2<<" n_pairs: "<<n_pairs<<std::endl;
+                            //if (ev_index == 1) std::cout<<"n: ev_index_p2: "<<ev_index_p2<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy_p2<<" n_pairs: "<<n_pairs<<std::endl; // check to see if positron is evindex > 0
                             
                         }
                     }
@@ -275,7 +275,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
             ULong64_t jj_limit = jj-5; //set limit since jj will change value
             while ((jj > jj_limit)&&(jj > 0)&&(jj < entries_positrons2.size())){
                 j = entries_positrons2.at(jj);
-                std::cout<<"jj"<<jj<<" j:"<<j<<std::endl;
+                //std::cout<<"jj"<<jj<<" j:"<<j<<std::endl;
 
                 tree_input->GetEntry(j);
 
