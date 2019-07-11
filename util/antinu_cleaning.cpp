@@ -151,6 +151,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
             tree_input->GetEntry(i);
 
             entries_parents.push_back(entry); // entry for all events
+            //std::cout<<"ii: "<<ii<<" entry: "<<entry<<" ev_index: "<<ev_index<<"/"<<ev_n_index<<" ev_energy: "<<ev_energy<<std::endl;
 
             if ((ev_validity==true)&&(ev_nhit>10)&&(ev_pos_r<=6000)) // basic nhit and position cuts to remove junk
                 entries_basic.push_back(i);
@@ -191,29 +192,57 @@ void process_cuts(const std::string filename_input, const std::string filename_o
         std::cout<<"particles after neutron energy cut: "<<entries_neutrons.size()<<std::endl;
         std::cout<<"particles after positron energy cut: "<<entries_positrons.size()<<std::endl;
         n_entries = entries_neutrons.size();
+        progress_countdown = percent_interval;
 
         // ev cut
         for (ULong64_t ii=0; ii < entries_neutrons.size(); ii++){
             i = entries_neutrons.at(ii);
-            tree_input->GetEntry(i);
-            if (ev_index > 0) {// neutron can't be the first fitted particle
-                entries_neutrons2.push_back(i);
-                //std::cout<<"n: ev_index: "<<ev_index<<"/"<<ev_n_index<<" entry: "<<entry<<std::endl;
+            
+            // print progress
+            progress_countdown--;
+            if (progress_countdown==0){
+                progress_countdown = percent_interval;
+                printf("ev cut %.0f%% done\n",(Double_t)(ii+1)/n_entries*100);
             }
-        }
-        for (ULong64_t ii=0; ii < entries_positrons.size(); ii++){
-            i = entries_positrons.at(ii);
+            
             tree_input->GetEntry(i);
-            if (ev_index < 2) {// positron must be one of the first 2 fitted particles
-                if ((ev_n_index-ev_index)>1){
-                    entries_positrons2.push_back(i);
-                    std::cout<<"e: ev_index: "<<ev_index<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy<<std::endl;
+            entry_i = entry;
+            ev_index_p2 = 0; // reset to 0 i.e positron like.
+            bool passed = false;
+            if (ev_index > 0) {// neutron can't be the first fitted particle (i.e. ev=0,1
+                ev_index_p2 = ev_index;
+                ev_energy_p2 = ev_energy;
+                //std::cout<<"n: ev_index_p2: "<<ev_index<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy<<std::endl;
+                passed = true;
+            }
+
+            if (passed){
+                // now go through neutron events, find neutron event with same event number, select neutron for ev's > than this
+                ULong64_t n_pairs = 0;
+                for (ULong64_t iii = 0; iii < entries_positrons.size(); iii++){
+                    j = entries_positrons.at(iii);
+                    tree_input->GetEntry(j);
+                    if ((entry_i == entry)&&(ev_index < ev_index_p2)&&(ev_index < 2)){ // positron must be first of 2 fitted particles
+                        if ((int)(ev_n_index-ev_index)>1){ // positron must not be the last fitted particle i.e if n_ev=2 positron can't be ev=1, must be ev=0.
+                            n_pairs ++;
+                            ev_index_p1 = ev_index;
+                            ev_energy_p1 = ev_energy;
+                            // pass pairs of particles at a time - only pass neutron if positron was found.
+                            entries_neutrons2.push_back(i); // but this is how we get duplicates in the neutron list.
+                            entries_positrons2.push_back(j);
+                            //std::cout<<"e: ev_index_p1: "<<ev_index_p1<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy<<" n_pairs: "<<n_pairs<<std::endl;
+                            //std::cout<<"n: ev_index_p2: "<<ev_index_p2<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy_p2<<" n_pairs: "<<n_pairs<<std::endl;
+                        }
+                    }
                 }
+                if (n_pairs>1)
+                    std::cout<<"\n***\n***\n***** warning n_pairs: *****\n***\n***\n"<<n_pairs<<std::endl;
             }
         }
         std::cout<<"neutron after ev cut: "<<entries_neutrons2.size()<<std::endl;
         std::cout<<"positron after ev cut: "<<entries_positrons2.size()<<std::endl;
         n_entries = entries_neutrons2.size();
+        progress_countdown = percent_interval;
 
 
         // time window cut
@@ -235,16 +264,17 @@ void process_cuts(const std::string filename_input, const std::string filename_o
             ULong64_t jj=0;
             for (jj = 0; jj < entries_positrons2.size(); jj++){
                 j = entries_positrons2.at(jj);
-                if (i <= j){
-                    break; //jj is now the index of the positron with the same particle number as the neutron
-                }
+                if (i <= j) break; //jj is now the index of the positron with the same particle number as the neutron
             }
-            ULong64_t jj0=jj;
+            if (jj > entries_positrons2.size()) jj = entries_positrons2.size();
             //std::cout<<"\ti:"<<i<<" ii:"<<ii<<" jj:"<<entries_positrons2.at(jj)<<std::endl;
 
-            // go backward through events to find positron
-            while (jj > (jj0-5)){
+            // go backward through events to find positron, but ensure we go backwards without going beyond 0.
+            ULong64_t jj_limit = jj-5; //set limit since jj will change value
+            while ((jj > jj_limit)&&(jj > 0)&&(jj < entries_positrons2.size())){
                 j = entries_positrons2.at(jj);
+                std::cout<<"jj"<<jj<<" j:"<<j<<std::endl;
+
                 tree_input->GetEntry(j);
 
                 if ((i!=j)&&(j<i)){ //don't tag particle with itself and positron must be before neutron
@@ -273,9 +303,11 @@ void process_cuts(const std::string filename_input, const std::string filename_o
         n_entries = entries_coincidence_n.size();
         std::cout<<"particles after coincident cut: "<<entries_coincidence_n.size()+entries_coincidence_ep.size()<<" (n:"<<entries_coincidence_n.size()<<", ep:"<<entries_coincidence_ep.size()<<")"<<std::endl;
 
-        // Inter-particle distance cutt
+        progress_countdown = percent_interval;
+        // Inter-particle distance cut
         for (ULong64_t ii=0; ii < n_entries; ii++){
             i = entries_coincidence_n.at(ii);
+            
             // print progress
             progress_countdown--;
             if (progress_countdown==0){
@@ -375,231 +407,6 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
     }
     std::cout<<"passed entries: "<<p2<<std::endl;
-
-
-    // if (n_entries>1){
-        // for (ULong64_t i=0; i < (n_entries-1); i++){ // since we're comparing partners we go to entry n-1
-
-            // //if (i>100) break; // testing
-
-            // // print progress
-            // progress_countdown--;
-            // if (progress_countdown==0){
-                // progress_countdown = percent_interval;
-                // printf("%.0f%% done\n",(Double_t)(i+1)/n_entries*100);
-            // }
-
-            // tree_input->GetEntry(i);
-
-            // // for events which pass most basic cut
-            // // get data for this trigger
-            // // p1 is first (prompt particle i.e. assumed positron)
-            // ev_time_days_p1 = ev_time_days;
-            // ev_time_seconds_p1 = ev_time_seconds;
-            // ev_time_nanoseconds_p1 = ev_time_nanoseconds;
-            // ev_pos_r_p1 = ev_pos_r;
-            // ev_pos_x_p1 = ev_pos_x;
-            // ev_pos_y_p1 = ev_pos_y;
-            // ev_pos_z_p1 = ev_pos_z;
-            // ev_energy_p1 = ev_energy;
-            // ev_index_p1 = ev_index;
-
-            // if (ev_index==0) {
-                // n_parent_entries++; //count parent entries (always ev_index=0)
-                // // fill with all events (ev_index == 0 and in this outer loop since there's only one parent per event)
-                // h_before_cut_emc_nu.Fill(mc_energy_nu);
-                // h_before_cut_emc.Fill(mc_energy_ep);
-                // h2_before_cut_emc.Fill(mc_energy_ep, mc_energy_n);
-            // }
-
-            // // begin cuts on first particle
-            // // first reset master flag
-            // partner_passed = false;
-
-            // // basic nhit and position cuts to remove junk
-            // if ((ev_validity==false)||(ev_nhit<=20)||(ev_pos_r>6000)){
-                // continue;
-            // }
-
-            // // particle to be fitted within radius
-            // if ((ev_pos_r_p1 < 0)||(ev_pos_r_p1 > deltaP)){
-                // continue; // if this cut failed, don't go any further..
-            // }
-
-            // // energy cut
-            // if ((ev_energy_p1 < energy_ep_min)||(ev_energy_p1 > energy_ep_max)){
-                // continue; // if this cut failed, don't go any further..
-            // }
-
-            // entry_i = entry;
-            // j = i; // go forward from i'th event
-            // i_original = i;
-
-            // while ((j <= (i+10)) && (j < (n_entries-1))){ // for MC data test triggers only within the same event (+ a hard limit on loop entries)
-            // //((j <= (i+10)) && (j < (n_entries-1))){ // look through events (next 100)
-
-
-                // j++; // test the next trigger
-                // tree_input->GetEntry(j);
-
-                // // reset pass flags
-                // all_pass = false;
-                // coincidence_pass = false;
-                // position_r_pass = false;
-                // energy_pass = false;
-                // particle_distance_pass = false;
-
-                // // basic cuts to remove junk
-                // if ((ev_validity==false)||(ev_nhit<=20)||(ev_pos_r>6000)){
-                    // continue;
-                // }
-
-                // // for MC data, the positron and neutron are within the same event
-                // if (entry!=entry_i){
-                    // break;
-                // }
-
-                // //printf("entry %llu entry_i %llu\n", entry, entry_i);
-
-                // // get data for this trigger
-                // // p1 is first (prompt particle i.e. assumed positron)
-                // // p2 is second (delayed particle i.e. assumed neutron)
-                // ev_time_days_p2 = ev_time_days;
-                // ev_time_seconds_p2 = ev_time_seconds;
-                // ev_time_nanoseconds_p2 = ev_time_nanoseconds;
-                // ev_pos_r_p2 = ev_pos_r;
-                // ev_pos_x_p2 = ev_pos_x;
-                // ev_pos_y_p2 = ev_pos_y;
-                // ev_pos_z_p2 = ev_pos_z;
-                // ev_energy_p2 = ev_energy;
-                // ev_index_p2 = ev_index;
-
-                // // ensure we're not looking at the same particle
-                // if (ev_index_p1==ev_index_p2){
-                    // continue;
-                // }
-
-                // // both particles to be fitted within a fiducial radius
-                // if ((ev_pos_r_p2 >= 0)&&(ev_pos_r_p2 < deltaP)){
-                    // position_r_pass = true;
-                // }
-                // else{
-                    // continue; // if this cut failed, don't go any further..
-                // }
-
-                // // energy cut
-                // if ((ev_energy_p2 > energy_n_min)&&(ev_energy_p2 < energy_n_max)){
-                    // energy_pass = true;
-                // }
-                // else{
-                    // continue; // if this cut failed, don't go any further..
-                // }
-
-                // // time window cut
-                // // calculate time difference
-                // if(std::abs(ev_time_days_p2 - ev_time_days_p1) > 0){ //begin time tests
-                    // time_ns_diff = std::abs(ev_time_days_p2 - ev_time_days_p1)*24*60*60*1e9 + std::abs(ev_time_seconds_p2 - ev_time_seconds_p1)*1e9 + std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds_p1);
-                // }
-                // else { // days are equal
-                    // if(std::abs(ev_time_seconds_p2 - ev_time_seconds_p1) > 0){
-                        // time_ns_diff = std::abs(ev_time_seconds_p2 - ev_time_seconds_p1)*1e9 + std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds_p1);
-                    // }
-                    // else { // seconds are equal
-                        // time_ns_diff = std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds_p1);
-                        // if(std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds_p1) < deltaT) // nanosec are to within deltaT
-                            // coincidence_pass = true;
-                        // else{
-                            // continue; // so close.. if this cut failed, don't go any further..
-                        // }
-                    // }
-                // }
-
-
-                // // Inter-particle distance cut
-                // TVector3 position_p1_pos(ev_pos_x_p1, ev_pos_y_p1, ev_pos_z_p1);
-                // TVector3 position_p2_pos(ev_pos_x_p2, ev_pos_y_p2, ev_pos_z_p2);
-                // ev_particle_distance = (position_p2_pos - position_p1_pos).Mag();
-                // if ((ev_particle_distance >= 0)&&(ev_particle_distance < deltaD)){
-                    // particle_distance_pass = true;
-                // }
-                // else{
-                    // continue; // if this cut failed, don't go any further..
-                // }
-
-                // // reached master cut flag
-                // all_pass = ev_validity && coincidence_pass && position_r_pass && particle_distance_pass && energy_pass;
-
-                // //if ((coincidence_pass)&&(mc_ev_index_ep==0)&&(mc_ev_index_n==1)&&(ev_pos_r_p1>0)&&(ev_pos_r_p2>0))
-                // //debug statement
-                // //std::cout << "(i," << i << " j " << j << ") mc_entry " << entry << " mc_ev " << "(" << mc_ev_index_ep << "," << mc_ev_index_n << ") ev_ev (" << ev_index_p1 << "," << ev_index_p2 << ") all_pass " << all_pass << " ev_validity " << ev_validity << " coincidence " << coincidence_pass << "(" << time_ns_diff << ") position_r " << position_r_pass << "(" << ev_pos_r_p1 << "," << ev_pos_r_p2 << ") particle_distance " << particle_distance_pass << "(" << ev_particle_distance << ") energy " << energy_pass << "(" << ev_energy__p1 << "," << ev_energy_p2 << ") nhit " << ev_nhit << std::endl;
-
-                // if (all_pass){
-                    // // mark this i'th trigger as passed (it and at least 1 partner passed cuts)
-                    // partner_passed = true;
-
-                    // // whats unique about each entry? the event number and the ev number - record these to check for duplicates.
-                    // //sprintf(name, "%llu-%llu",entry, ev_index_p1);
-                    // //tagged_entries.push_back(((TString)name));
-                    // //sprintf(name, "%llu-%llu",entry, ev_index_p2);
-                    // //tagged_entries.push_back(((TString)name));
-
-                    // // fill histograms with all triggers which pass cuts
-                    // h2_after_cut_efit.Fill(ev_energy_p1, ev_energy_p2);
-                    // h_after_cut_efit_p1.Fill(ev_energy_p1);
-                    // h2_after_cut_efit_neutron.Fill(ev_energy_p1, mc_energy_nu - (ev_energy_p1+e_rem) );
-                    // h_after_cut_efit_p2.Fill(ev_energy_p2);
-                    // h_after_cut_time_diff.Fill(time_ns_diff);
-                    // h_after_cut_position_displacement.Fill(ev_particle_distance);
-                    // h2_after_cut_time_diff_displacement.Fill(time_ns_diff, ev_particle_distance);
-                    // h2_after_cut_energy_resolution.Fill((ev_energy_p1-mc_energy_nu)/mc_energy_nu, (ev_energy_p2-neutron_capture_energy)/neutron_capture_energy);
-                    // h2_after_cut_position_resolution.Fill((ev_pos_x_p1-mc_pos_x_ep)/mc_pos_x_ep, (ev_pos_x_p2-mc_pos_x_n)/mc_pos_x_n);
-
-                    // tree_output->Fill();
-                    // n_passed++;
-
-                    // i=j+1; // set outer (positron) loop to jump beyond the found neutron
-                // }
-                // else{ //reset variables to nonsense
-                    // ev_time_days_p2 = -9000;
-                    // ev_time_seconds_p2 = -9000;
-                    // ev_time_nanoseconds_p2 = -9000;
-                    // ev_pos_r_p2 = -9000;
-                    // ev_pos_x_p2 = -9000;
-                    // ev_pos_y_p2 = -9000;
-                    // ev_pos_z_p2 = -9000;
-                    // ev_energy_p2 = -9000;
-                    // ev_index_p2 = -9000;
-                // }
-            // }
-
-            // // load the original event (not the j'th)
-            // tree_input->GetEntry(i_original);
-
-            // // fill mc event histograms
-            // if ((ev_index==0)&&(partner_passed)){ // fill with only those which had a trigger which passed cuts
-                    // h_after_cut_emc_nu.Fill(mc_energy_nu);
-                    // h_after_cut_emc.Fill(mc_energy_ep);
-                    // h2_after_cut_emc.Fill(mc_energy_ep, mc_energy_n);
-            // }
-        // }
-    // }
-
-    // // this takes waaaaayy too long so taking this out for now..
-    // // has this particle been tagged as a partner of another particle previously?
-    // for (ULong64_t ii = 0; ii < (tagged_entries.size()-1); ii++){
-        // for (ULong64_t jj = (ii+1); jj < (tagged_entries.size()-1); jj++){
-            // if (tagged_entries.at(ii) == tagged_entries.at(jj)){
-               // //std::cout << "WARNING! already tagged i" << ii << " ev: " << tagged_entries.at(ii) << std::endl;
-                // already_tagged++;
-            // }
-        // }
-    // }
-
-    // //print all
-    // if (tagged_entries.size()>0){ // if the doubly-tagged entry vector has any entries, then print the vector.
-        // for (ULong64_t ii = 0; ii < tagged_entries.size(); ii++)
-            // std::cout << "i(" << ii << ") entry_i: " << tagged_entries.at(ii) << std::endl;
-    // }
 
     // cut purity plots (ratio plot)
     TH1D *h_after_cut_emc_nu_ratio = (TH1D*)h_after_cut_emc_nu.Clone("h_after_cut_emc_nu_ratio");
