@@ -248,10 +248,10 @@ void ntload(std::string input_filename, std::string output_filename, std::string
             ev_time_days = time_day_sec_ns.GetDays();
             ev_time_seconds = time_day_sec_ns.GetSeconds();
             ev_time_nanoseconds = time_day_sec_ns.GetNanoSeconds();
-            ev_validity = false;
             ev_index = i_ev;
 
             // set all to some unphysical value, maintain correspondence of number of events in tree to events in root file
+            ev_validity = false;
             ev_energy = -9000;
             ev_pos_x = -9000;
             ev_pos_y = -9000;
@@ -271,10 +271,31 @@ void ntload(std::string input_filename, std::string output_filename, std::string
                         ev_pos_z = fitVertex.GetPosition().Z();
                         ev_pos_r = fitVertex.GetPosition().Mag();
                     }
-                    catch (RAT::DS::FitResult::NoVertexError &e){;}
-                    catch (RAT::DS::FitResult::NoFitResultError &e){;}
-                    catch (RAT::DS::FitVertex::NoValueError &e){;}
-                    break;
+                    catch (RAT::DS::FitResult::NoVertexError &e){
+                        ev_validity = false;
+                        ev_energy = -9000;
+                        ev_pos_x = -9000;
+                        ev_pos_y = -9000;
+                        ev_pos_z = -9000;
+                        ev_pos_r = -9000;
+                    }
+                    catch (RAT::DS::FitResult::NoFitResultError &e){
+                        ev_validity = false;
+                        ev_energy = -9000;
+                        ev_pos_x = -9000;
+                        ev_pos_y = -9000;
+                        ev_pos_z = -9000;
+                        ev_pos_r = -9000;
+                    }
+                    catch (RAT::DS::FitVertex::NoValueError &e){
+                        ev_validity = false;
+                        ev_energy = -9000;
+                        ev_pos_x = -9000;
+                        ev_pos_y = -9000;
+                        ev_pos_z = -9000;
+                        ev_pos_r = -9000;
+                    }
+                    //break;
                 }
             }
             tree_output->Fill();

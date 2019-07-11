@@ -232,6 +232,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                             entries_positrons2.push_back(j);
                             //std::cout<<"e: ev_index_p1: "<<ev_index_p1<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy<<" n_pairs: "<<n_pairs<<std::endl;
                             //std::cout<<"n: ev_index_p2: "<<ev_index_p2<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy_p2<<" n_pairs: "<<n_pairs<<std::endl;
+                            if (ev_index == 1) std::cout<<"n: ev_index_p2: "<<ev_index_p2<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy_p2<<" n_pairs: "<<n_pairs<<std::endl;
+                            
                         }
                     }
                 }
