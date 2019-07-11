@@ -618,9 +618,9 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     delE_emc_p1.Write();
     delE_emc_p1_0_1.Write();
     delE_emc_p1_0_2.Write();
-    c_delekeplus_e1.Write();
-    c_delekeplus_poske.Write();
-    c_delekeplus_poske_1v2.Write();
+    c_delekeplus_e1->Write();
+    c_delekeplus_poske->Write();
+    c_delekeplus_poske_1v2->Write();
 
     deltaTimeBadEVindex1.Write();
     deltaRBadEVindex1.Write();
