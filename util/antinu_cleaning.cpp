@@ -60,11 +60,11 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     TH1D h_after_cut_emc_p2("h_after_cut_emc_p2", "Particle 2 KE (MeV)", 300, 0, 1);
     TH2D h2_after_cut_emc_p2_vs_p1("h2_after_cut_emc_p2_vs_p1", "Particle 2 KE vs Particle 1 KE", 10000, 0, 10, 1000, 0, 1);
     
-    TH1D h_after_cut_deltaT("h_after_cut_deltaT", "Time diff (ns)", 500, 0, 1000000);
-    TH1D h_after_cut_deltaR("h_after_cut_deltaR", "Inter-particle distance (mm)", 300, 0, 10000);
+    TH1D h_after_cut_deltaT("h_after_cut_deltaT", "Time diff (ns)", 300, 0, 1500000);
+    TH1D h_after_cut_deltaR("h_after_cut_deltaR", "Inter-particle distance (mm)", 300, 0, 5000);
     TH2D h2_after_cut_deltaT_vs_deltaR("h2_after_cut_deltaR_deltaT", "deltaR vs deltaT ", 500, 0, 1000000, 300, 0, 10000);
-    TH1D h_after_cut_deltaT_0_1("h_after_cut_deltaT_0_1", "Time diff (ns)   evindex=0,1", 500, 0, 1000000);
-    TH1D h_after_cut_deltaT_0_2("h_after_cut_deltaT_0_2", "Time diff (ns)   evindex=0,2", 500, 0, 1000000);
+    TH1D h_after_cut_deltaT_0_1("h_after_cut_deltaT_0_1", "Time diff (ns)   evindex=0,1", 100, 0, 1000000);
+    TH1D h_after_cut_deltaT_0_2("h_after_cut_deltaT_0_2", "Time diff (ns)   evindex=0,2", 100, 0, 1000000);
     TH1D h_after_cut_deltaR_0_1("h_after_cut_deltaR_0_1", "Inter-particle distance (mm)  evindex=0,1", 300, 0, 10000);
     TH1D h_after_cut_deltaR_0_2("h_after_cut_deltaR_0_2", "Inter-particle distance (mm)  evindex=0,2", 300, 0, 10000);
     
@@ -268,14 +268,14 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 			  h_after_cut_emc_nu.Fill(mc_energy_nu);
 			  h_after_cut_emc_p1.Fill(mc_energy_ep);
 			  h_after_cut_emc_p2.Fill(mc_energy_n);
-			  h2_after_cut_emc_p2_vs_p1.Fill(mc_energy_n, mc_energy_ep);
+			  h2_after_cut_emc_p2_vs_p1.Fill(mc_energy_ep, mc_energy_n);
 
 			  h_after_cut_deltaT.Fill(deltaT);
 			  h_after_cut_deltaR.Fill(deltaR);
 			  h2_after_cut_deltaT_vs_deltaR.Fill(deltaR, deltaT);
 			  h_after_cut_efit_prompt.Fill(ev_energy);
 			  h_after_cut_efit_delayed.Fill(ev_next_energy);
-			  h2_after_cut_efit_delayed_vs_prompt.Fill(ev_next_energy, ev_energy);
+			  h2_after_cut_efit_delayed_vs_prompt.Fill(ev_energy, ev_next_energy);
 
 			  delE_efit_prompt.Fill(ev_energy,mc_energy_ep + annihilation - ev_energy);
 			  delE_emc_p1.Fill(mc_energy_ep,mc_energy_ep + annihilation - ev_energy);
