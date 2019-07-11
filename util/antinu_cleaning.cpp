@@ -9,8 +9,41 @@
 #include <iostream>
 #include <TObject.h>
 #include <math.h>
+#include <TCanvas.h>
+#include <TGraphErrors.h>
+#include <TRandom3.h>
+#include <TStyle.h>
 
-void process_cuts(const std::string filename_input, const std::string filename_output, Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max, Double_t deltaT = 1000000, Double_t deltaP = 6000, Double_t deltaD = 6000){
+/*double correction(double x){
+  double correc = 8.83411e-02 + (9.02287e-03)*x;
+  return correc;
+}
+*/
+
+//AVERAGE
+double Average(std::vector<double> v)
+{      double sum=0;
+  for(int i=0;i<abs(v.size());i++)
+    sum+=v[i];
+  return sum/(double)v.size();
+}
+//DEVIATION
+double Uncert(std::vector<double> v, double ave)
+{
+  double E=0;
+  for(int i=0;i<abs(v.size());i++)
+    E+=(v[i] - ave)*(v[i] - ave);
+  int sizemin1size = (v.size()-1)*v.size();
+  return (sqrt(E/(double)sizemin1size));
+}
+
+double myline (double *x, double *par){
+
+  double pdf = par[0] + par[1]*x[0];
+  return pdf;
+}
+
+void process_cuts(const std::string filename_input, const std::string filename_output, Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max,Double_t deltaTmin, Double_t deltaTmax, Double_t promptRmax, Double_t lateRmax, Double_t deltaRmax){
 
     // load input file
     TFile *file_input = new TFile(filename_input.c_str());
@@ -22,46 +55,83 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
     char *name = new char[1000];
 
-    TH2D h2_before_cut_emc("h2_before_cut_emc", "h2_before_cut_emc", 10000, 0, 10, 1000, 0, 1);
+    TH1D h_after_cut_emc_nu("h_after_cut_emc_nu", "Parent antinu KE (MeV)", 300, 0, 9);
+    TH1D h_after_cut_emc_p1("h_after_cut_emc_p1", "Particle 1 KE (MeV)", 300, 0, 9);
+    TH1D h_after_cut_emc_p2("h_after_cut_emc_p2", "Particle 2 KE (MeV)", 300, 0, 1);
+    TH2D h2_after_cut_emc_p2_vs_p1("h2_after_cut_emc_p2_vs_p1", "Particle 2 KE vs Particle 1 KE", 10000, 0, 10, 1000, 0, 1);
+    
+    TH1D h_after_cut_deltaT("h_after_cut_deltaT", "Time diff (ns)", 500, 0, 1000000);
+    TH1D h_after_cut_deltaR("h_after_cut_deltaR", "Inter-particle distance (mm)", 300, 0, 10000);
+    TH2D h2_after_cut_deltaT_vs_deltaR("h2_after_cut_deltaR_deltaT", "deltaR vs deltaT ", 500, 0, 1000000, 300, 0, 10000);
+    TH1D h_after_cut_deltaT_0_1("h_after_cut_deltaT_0_1", "Time diff (ns)   evindex=0,1", 500, 0, 1000000);
+    TH1D h_after_cut_deltaT_0_2("h_after_cut_deltaT_0_2", "Time diff (ns)   evindex=0,2", 500, 0, 1000000);
+    TH1D h_after_cut_deltaR_0_1("h_after_cut_deltaR_0_1", "Inter-particle distance (mm)  evindex=0,1", 300, 0, 10000);
+    TH1D h_after_cut_deltaR_0_2("h_after_cut_deltaR_0_2", "Inter-particle distance (mm)  evindex=0,2", 300, 0, 10000);
+    
+    TH1D h_after_cut_efit_prompt("h_after_cut_efit_prompt", "Prompt Reconstructed Energy (MeV)", 300, 0, 9);
+    TH1D h_after_cut_efit_delayed("h_after_cut_efit_delayed", "Delayed Reconstructed Energy (MeV)", 300, 0, 9);
+    TH2D h2_after_cut_efit_delayed_vs_prompt("h2_after_cut_efit_delayed_vs_prompt", "Delayed vs Prompt Reconstructed Energy (MeV)", 300, 0, 9, 300, 0, 9);
+    
+    // Comparing Reconstructed to Truth:
+    int nxbins = 16;
+    double e1min = 0.;
+    double e1max = 8.;
+    int nybins = 500;
+    double delemin = 0.;
+    double delemax = 1.;
+    
+    TH2D delE_efit_prompt("delE_efit_prompt","delE_efit_prompt",nxbins,e1min,e1max,nybins,delemin,delemax);
+    TH2D delE_emc_p1("delE_emc_p1","delE_emc_p1",nxbins,e1min,e1max,nybins,delemin,delemax);
+    TH2D delE_emc_p1_0_1("delE_emc_p1_0_1","delE_emc_p1_0_1",nxbins,e1min,e1max,nybins,delemin,delemax);
+    TH2D delE_emc_p1_0_2("delE_emc_p1_0_2","delE_emc_p1_0_2",nxbins,e1min,e1max,nybins,delemin,delemax);
+    
+    // Investing in-between event (evindex = 1 when positron is 0th evindec and neutron is 2nd
+    TH1D deltaTimeBadEVindex1("deltaTimeBadEVindex1","deltaTimeBadEVindex1 (ns)",20,0,1000);
+    TH1D deltaRBadEVindex1("deltaRBadEVindex1","deltaRBadEVindex1 (mm)",300,0,10000);
+
+
+    
+    
+    
+    /*TH2D h2_before_cut_emc("h2_before_cut_emc", "h2_before_cut_emc", 10000, 0, 10, 1000, 0, 1);
     TH1D h_before_cut_emc("h_before_cut_emc", "h_before_cut_emc", 100, 0, 10);
     TH1D h_before_cut_emc_nu("h_before_cut_emc_nu", "h_before_cut_emc_nu", 100, 0, 10);
-
-    TH2D h2_after_cut_emc("h2_after_cut_emc", "h2_after_cut_emc", 10000, 0, 10, 1000, 0, 1);
-    TH1D h_after_cut_emc("h_after_cut_emc", "h_after_cut_emc", 100, 0, 10);
-    TH1D h_after_cut_emc_nu("h_after_cut_emc_nu", "h_after_cut_emc_nu", 100, 0, 10);
-    TH2D h2_after_cut_efit("h2_after_cut_efit", "h2_after_cut_efit", 1000, 0, 10, 1000, 0, 10);
-    TH1D h_after_cut_efit_p1("h_after_cut_efit_p1", "h_after_cut_efit_p1", 100, 0, 10);
-    TH2D h2_after_cut_efit_neutron("h2_after_cut_efit_neutron", "h2_after_cut_efit_neutron", 100, 0, 10, 300, 0, 3);
-    TH1D h_after_cut_efit_p2("h_after_cut_efit_p2", "h_after_cut_efit_p2", 100, 0, 10);
-    TH1D h_after_cut_time_diff("h_after_cut_time_diff", "h_after_cut_time_diff", 1000, 0, 5000000);
+    
     TH2D h2_after_cut_energy_resolution("h2_after_cut_energy_resolution", "h2_after_cut_energy_resolution", 200, -2, 2, 201, -2, 2);
     TH2D h2_after_cut_position_resolution("h2_after_cut_position_resolution", "h2_after_cut_position_resolution", 200, -2, 2, 201, -2, 2);
-    TH1D h_after_cut_position_displacement("h_after_cut_position_displacement", "h_after_cut_position_displacement", 1000, 0, 10000);
-    TH2D h2_after_cut_time_diff_displacement("h2_after_cut_time_diff_displacement", "h2_after_cut_time_diff_displacement", 1000, 0, 5000000, 1000, 0, 10000);
+    */
 
     Double_t neutron_capture_energy = 2.2;//1.857;
     Double_t e_rem = 0.784;
+    Double_t annihilation = 1.022;
+    
+    //Iwan
+    ULong64_t numsimmed = 1;
+    ULong64_t numtagged = 1;
+    ULong64_t ev01 = 0;
+    ULong64_t ev02 = 0;
+    ULong64_t ev03 = 0;
+    ULong64_t badev1 = 0;
+    Double_t totalbadevdeltaT = 0.;
+    
 
-    ULong64_t n_passed = 0;
-    ULong64_t already_tagged = 0;
-    ULong64_t n_parent_entries = 0;
-    ULong64_t n_parent_particles = 0;
     Double_t time_ns_diff;
     ULong64_t i_original, j;
     Bool_t all_pass, energy_pass, coincidence_pass, position_r_pass, particle_distance_pass, partner_passed;
 
     // properties to load from tree
-    ULong64_t entry, entry_i;
-    Double_t ev_pos_r, ev_pos_x, ev_pos_y, ev_pos_z, ev_particle_distance;
-    Double_t ev_pos_r_i, ev_pos_x_i, ev_pos_y_i, ev_pos_z_i;
-    Double_t ev_pos_r_p1, ev_pos_x_p1, ev_pos_y_p1, ev_pos_z_p1;
-    Double_t ev_pos_r_p2, ev_pos_x_p2, ev_pos_y_p2, ev_pos_z_p2;
-    Double_t ev_energy, ev_energy_i, ev_energy_p1, ev_energy_p2;
-    UInt_t ev_time_seconds, ev_time_seconds_i, ev_time_days, ev_time_days_i, ev_time_days_p1, ev_time_seconds_p1, ev_time_days_p2, ev_time_seconds_p2;
-    Double_t ev_time_nanoseconds, ev_time_nanoseconds_i, ev_time_nanoseconds_p1, ev_time_nanoseconds_p2;
-    Int_t ev_nhit;//, ev_nhit_i;
-    Bool_t ev_validity;
-    ULong64_t ev_index, ev_n_index, mc_n_ev_index, mc_ev_index_ep, mc_ev_index_n, ev_index_p1, ev_index_p2;
+    ULong64_t mc_entry, mc_entryb4;//entry, entry_i;
+    Double_t ev_pos_x, ev_pos_y, ev_pos_z;//ev_pos_r, ev_particle_distance;
+    //Double_t ev_pos_r_i, ev_pos_x_i, ev_pos_y_i, ev_pos_z_i;
+    //Double_t ev_pos_r_p1, ev_pos_x_p1, ev_pos_y_p1, ev_pos_z_p1;
+    //Double_t ev_pos_r_p2, ev_pos_x_p2, ev_pos_y_p2, ev_pos_z_p2;
+    Double_t ev_energy, ev_next_energy, ev_energy_p1, ev_energy_p2;//, ev_energy_i, ev_energy_p1, ev_energy_p2;
+    UInt_t ev_time_seconds, ev_time_days;//ev_time_seconds, ev_time_seconds_i, ev_time_days, ev_time_days_i, ev_time_days_p1, ev_time_seconds_p1, ev_time_days_p2, ev_time_seconds_p2;
+    Double_t ev_time_nanoseconds;//, ev_time_nanoseconds_i, ev_time_nanoseconds_p1, ev_time_nanoseconds_p2;
+    Double_t ev_time_ns, ev_next_time_ns;
+    Int_t ev_nhit, ev_next_nhit;//, ev_nhit_i;
+    Bool_t ev_validity,ev_next_validity;
+    ULong64_t ev_index, ev_next_index, ev_index_p1, ev_index_p2;//, ev_n_index, mc_n_ev_index, mc_ev_index_ep, mc_ev_index_n;
 
     Double_t mc_pos_r_nu, mc_pos_x_nu, mc_pos_y_nu, mc_pos_z_nu;
     Double_t mc_pos_n_r, mc_pos_x_n, mc_pos_y_n, mc_pos_z_n;
@@ -71,9 +141,12 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     Double_t mc_time_nanoseconds;
     Double_t latitude, longitude, altitude, distance;
 
-
+    //not used
+    Double_t ev_pos_r;
+    ULong64_t ev_n_index, mc_n_ev_index, mc_ev_index_ep, mc_ev_index_n;
+    
     // set branches
-    tree_input->SetBranchAddress("entry", &entry);
+    tree_input->SetBranchAddress("entry", &mc_entry);
     tree_input->SetBranchAddress("mc_time_days", &mc_time_days);
     tree_input->SetBranchAddress("mc_time_seconds", &mc_time_seconds);
     tree_input->SetBranchAddress("mc_time_nanoseconds", &mc_time_nanoseconds);
@@ -119,316 +192,374 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     tree_output->SetBranchAddress("ev_index_p1", &ev_index_p1);
     tree_output->SetBranchAddress("ev_index_p2", &ev_index_p2);
 
-    std::vector<TString> tagged_entries;
+    ///////////////////////////////////////////////
+    /// Cleaning+Coinc. Tagging (using evindex) ///
+    ///////////////////////////////////////////////
 
     ULong64_t n_entries = tree_input->GetEntries();
-    ULong64_t percent_interval = n_entries/10; //print every 10%
-    if (percent_interval<=0) percent_interval = 1;
-    ULong64_t progress_countdown = percent_interval;
-    ULong64_t i = 0;
-    ULong64_t p2 = 0;
-    n_parent_particles = tree_input->GetEntries();
+    
+    //get first event and its MCentry number
+    tree_input->GetEntry(0);
+    mc_entryb4 = mc_entry;  
 
-    std::vector<ULong64_t> entries_parents;
-    std::vector<ULong64_t> entries_neutrons;
-    std::vector<ULong64_t> entries_positrons;
-    std::vector<ULong64_t> entries_neutrons2;
-    std::vector<ULong64_t> entries_positrons2;
-    std::vector<ULong64_t> entries_basic;
-    std::vector<ULong64_t> entries_fiducial;
-    std::vector<ULong64_t> entries_coincidence_ep;
-    std::vector<ULong64_t> entries_coincidence_n;
-    std::vector<ULong64_t> entries_distance_ep;
-    std::vector<ULong64_t> entries_distance_n;
-    std::vector<ULong64_t> entries_passed;
-    std::vector<ULong64_t> entries_passed_2;
-    std::vector<ULong64_t> entries_passed_2_ep;
-    if (n_entries>1){
+    //go through entries and collect triggered evs which correspond to a single generated antinu MC event.
+    for(ULong64_t i = 1; i < n_entries; i++){
+      tree_input->GetEntry(i);
+      if(abs(mc_entry - mc_entryb4)>= 1 && ev_index == 0){ //mark when passed group of triggered evs with same mcindex:
+	numsimmed += 1;
+	tree_input->GetEntry(i-1);//Get triggered event count for the antinu MC entry
+	ULong64_t EVcount = ev_index + 1; 
 
-        // basic cut
-        for (ULong64_t ii=0; ii < n_entries; ii++){
-            i = ii;
-            tree_input->GetEntry(i);
+	ULong64_t j = 0;  // j index for potential positron event
+	bool pairfound = false;
+	//move j index within MC index group, move onto next group when j reaches second to last event
+	while (j < EVcount - 1){
+	  ULong64_t k = 1; // k index for potential neutron event
+	  Double_t time_diff_condition = 0;
+	  //move j index within MC index group, move on to next group if nothing within deltaT or no more events to look at
+	  while((time_diff_condition < deltaTmax) && (k < EVcount - j)){
+	    tree_input->GetEntry(i-EVcount+j+k); // store potential neutron event parameters
+	    ev_next_validity = ev_validity;
+	    ev_next_time_ns = ev_time_nanoseconds + (ev_time_seconds * pow(10, 9)) + (ev_time_days * 24 * 3600 * pow(10, 9));
+	    ev_next_nhit = ev_nhit;
+	    ev_next_index = ev_index;
+	    ev_next_energy = ev_energy;
+	    TVector3 ev_next_vecR = TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
+	  
+	    tree_input->GetEntry(i-EVcount+j);// potential positron event
+	    bool goodpair = false;
+	    //std::cout<<"timeD: "<<timeD<<std::endl;
+	    std::cout<<"\n MCentry: "<<mc_entry<<" EVindex: "<<ev_index<<" E: "<<ev_energy<<std::endl;
+	    std::cout<<"MCentry: "<<mc_entry<<" EVindex2: "<<ev_next_index<<" E: "<<ev_next_energy<<"\n"<<std::endl;
+	    Double_t deltaT = 0.;
+	    if (ev_validity && ev_next_validity){
+	      TVector3 ev_vecR= TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
+	      ev_time_ns = ev_time_nanoseconds + (ev_time_seconds * pow(10, 9)) + (ev_time_days * 24 * 3600 * pow(10, 9));
+	      deltaT = std::fabs(ev_next_time_ns - ev_time_ns);
+	      Double_t deltaR = (ev_vecR - ev_next_vecR).Mag();
+	      if(deltaT > deltaTmin && deltaT < deltaTmax){
+		if (ev_vecR.Mag() < promptRmax){
+		  if (ev_next_vecR.Mag() < lateRmax){
+		    if (deltaR < deltaRmax){
+		      // if want to apply nhit cuts
+		      //if (nhit1Min <= nhit  && nhit <= nhit1Max){
+		      //if (nhit2Min <= nextnhit && nextnhit <= nhit2Max){
+		
+		      //if want to correc energies
+		      //double corrected_ev_energy = ev_energy + correction(ev_energy);
+		      //if (energy_ep_min <= corrected_ev_energy && corrected_ev_energy <= energy_ep_max){
+		      //double corrected_ev_next_energy = nextEnergy + correction(nextEnergy);
+		      //if (energy_n_min <= corrected_ev_next_energy && corrected_ev_next_energy <= energy_n_max){
+		      if (energy_ep_min <= ev_energy && ev_energy <= energy_ep_max){
+			if (energy_n_min <= ev_next_energy && ev_next_energy <= energy_n_max){ //|| (4. <= nextEnergycorrec && nextEnergycorrec <= 5.8)){ //if want to allow for carbon capture?
+			  //EPromptvsEDelay2Cut.Fill(ev_energy,ev_next_energy);
+			  //E2EVindex2Cut.Fill(ev_next_energy);
+			  //}
 
-            entries_parents.push_back(entry); // entry for all events
-            //std::cout<<"ii: "<<ii<<" entry: "<<entry<<" ev_index: "<<ev_index<<"/"<<ev_n_index<<" ev_energy: "<<ev_energy<<std::endl;
+			  numtagged += 1;		
+	
+			  //std::cout<<"\n MCentry: "<<MCentry<<" EVindex: "<<evindex<<" nhits: "<<nhit<<" day: "<<days<<std::endl;
+			  //std::cout<<"MCentry2: "<<nextMCentry<<" EVindex2: "<<nextevindex<<" nhits2: "<<nextnhit<<" day2: "<<nextdays<<std::endl;
+			  //std::cout<<"timeD: "<<timeD<<std::endl;
+			  //std::cout<<"------------------------------------------------------- "<<timeD<<std::endl;
+			  //std::cout<<" EVindex: "<<evindex<<std::endl;
+			  //std::cout<<" EVindex2: "<<nextevindex<<std::endl;
+			  //std::cout<<"Energy: "<<Energy<<" EDep: "<<EDep<<" QuenchEDep: "<<QuenchEDep<<std::endl;
+			  h_after_cut_emc_nu.Fill(mc_energy_nu);
+			  h_after_cut_emc_p1.Fill(mc_energy_ep);
+			  h_after_cut_emc_p2.Fill(mc_energy_n);
+			  h2_after_cut_emc_p2_vs_p1.Fill(mc_energy_n, mc_energy_ep);
 
-            if ((ev_validity==true)&&(ev_nhit>10)&&(ev_pos_r<=6000)) // basic nhit and position cuts to remove junk
-                entries_basic.push_back(i);
+			  h_after_cut_deltaT.Fill(deltaT);
+			  h_after_cut_deltaR.Fill(deltaR);
+			  h2_after_cut_deltaT_vs_deltaR.Fill(deltaR, deltaT);
+			  h_after_cut_efit_prompt.Fill(ev_energy);
+			  h_after_cut_efit_delayed.Fill(ev_next_energy);
+			  h2_after_cut_efit_delayed_vs_prompt.Fill(ev_next_energy, ev_energy);
 
-            h_before_cut_emc_nu.Fill(mc_energy_nu);
-            h_before_cut_emc.Fill(mc_energy_ep);
-            h2_before_cut_emc.Fill(mc_energy_ep, mc_energy_n);
-        }
-        // vector method to get unique entries
-        sort( entries_parents.begin(), entries_parents.end() );
-        entries_parents.erase( unique( entries_parents.begin(), entries_parents.end() ), entries_parents.end() );
-        n_parent_entries = entries_parents.size();
-        std::cout<<"parent entries: "<<n_parent_entries<<std::endl;
-        std::cout<<"initial particles: "<<n_entries<<std::endl;
+			  delE_efit_prompt.Fill(ev_energy,mc_energy_ep + annihilation - ev_energy);
+			  delE_emc_p1.Fill(mc_energy_ep,mc_energy_ep + annihilation - ev_energy);
 
-        n_entries = entries_basic.size();
-        std::cout<<"particles after basic cuts: "<<n_entries<<std::endl;
+			  ev_energy_p1 = ev_energy;
+			  ev_index_p1 = ev_index;
+			  ev_energy_p2 = ev_next_energy;
+			  ev_index_p2 = ev_next_index;
+			  tree_output->Fill();
+			  
+			  if (ev_index == 0 && ev_next_index == 1){
+			    ev01 += 1;
+			    h_after_cut_deltaT_0_1.Fill(deltaT);
+			    h_after_cut_deltaR_0_1.Fill(deltaR);
 
-        // deltaP cut
-        for (ULong64_t ii=0; ii < n_entries; ii++){
-            i = entries_basic.at(ii);
-            tree_input->GetEntry(i);
-            if (ev_pos_r <= deltaP) // cut events outside of specified fiducial radius
-                entries_fiducial.push_back(i);
-        }
-        n_entries = entries_fiducial.size();
-        std::cout<<"particles after fiducial cut: "<<n_entries<<std::endl;
+			    delE_emc_p1_0_1.Fill(mc_energy_ep,mc_energy_ep + annihilation - ev_energy);
+			  
+			    /*E1_KE_x_01vec.push_back(ev_energy);
+			      E1_KE_y_01vec.push_back(fabs(ev_energy-part1ke));
+			      //delE_E101.Fill(Energy,part1ke + 1.022 - Energy);
+			      delT0_1.Fill(timeD);
+			      E1evindex0_1.Fill(ev_energy);
+			      KE1evindex0_1.Fill(part1ke);
+			      posKE_E1_0_1.Fill(ev_energy-part1ke);
+			      EDepevindex0_1.Fill(EDep);
+			      QuenchEDepevindex0_1.Fill(QuenchEDep);
+			      posKEvsEDepv0_1.Fill(EDep,part1ke);
+			      EDepvsQuenchEDep0_1.Fill(QuenchEDep,EDep);
+			      EDepvsEPrompt0_1.Fill(ev_energy,EDep);
+			      posKEvsEPrompt0_1.Fill(ev_energy,part1ke);
+			    */
+			  }
+			  if (ev_index == 0 && ev_next_index == 2){
+			    ev02 += 1;
+			    h_after_cut_deltaT_0_2.Fill(deltaT);
+			    h_after_cut_deltaR_0_2.Fill(deltaR);
 
-        // energy cut ** these are fiducial neutron & positron candidates
-        for (ULong64_t ii=0; ii < n_entries; ii++){
-            i = entries_fiducial.at(ii);
-            tree_input->GetEntry(i);
-            if ((ev_energy > energy_n_min)&&(ev_energy < energy_n_max)) // cut arround 2.2. MeV gamma of neutron capture
-                entries_neutrons.push_back(i);
-            if ((ev_energy > energy_ep_min)&&(ev_energy < energy_ep_max)) // cut positron energy spectrum
-                entries_positrons.push_back(i);
-        }
-        std::cout<<"particles after neutron energy cut: "<<entries_neutrons.size()<<std::endl;
-        std::cout<<"particles after positron energy cut: "<<entries_positrons.size()<<std::endl;
-        n_entries = entries_neutrons.size();
-        progress_countdown = percent_interval;
+			    delE_emc_p1_0_2.Fill(mc_energy_ep,mc_energy_ep + annihilation - ev_energy);
 
-        // ev cut
-        for (ULong64_t ii=0; ii < entries_neutrons.size(); ii++){
-            i = entries_neutrons.at(ii);
-            
-            // print progress
-            progress_countdown--;
-            if (progress_countdown==0){
-                progress_countdown = percent_interval;
-                printf("ev cut %.0f%% done\n",(Double_t)(ii+1)/n_entries*100);
-            }
-            
-            tree_input->GetEntry(i);
-            entry_i = entry;
-            ev_index_p2 = 0; // reset to 0 i.e positron like.
-            bool passed = false;
-            if (ev_index > 0) {// neutron can't be the first fitted particle (i.e. ev=0,1
-                ev_index_p2 = ev_index;
-                ev_energy_p2 = ev_energy;
-                //std::cout<<"n: ev_index_p2: "<<ev_index<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy<<std::endl;
-                passed = true;
-            }
+			    Double_t ev_time0_ns = ev_time_ns;
+			    TVector3 ev_vecR0 = ev_vecR;
+			    tree_input->GetEntry(i-EVcount+j+k-1);
+			    if (ev_validity){
+			      badev1 += 1;
+			      Double_t ev_time1_ns = ev_time_nanoseconds + (ev_time_seconds * pow(10, 9)) + (ev_time_days * 24 * 3600 * pow(10, 9));
+			      TVector3 ev_vecR1 = TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
+			      Double_t deltaR01 = (ev_vecR0 - ev_vecR1).Mag();
+			      Double_t deltaT01 = std::fabs(ev_time1_ns - ev_time0_ns);
+			      
+			      deltaTimeBadEVindex1.Fill(deltaT01);
+			      deltaRBadEVindex1.Fill(deltaR01);
+			      totalbadevdeltaT += deltaT01;
+			    }
+			  
+			    /*
+			      E1_KE_x_02vec.push_back(ev_energy);
+			      E1_KE_y_02vec.push_back(fabs(ev_energy-part1ke));
+			      delT0_2.Fill(timeD);
+			      E1evindex0_2.Fill(ev_energy);
+			      KE1evindex0_2.Fill(part1ke);
+			      posKE_E1_0_2.Fill(ev_energy-part1ke);
+			      posKEvsEDepv0_2.Fill(EDep,part1ke);
+			      EDepevindex0_2.Fill(EDep);
+			      QuenchEDepevindex0_2.Fill(QuenchEDep);
+			      EDepvsQuenchEDep0_2.Fill(QuenchEDep,EDep);
+			      EDepvsEPrompt0_2.Fill(ev_energy,EDep);
+			      posKEvsEPrompt0_2.Fill(ev_energy,part1ke);
+			    */
+			  }
+			  if (ev_index == 0 && ev_next_index == 3)
+			    ev03 += 1;
 
-            if (passed){
-                // now go through neutron events, find neutron event with same event number, select neutron for ev's > than this
-                ULong64_t n_pairs = 0;
-                for (ULong64_t iii = 0; iii < entries_positrons.size(); iii++){
-                    j = entries_positrons.at(iii);
-                    tree_input->GetEntry(j);
-                    if ((entry_i == entry)&&(ev_index < ev_index_p2)&&(ev_index < 2)){ // positron must be first of 2 fitted particles
-                        if ((int)(ev_n_index-ev_index)>1){ // positron must not be the last fitted particle i.e if n_ev=2 positron can't be ev=1, must be ev=0.
-                            n_pairs ++;
-                            ev_index_p1 = ev_index;
-                            ev_energy_p1 = ev_energy;
-                            // pass pairs of particles at a time - only pass neutron if positron was found.
-                            entries_neutrons2.push_back(i); // but this is how we get duplicates in the neutron list.
-                            entries_positrons2.push_back(j);
-                            //std::cout<<"e: ev_index_p1: "<<ev_index_p1<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy<<" n_pairs: "<<n_pairs<<std::endl;
-                            //std::cout<<"n: ev_index_p2: "<<ev_index_p2<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy_p2<<" n_pairs: "<<n_pairs<<std::endl;
-                            if (ev_index == 1) std::cout<<"n: ev_index_p2: "<<ev_index_p2<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy_p2<<" n_pairs: "<<n_pairs<<std::endl;
-                            
-                        }
-                    }
-                }
-                if (n_pairs>1)
-                    std::cout<<"\n***\n***\n***** warning n_pairs: *****\n***\n***\n"<<n_pairs<<std::endl;
-            }
-        }
-        std::cout<<"neutron after ev cut: "<<entries_neutrons2.size()<<std::endl;
-        std::cout<<"positron after ev cut: "<<entries_positrons2.size()<<std::endl;
-        n_entries = entries_neutrons2.size();
-        progress_countdown = percent_interval;
+			
+			
+			  /*if (evindex == 0)
+			    h2.Fill(ev_energy,parke);
+			    nubarKE_posKE.Fill(parke-part1ke);
+			    nubarKE_E1.Fill(parke-ev_energy);
+			    EDepvsEPrompt.Fill(ev_energy,EDep);
+			    QuenchvsEPrompt.Fill(ev_energy,QuenchEDep);
+			    delQuenchvsEPrompt2d.Fill(ev_energy,fabs(QuenchEDep-ev_energy));
+	
+			    KEPart1plus.Fill(part1ke + 1.022);
 
+			    EPromptvsEDelay.Fill(ev_energy,ev_next_energy);
 
-        // time window cut
-        for (ULong64_t ii=0; ii < n_entries; ii++){
-            i = entries_neutrons2.at(ii);
-            // print progress
-            progress_countdown--;
-            if (progress_countdown==0){
-                progress_countdown = percent_interval;
-                printf("coincident %.0f%% done\n",(Double_t)(ii+1)/n_entries*100);
-            }
-            tree_input->GetEntry(i);
-            entry_i = entry;
-            ev_time_days_p2 = ev_time_days;
-            ev_time_seconds_p2 = ev_time_seconds;
-            ev_time_nanoseconds_p2 = ev_time_nanoseconds;
+			    KEminuspdf.Fill(parke - 0.8);
+			    posKEpluspdf.Fill(part1ke + 1.022);
+			    E1pdf.Fill(ev_energy);
+			    E1pdfcorrec.Fill(ev_energy + correction(ev_energy));
+			
+			    KESmear.Fill(smearKE(part1ke));
+			  */
+			      
 
-            // find closest fiducial positron
-            ULong64_t jj=0;
-            for (jj = 0; jj < entries_positrons2.size(); jj++){
-                j = entries_positrons2.at(jj);
-                if (i <= j) break; //jj is now the index of the positron with the same particle number as the neutron
-            }
-            if (jj > entries_positrons2.size()) jj = entries_positrons2.size();
-            //std::cout<<"\ti:"<<i<<" ii:"<<ii<<" jj:"<<entries_positrons2.at(jj)<<std::endl;
-
-            // go backward through events to find positron, but ensure we go backwards without going beyond 0.
-            ULong64_t jj_limit = jj-5; //set limit since jj will change value
-            while ((jj > jj_limit)&&(jj > 0)&&(jj < entries_positrons2.size())){
-                j = entries_positrons2.at(jj);
-                std::cout<<"jj"<<jj<<" j:"<<j<<std::endl;
-
-                tree_input->GetEntry(j);
-
-                if ((i!=j)&&(j<i)){ //don't tag particle with itself and positron must be before neutron
-                    if (entry_i==entry){ // for MC generated data, we know the positron and neutron are in the same event number **not true for data**
-
-                        if(std::abs(ev_time_days_p2 - ev_time_days) > 0){ //begin time tests
-                            time_ns_diff = std::abs(ev_time_days_p2 - ev_time_days)*24*60*60*1e9 + std::abs(ev_time_seconds_p2 - ev_time_seconds)*1e9 + std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds);
-                        }
-                        else { // days are equal
-                            if(std::abs(ev_time_seconds_p2 - ev_time_seconds) > 0){
-                                time_ns_diff = std::abs(ev_time_seconds_p2 - ev_time_seconds)*1e9 + std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds);
-                            }
-                            else { // seconds are equal
-                                time_ns_diff = std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds);
-                                if(std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds) < deltaT){ // nanosec are to within deltaT
-                                    entries_coincidence_n.push_back(i);
-                                    entries_coincidence_ep.push_back(j);
-                                }
-                            }
-                        }
-                    }
-                }
-                jj--;
-            }
-        }
-        n_entries = entries_coincidence_n.size();
-        std::cout<<"particles after coincident cut: "<<entries_coincidence_n.size()+entries_coincidence_ep.size()<<" (n:"<<entries_coincidence_n.size()<<", ep:"<<entries_coincidence_ep.size()<<")"<<std::endl;
-
-        progress_countdown = percent_interval;
-        // Inter-particle distance cut
-        for (ULong64_t ii=0; ii < n_entries; ii++){
-            i = entries_coincidence_n.at(ii);
-            
-            // print progress
-            progress_countdown--;
-            if (progress_countdown==0){
-                progress_countdown = percent_interval;
-                printf("distance %.0f%% done\n",(Double_t)(ii+1)/n_entries*100);
-            }
-            tree_input->GetEntry(i);
-            TVector3 position_p2_pos(ev_pos_x, ev_pos_y, ev_pos_z);
-
-            j = entries_coincidence_ep.at(ii);
-            tree_input->GetEntry(j);
-            TVector3 position_p1_pos(ev_pos_x, ev_pos_y, ev_pos_z);
-            //TVector3 position_p1_pos(mc_pos_x_ep, mc_pos_y_ep, mc_pos_z_ep);
-
-            ev_particle_distance = (position_p2_pos - position_p1_pos).Mag();
-            if ((ev_particle_distance >= 1)&&(ev_particle_distance < deltaD)){
-                entries_distance_n.push_back(i);
-                entries_distance_ep.push_back(j);
-                entries_passed.push_back(i);
-                entries_passed.push_back(j);
-            }
-        }
-        sort( entries_passed.begin(), entries_passed.end() );
-        n_entries = entries_passed.size();
-        std::cout<<"particles after inter-particle distance cut: "<<n_entries<<" (n:"<<entries_distance_n.size()<<", ep:"<<entries_distance_ep.size()<<")"<<std::endl;
-
-        std::vector<ULong64_t>::iterator it1 = std::unique( entries_distance_n.begin(), entries_distance_n.end() );
-        bool wasUnique_n = (it1 == entries_distance_n.end() );
-        std::vector<ULong64_t>::iterator it2 = std::unique( entries_distance_ep.begin(), entries_distance_ep.end() );
-        bool wasUnique_ep = (it2 == entries_distance_ep.end() );
-        std::cout<<"uniqness n:"<<wasUnique_n<<" ep:"<<wasUnique_ep<<std::endl;
-
-        // get final entry numbers
-        for (ULong64_t ii=0; ii < entries_distance_n.size(); ii++){
-            i = entries_distance_n.at(ii);
-            tree_input->GetEntry(i);
-            entries_passed_2.push_back(entry);
-
-        }
-        for (ULong64_t ii=0; ii < entries_distance_ep.size(); ii++){
-            i = entries_distance_ep.at(ii);
-            tree_input->GetEntry(i);
-            entries_passed_2_ep.push_back(entry);
-        }
-
-        // for (ULong64_t ii=0; ii < entries_distance_n.size(); ii++){
-            // bool same = 0;
-            // if (entries_passed_2.at(ii)==entries_passed_2_ep.at(ii)) same=true;
-            // std::cout<<"i:"<<ii<<" particle_j:"<<entries_distance_ep.at(ii)<<" particle_i:"<<entries_distance_n.at(ii)<<" entry_j:"<<entries_passed_2_ep.at(ii)<<" entry_i:"<<entries_passed_2.at(ii)<<":"<<same<<std::endl;
-        // }
-
-        // fill events which passed
-        n_passed = n_entries;
-        for (ULong64_t ii=0; ii < entries_distance_n.size(); ii++){
-            i = entries_distance_n.at(ii);
-            tree_input->GetEntry(i);
-            ev_energy_p2 = ev_energy;
-            ev_index_p2 = ev_index;
-            ev_time_nanoseconds_p2 = ev_time_nanoseconds;
-            ev_pos_x_p2 = ev_pos_x;
-            ev_pos_y_p2 = ev_pos_y;
-            ev_pos_z_p2 = ev_pos_z;
-            TVector3 position_p2_pos(ev_pos_x_p2, ev_pos_y_p2, ev_pos_z_p2);
-
-            j = entries_distance_ep.at(ii);
-            tree_input->GetEntry(j);
-            ev_energy_p1 = ev_energy;
-            ev_index_p1 = ev_index;
-
-            time_ns_diff = std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds);
-            TVector3 position_p1_pos(ev_pos_x, ev_pos_y, ev_pos_z);
-            ev_particle_distance = (position_p2_pos - position_p1_pos).Mag();
-
-            // // fill histograms with all triggers which pass cuts
-            h2_after_cut_efit.Fill(ev_energy_p1, ev_energy_p2);
-            h_after_cut_efit_p1.Fill(ev_energy_p1);
-            h2_after_cut_efit_neutron.Fill(ev_energy_p1, mc_energy_nu - (ev_energy_p1+e_rem) );
-            h_after_cut_efit_p2.Fill(ev_energy_p2);
-            h_after_cut_time_diff.Fill(time_ns_diff);
-            h_after_cut_position_displacement.Fill(ev_particle_distance);
-            h2_after_cut_time_diff_displacement.Fill(time_ns_diff, ev_particle_distance);
-            h2_after_cut_energy_resolution.Fill((ev_energy_p1-mc_energy_nu)/mc_energy_nu, (ev_energy_p2-neutron_capture_energy)/neutron_capture_energy);
-            h2_after_cut_position_resolution.Fill((ev_pos_x-mc_pos_x_ep)/mc_pos_x_ep, (ev_pos_x_p2-mc_pos_x_n)/mc_pos_x_n);
-
-            h_after_cut_emc_nu.Fill(mc_energy_nu);
-            h_after_cut_emc.Fill(mc_energy_ep);
-            h2_after_cut_emc.Fill(mc_energy_ep, mc_energy_n);
-
-            tree_output->Fill();
-        }
-
-        std::vector<ULong64_t>::iterator it3 = std::unique( entries_passed.begin(), entries_passed.end() );
-        bool wasUnique = (it3 == entries_passed.end() );
-        std::cout<<"uniqness n:"<<wasUnique<<std::endl;
-
-        p2 = entries_passed.size();
-
+			  goodpair = true;  //pair passed quality cuts, if not continue search in group
+			  pairfound = true; // a pair was found
+			  k += 100; // cancel sub search
+			}
+		      }
+		    }
+		  }
+		}
+	      }
+	    } // if pair failed quality cuts, continue sub group search
+	    if (!goodpair){
+	      k += 1;
+	      if (!ev_validity){ //if positron/j_index not a valid fit, move onto next sub group
+		k += 100;
+	      }else{ //else if good, check that it satisfies time diff, if not move onto next sub group
+		time_diff_condition = deltaT;
+	      }
+	    }
+	  }
+	  if (pairfound){
+	    j += 100;
+	  }else{
+	    j += 1;
+	  }
+	}
+      }
+      mc_entryb4 = mc_entry;
     }
-    std::cout<<"passed entries: "<<p2<<std::endl;
+    // finished tagging (though the last mc entry is skipped due to the method, negligible for high stats)
 
-    // cut purity plots (ratio plot)
-    TH1D *h_after_cut_emc_nu_ratio = (TH1D*)h_after_cut_emc_nu.Clone("h_after_cut_emc_nu_ratio");
-    h_after_cut_emc_nu_ratio->Divide(&h_before_cut_emc_nu);
 
-    TH1D *h_after_cut_efit_ratio = (TH1D*)h_after_cut_efit_p1.Clone("h_after_cut_efit_ratio");
-    h_after_cut_efit_ratio->Divide(&h_after_cut_emc_nu);
+    // look at how reconstruction compares w/ MC truth
+    //  dele = positronKE + 1.022MeV - reconstructedEPrompt
+    std::vector<Double_t> dele_e1xvec;
+    std::vector<Double_t> dele_e1yvec;
+    std::vector<Double_t> dele_e1yerrvec;
+    std::vector<Double_t> dele_poskexvec;
+    std::vector<Double_t> dele_poskeyvec;
+    std::vector<Double_t> dele_poskeyerrvec;
+    std::vector<Double_t> dele_poskexvec01;
+    std::vector<Double_t> dele_poskeyvec01;
+    std::vector<Double_t> dele_poskeyerrvec01;
+    std::vector<Double_t> dele_poskexvec02;
+    std::vector<Double_t> dele_poskeyvec02;
+    std::vector<Double_t> dele_poskeyerrvec02;
 
-    TH1D *h_after_cut_emc_nu_n = (TH1D*)h_after_cut_emc_nu.Clone("h_after_cut_emc_nu_n");
-    TH1D *h_after_cut_efit_p1_n = (TH1D*)h_after_cut_efit_p1.Clone("h_after_cut_efit_p1_n");
-    h_after_cut_emc_nu_n->Scale(1./h_after_cut_emc_nu_n->GetMaximum());
-    h_after_cut_efit_p1_n->SetLineColor(kRed);
-    h_after_cut_efit_p1_n->Scale(1./h_after_cut_efit_p1_n->GetMaximum());
+    std::vector<Double_t> dele_e1xerrvec;
+    std::vector<Double_t> dele_poskexerrvec;
+    std::vector<Double_t> dele_poskexerrvec01;
+    std::vector<Double_t> dele_poskexerrvec02;
+    
+    for (ULong64_t i = 0; i < nxbins; i++){
+      std::vector<Double_t> slicecontente1;
+      std::vector<Double_t> slicecontent;
+      std::vector<Double_t> slicecontent01;
+      std::vector<Double_t> slicecontent02;
+      for (ULong64_t j = 0; j < nybins; j++){
+	ULong64_t pointcounte1 = delE_efit_prompt.GetBinContent(i+1,j+1);
+	ULong64_t pointcount = delE_emc_p1.GetBinContent(i+1,j+1);
+	ULong64_t pointcount01 = delE_emc_p1_0_1.GetBinContent(i+1,j+1);
+	ULong64_t pointcount02 = delE_emc_p1_0_2.GetBinContent(i+1,j+1);
+	if (pointcounte1 >= 1){
+	  for (ULong64_t k = 0; k < pointcounte1; k++)
+	    slicecontente1.push_back(((TAxis*)delE_efit_prompt.GetYaxis())->GetBinCenter(j+1));
+	}
+	if (pointcount >= 1){
+	  for (ULong64_t k = 0; k < pointcount; k++)
+	    slicecontent.push_back(((TAxis*)delE_emc_p1.GetYaxis())->GetBinCenter(j+1));
+	}
+	if (pointcount01 >= 1){
+	  for (ULong64_t k = 0; k < pointcount01; k++)
+	    slicecontent01.push_back(((TAxis*)delE_emc_p1_0_1.GetYaxis())->GetBinCenter(j+1));
+	}
+	if (pointcount02 >= 1){
+	  for (ULong64_t k = 0; k < pointcount02; k++)
+	    slicecontent02.push_back(((TAxis*)delE_emc_p1_0_2.GetYaxis())->GetBinCenter(j+1));
+	}
+      }
+      ULong64_t minnum = 10; //minimum sample size used to calculate a mean and uncertainty
+      if (abs(slicecontente1.size()) >= minnum){
+	double mean = Average(slicecontente1);
+	double uncert = Uncert(slicecontente1,mean);
+	//std::cout<<"\n E1: "<<((TAxis*)delE_E1.GetXaxis())->GetBinCenter(i+1)<<" deleavg: "<<mean<<" uncert: "<<uncert<<" num in slice: "<<slicecontente1.size()<<std::endl;
+	dele_e1xvec.push_back(((TAxis*)delE_efit_prompt.GetXaxis())->GetBinCenter(i+1));
+	dele_e1yvec.push_back(mean);
+	dele_e1yerrvec.push_back(uncert);
+	dele_e1xerrvec.push_back(0.);
+      }
+      if (abs(slicecontent.size()) >= minnum){
+	double mean = Average(slicecontent);
+	double uncert = Uncert(slicecontent,mean);
+	//std::cout<<" poske: "<<((TAxis*)delE_posKE.GetXaxis())->GetBinCenter(i+1)<<" deleavg: "<<mean<<" uncert: "<<uncert<<" num in slice: "<<slicecontent.size()<<std::endl;
+	dele_poskexvec.push_back(((TAxis*)delE_emc_p1.GetXaxis())->GetBinCenter(i+1));
+	dele_poskeyvec.push_back(mean);
+	dele_poskeyerrvec.push_back(uncert);
+	dele_poskexerrvec.push_back(0.);
+      }
+      if (abs(slicecontent01.size()) >= minnum){
+	double mean01 = Average(slicecontent01);
+	double uncert01 = Uncert(slicecontent01,mean01);
+	//std::cout<<"0_1: poske: "<<((TAxis*)delE_posKE01.GetXaxis())->GetBinCenter(i+1)<<" deleavg: "<<mean01<<" uncert: "<<uncert01<<" num in slice: "<<slicecontent01.size()<<std::endl;
+	dele_poskexvec01.push_back(((TAxis*)delE_emc_p1_0_1.GetXaxis())->GetBinCenter(i+1));
+	dele_poskeyvec01.push_back(mean01);
+	dele_poskeyerrvec01.push_back(uncert01);
+	dele_poskexerrvec01.push_back(0.);
+      }
+      if (abs(slicecontent02.size()) >= minnum){
+	double mean02 = Average(slicecontent02);
+	double uncert02 = Uncert(slicecontent02,mean02);
+	//std::cout<<"0_2: poske: "<<((TAxis*)delE_posKE02.GetXaxis())->GetBinCenter(i+1)<<" deleavg: "<<mean02<<" uncert: "<<uncert02<<" num in slice: "<<slicecontent02.size()<<std::endl;
+	dele_poskexvec02.push_back(((TAxis*)delE_emc_p1_0_2.GetXaxis())->GetBinCenter(i+1));
+	dele_poskeyvec02.push_back(mean02);
+	dele_poskeyerrvec02.push_back(uncert02);
+	dele_poskexerrvec02.push_back(0.);
+      }
+    }
+    // Plotting (and fitting) DelE vs reconstructed EPrompt
+    TCanvas* c_delekeplus_e1 = new TCanvas("c_delekeplus_e1", "positronKE + 1.022MeV - EPrompt vs EPrompt");
+    TGraphErrors *gr_dele_e1 = new TGraphErrors(dele_e1xvec.size(),&dele_e1xvec[0],&dele_e1yvec[0],&dele_e1xerrvec[0],&dele_e1yerrvec[0]);
+    
+    TF1 *fitfunc = new TF1("fitfunc", myline, e1min, e1max, 2);
+    fitfunc->SetParName(0,"C");
+    fitfunc->SetParName(1,"m");
 
+    double Cmax = 0.6;
+    double mmax = 10;
+
+    TRandom3 *r1 = new TRandom3();
+    r1->SetSeed(0);
+
+    fitfunc->SetParameters(r1->Rndm()*(Cmax),(r1->Rndm())*mmax);  
+    fitfunc->SetParLimits(0, 0., Cmax);
+    fitfunc->SetParLimits(1, 0., mmax);
+    gr_dele_e1->Fit(fitfunc);
+    Double_t par[2];
+    fitfunc->GetParameters(par);
+    gStyle->SetOptFit(1);
+    fitfunc->Draw("same");
+  
+    gr_dele_e1->SetTitle("(positronKE + 1.022MeV - EPrompt) vs EPrompt");
+    gr_dele_e1->SetMarkerColor(kRed);
+    gr_dele_e1->SetLineColor(kRed);
+    gr_dele_e1->SetMarkerStyle(21);
+    gr_dele_e1->Draw("AP");
+    
+    // Plotting DelE vs positron KE
+    TCanvas* c_delekeplus_poske = new TCanvas("c_delekeplus_poske", "positronKE + 1.022MeV - EPrompt vs positronKE");
+    TGraphErrors *gr_dele_poske = new TGraphErrors(dele_poskexvec.size(),&dele_poskexvec[0],&dele_poskeyvec[0],&dele_poskexerrvec[0],&dele_poskeyerrvec[0]);
+    
+    gr_dele_poske->SetTitle("(positronKE + 1.022MeV - EPrompt) vs positronKE");
+    gr_dele_poske->SetMarkerColor(kRed);
+    gr_dele_poske->SetLineColor(kRed);
+    gr_dele_poske->SetMarkerStyle(21);
+    gr_dele_poske->Draw("AP");
+
+    // Plotting DelE vs positron KE (ev index 0_1 and 0_2)
+    TCanvas* c_delekeplus_poske_1v2 = new TCanvas("c_delekeplus_e11v2", "positronKE + 1.022MeV - EPrompt vs EPrompt (0_1 vs 0_2)");
+    TGraphErrors *gr_dele_poske01 = new TGraphErrors(dele_poskexvec01.size(),&dele_poskexvec01[0],&dele_poskeyvec01[0],&dele_poskexerrvec01[0],&dele_poskeyerrvec01[0]);
+    gr_dele_poske01->SetTitle("(positronKE + 1.022MeV - EPrompt) vs  positronKE   evindex= 0_1(red) vs 0_2(blue)" );
+    gr_dele_poske01->SetMarkerColor(kRed);
+    gr_dele_poske01->SetLineColor(kRed);
+    gr_dele_poske01->SetMarkerStyle(21);
+    gr_dele_poske01->Draw("AP");
+    TGraphErrors *gr_dele_poske02 = new TGraphErrors(dele_poskexvec02.size(),&dele_poskexvec02[0],&dele_poskeyvec02[0],&dele_poskexerrvec02[0],&dele_poskeyerrvec02[0]);
+    gr_dele_poske02->SetMarkerColor(kBlue);
+    gr_dele_poske02->SetLineColor(kBlue);
+    gr_dele_poske02->SetMarkerStyle(21);
+    gr_dele_poske02->Draw("P");
+
+
+    //summary stats
+    std::cout<<"\n \n Summary: "<<std::endl;
+    std::cout<<"\n number of antinus simmed: "<<numsimmed<<std::endl;
+    std::cout<<"MC partner events within deltaT: "<<numtagged<<std::endl;
+
+    std::cout<<"\n  EVindex 0_1: "<<ev01<<std::endl;
+    std::cout<<" EVindex 0_2: "<<ev02<<std::endl;
+    std::cout<<" EVindex 0_3: "<<ev03<<std::endl;
+    
+    std::cout<<"\n noise events between e+ an n: "<<badev1<<std::endl;
+    std::cout<<"bad ev following positron mean time (ns): "<<totalbadevdeltaT/badev1<<std::endl;
+
+    
     // save file
     file_input->Close();
     file_output->cd();
 
     // set axes...
-    h2_before_cut_emc.GetXaxis()->SetTitle("mc_energy_ep");
+    /*h2_before_cut_emc.GetXaxis()->SetTitle("mc_energy_ep");
     h2_before_cut_emc.GetYaxis()->SetTitle("mc_energy_n");
     h_before_cut_emc.SetTitle("KE_ep");
     h_before_cut_emc_nu.SetTitle("KE_nu");
@@ -463,57 +594,59 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     h_after_cut_efit_p2.GetXaxis()->SetTitle("Energy (MeV)");
     h_after_cut_time_diff.GetXaxis()->SetTitle("Time between abs(ev_fit_p2 - ev_fit_p1) (ns)");
     h_after_cut_position_displacement.GetXaxis()->SetTitle("Position (ev_fit_p1 - ev_fit_p2) (mm)");
-
-    h_after_cut_emc_nu_ratio->GetYaxis()->SetTitle("KE_nu after cut / KE_nu before cut");
-    h_after_cut_efit_ratio->GetYaxis()->SetTitle("ev_energy_p1+0.784MeV / KE_nu");
-    h_after_cut_emc_nu_ratio->GetXaxis()->SetTitle("Energy (MeV)");
-    h_after_cut_efit_ratio->GetXaxis()->SetTitle("Energy (MeV)");
-
+    */
+    
     // write objects...
-    h2_before_cut_emc.Write();
-    h_before_cut_emc_nu.Write();
-    h_before_cut_emc.Write();
-
-    h2_after_cut_emc.Write();
     h_after_cut_emc_nu.Write();
-    h_after_cut_emc_nu_n->Write();
-    h_after_cut_emc.Write();
-    h2_after_cut_efit.Write();
-    h_after_cut_efit_p1.Write();
-    h_after_cut_efit_p1_n->Write();
-    h2_after_cut_efit_neutron.Write();
-    h_after_cut_efit_p2.Write();
-    h_after_cut_time_diff.Write();
-    h_after_cut_position_displacement.Write();
-    h2_after_cut_time_diff_displacement.Write();
-    h2_after_cut_energy_resolution.Write();
-    h2_after_cut_position_resolution.Write();
+    h_after_cut_emc_p1;
+    h_after_cut_emc_p2;
+    h2_after_cut_emc_p2_vs_p1;
 
-    h_after_cut_emc_nu_ratio->Write();
-    h_after_cut_efit_ratio->Write();
+    h_after_cut_deltaT;
+    h_after_cut_deltaR;
+    h2_after_cut_deltaT_vs_deltaR;
+    h_after_cut_deltaT_0_1;
+    h_after_cut_deltaT_0_2;
+    h_after_cut_deltaR_0_1;
+    h_after_cut_deltaR_0_2;
+
+    h_after_cut_efit_prompt;
+    h_after_cut_efit_delayed;
+    h2_after_cut_efit_delayed_vs_prompt;
+    
+    delE_efit_prompt;
+    delE_emc_p1;
+    delE_emc_p1_0_1;
+    delE_emc_p1_0_2;
+    c_delekeplus_e1;
+    c_delekeplus_poske;
+    c_delekeplus_poske_1v2;
+
+    deltaTimeBadEVindex1;
+    deltaRBadEVindex1;
+    
+    //h2_before_cut_emc.Write();
+    //h_before_cut_emc_nu.Write();
+    //h_before_cut_emc.Write();
 
     tree_output->AutoSave();
     file_output->Close();
-    std::cout<<"Summary: "<<std::endl;
-    std::cout<<"\tparent entries: "<<n_parent_entries<<std::endl;
-    std::cout<<"\tfinal entries: "<<p2<<std::endl;
-    std::cout<<"\tpass percent: "<<(double)p2/(double_t)n_parent_entries*100<<std::endl;
-
-
-    std::cout<<"n_min: "<<energy_n_min<<" n_max: "<<energy_n_max<<std::endl;
 
     //write csv output file with event numbers
     sprintf(name, "%s.csv",filename_output.c_str());
     FILE *fOut = fopen(name,"w");
-    fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,initial_entries,final_entries,already_tagged,finished\n");
-    fprintf(fOut,"%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD, n_parent_entries, n_passed, already_tagged,1);
+    fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaTmin,deltaTmax,deltaRmax,initial_entries,final_entries,finished\n");
+    fprintf(fOut,"%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaTmin, deltaTmax, deltaRmax, numsimmed, numtagged,1);
     fclose(fOut);
+
+    std::cout<<"fin: "<<filename_input<<" \n fout: "<<filename_output<<"\n e1min "<<energy_ep_min<<"\n e1max "<<energy_ep_max<<"\n e2min "<<energy_n_min<<"\n e2max "<<energy_n_max<<"\n delT "<<deltaTmin<<"\n delTmax "<<deltaTmax<<"\n R1 "<<promptRmax<<"\n R2 "<<lateRmax<<"\n delR "<<deltaRmax<<std::endl;
+      //const std::string filename_input, const std::string filename_output, Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max,Double_t deltaTmin, Double_t deltaTmax, Double_t promptRmax, Double_t lateRmax, Double_t deltaRmax
 }
 
 Int_t main(Int_t argc, char *argv[]) {
 
-    if (argc != 10) {
-        std::cout<<"Error: 9 arguments expected. Got: "<<argc-1<<std::endl;
+    if (argc != 11) {
+        std::cout<<"Error: 10 arguments expected. Got: "<<argc-1<<std::endl;
         return 1; // return>0 indicates error code
     }
     else {
@@ -524,19 +657,21 @@ Int_t main(Int_t argc, char *argv[]) {
         double energy_ep_max = atof(argv[4]);
         double energy_n_min = atof(argv[5]);
         double energy_n_max = atof(argv[6]);
-        double deltaT = atof(argv[7]);
-        double deltaP = atof(argv[8]);
-        double deltaD = atof(argv[9]);
-
+	double deltaTmin = 500;
+        double deltaTmax = atof(argv[7]);
+        double promptRmax = atof(argv[8]);
+        double lateRmax = atof(argv[9]);
+	double deltaRmax = atof(argv[10]);
+	
         //write csv output file to show process has begun (values filled upon completion)
         char *name = new char[1000];
         sprintf(name, "%s.csv",filename_output.c_str());
         FILE *fOut = fopen(name,"w");
-        fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,initial_entries,final_entries,already_tagged,finished\n");
-        fprintf(fOut,"%s,%s,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i\n", filename_input.c_str(), filename_output.c_str(), -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000,0);
+	fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaTmin,deltaTmax,deltaRmax,initial_entries,final_entries,finished\n");
+        fprintf(fOut,"%s,%s,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i\n", filename_input.c_str(), filename_output.c_str(), -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000,0);
         fclose(fOut);
 
-        process_cuts(filename_input, filename_output, energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD);
+        process_cuts(filename_input, filename_output, energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaTmin, deltaTmax, promptRmax, lateRmax, deltaRmax);
 
         return 0; // completed successfully
     }
