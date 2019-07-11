@@ -598,32 +598,32 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     
     // write objects...
     h_after_cut_emc_nu.Write();
-    h_after_cut_emc_p1;
-    h_after_cut_emc_p2;
-    h2_after_cut_emc_p2_vs_p1;
+    h_after_cut_emc_p1.Write();
+    h_after_cut_emc_p2.Write();
+    h2_after_cut_emc_p2_vs_p1.Write();
 
-    h_after_cut_deltaT;
-    h_after_cut_deltaR;
-    h2_after_cut_deltaT_vs_deltaR;
-    h_after_cut_deltaT_0_1;
-    h_after_cut_deltaT_0_2;
-    h_after_cut_deltaR_0_1;
-    h_after_cut_deltaR_0_2;
+    h_after_cut_deltaT.Write();
+    h_after_cut_deltaR.Write();
+    h2_after_cut_deltaT_vs_deltaR.Write();
+    h_after_cut_deltaT_0_1.Write();
+    h_after_cut_deltaT_0_2.Write();
+    h_after_cut_deltaR_0_1.Write();
+    h_after_cut_deltaR_0_2.Write();
 
-    h_after_cut_efit_prompt;
-    h_after_cut_efit_delayed;
-    h2_after_cut_efit_delayed_vs_prompt;
+    h_after_cut_efit_prompt.Write();
+    h_after_cut_efit_delayed.Write();
+    h2_after_cut_efit_delayed_vs_prompt.Write();
     
-    delE_efit_prompt;
-    delE_emc_p1;
-    delE_emc_p1_0_1;
-    delE_emc_p1_0_2;
-    c_delekeplus_e1;
-    c_delekeplus_poske;
-    c_delekeplus_poske_1v2;
+    delE_efit_prompt.Write();
+    delE_emc_p1.Write();
+    delE_emc_p1_0_1.Write();
+    delE_emc_p1_0_2.Write();
+    c_delekeplus_e1.Write();
+    c_delekeplus_poske.Write();
+    c_delekeplus_poske_1v2.Write();
 
-    deltaTimeBadEVindex1;
-    deltaRBadEVindex1;
+    deltaTimeBadEVindex1.Write();
+    deltaRBadEVindex1.Write();
     
     //h2_before_cut_emc.Write();
     //h_before_cut_emc_nu.Write();
