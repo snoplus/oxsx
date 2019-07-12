@@ -88,8 +88,6 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     // Investing in-between event (evindex = 1 when positron is 0th evindec and neutron is 2nd
     TH1D deltaTimeBadEVindex1("deltaTimeBadEVindex1","deltaTimeBadEVindex1 (ns)",20,0,1000);
     TH1D deltaRBadEVindex1("deltaRBadEVindex1","deltaRBadEVindex1 (mm)",300,0,10000);
-
-
     
     
     
@@ -645,8 +643,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
 Int_t main(Int_t argc, char *argv[]) {
 
-    if (argc != 11) {
-        std::cout<<"Error: 10 arguments expected. Got: "<<argc-1<<std::endl;
+    if (argc != 12) {
+        std::cout<<"Error: 11 arguments expected. Got: "<<argc-1<<std::endl;
         return 1; // return>0 indicates error code
     }
     else {
@@ -657,11 +655,11 @@ Int_t main(Int_t argc, char *argv[]) {
         double energy_ep_max = atof(argv[4]);
         double energy_n_min = atof(argv[5]);
         double energy_n_max = atof(argv[6]);
-	double deltaTmin = 500;
-        double deltaTmax = atof(argv[7]);
-        double promptRmax = atof(argv[8]);
-        double lateRmax = atof(argv[9]);
-	double deltaRmax = atof(argv[10]);
+	double deltaTmin = atof(argv[7]);
+        double deltaTmax = atof(argv[8]);
+        double promptRmax = atof(argv[9]);
+        double lateRmax = atof(argv[10]);
+	double deltaRmax = atof(argv[11]);
 	
         //write csv output file to show process has begun (values filled upon completion)
         char *name = new char[1000];
