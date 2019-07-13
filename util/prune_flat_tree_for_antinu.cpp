@@ -18,8 +18,8 @@
 #include <RAT/DB.hh>
 //#include <TObject.h>
 
-const TVector3 SNO_ECEF_coord_ = TVector3(672.87, -4347.18, 4600.51);
-//const TVector3 SNO_ECEF_coord_ = TVector3(-3777.14425893, 3483.58137383, 3766.0181443); // Kamland
+const TVector3 ECEF_coord_ = TVector3(672.87, -4347.18, 4600.51);
+//const TVector3 ECEF_coord_ = TVector3(-3777.14425893, 3483.58137383, 3766.0181443); // Kamland
 
 Double_t CalculateDistance(TVector3 point1, TVector3 point2) {
     return (point2 - point1).Mag();
@@ -46,7 +46,7 @@ TVector3 LLAtoECEF(Double_t latitude, Double_t longitude, Double_t altitude) {
 }
 
 Double_t GetReactorDistanceLLA(Double_t latitude, Double_t longitude, Double_t altitude) {
-    return CalculateDistance(SNO_ECEF_coord_,LLAtoECEF(latitude, longitude, altitude));
+    return CalculateDistance(ECEF_coord_,LLAtoECEF(latitude, longitude, altitude));
 }
 
 void ntload(std::string input_filename, std::string output_filename, std::string fitter_name) {
