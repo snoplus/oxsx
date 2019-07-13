@@ -227,8 +227,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 	    tree_input->GetEntry(i-EVcount+j);// potential positron event
 	    bool goodpair = false;
 	    //std::cout<<"timeD: "<<timeD<<std::endl;
-	    std::cout<<"\n MCentry: "<<mc_entry<<" EVindex: "<<ev_index<<" E: "<<ev_energy<<std::endl;
-	    std::cout<<"MCentry: "<<mc_entry<<" EVindex2: "<<ev_next_index<<" E: "<<ev_next_energy<<"\n"<<std::endl;
+	    //std::cout<<"\n MCentry: "<<mc_entry<<" EVindex: "<<ev_index<<" E: "<<ev_energy<<std::endl;
+	    //std::cout<<"MCentry: "<<mc_entry<<" EVindex2: "<<ev_next_index<<" E: "<<ev_next_energy<<"\n"<<std::endl;
 	    Double_t deltaT = 0.;
 	    if (ev_validity && ev_next_validity){
 	      TVector3 ev_vecR= TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
@@ -502,7 +502,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     fitfunc->SetParameters(r1->Rndm()*(Cmax),(r1->Rndm())*mmax);  
     fitfunc->SetParLimits(0, 0., Cmax);
     fitfunc->SetParLimits(1, 0., mmax);
-    gr_dele_e1->Fit(fitfunc);
+    gr_dele_e1->Fit(fitfunc);  // should this be ->Fit(fitfunc, "NQR")??
     Double_t par[2];
     fitfunc->GetParameters(par);
     gStyle->SetOptFit(1);

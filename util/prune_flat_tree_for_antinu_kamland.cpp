@@ -18,8 +18,8 @@
 #include <RAT/DB.hh>
 //#include <TObject.h>
 
-//const TVector3 SNO_ECEF_coord_ = TVector3(672.87, -4347.18, 4600.51);
-const TVector3 SNO_ECEF_coord_ = TVector3(-3777.14425893, 3483.58137383, 3766.0181443); // Kamland
+//const TVector3 ECEF_coord_ = TVector3(672.87, -4347.18, 4600.51);
+const TVector3 ECEF_coord_ = TVector3(-3777.14425893, 3483.58137383, 3766.0181443); // Kamland
 
 Double_t CalculateDistance(TVector3 point1, TVector3 point2) {
     return (point2 - point1).Mag();
@@ -46,7 +46,7 @@ TVector3 LLAtoECEF(Double_t latitude, Double_t longitude, Double_t altitude) {
 }
 
 Double_t GetReactorDistanceLLA(Double_t latitude, Double_t longitude, Double_t altitude) {
-    return CalculateDistance(SNO_ECEF_coord_,LLAtoECEF(latitude, longitude, altitude));
+    return CalculateDistance(ECEF_coord_,LLAtoECEF(latitude, longitude, altitude));
 }
 
 void ntload(std::string input_filename, std::string output_filename, std::string fitter_name) {
@@ -76,7 +76,7 @@ void ntload(std::string input_filename, std::string output_filename, std::string
     UInt_t ev_time_seconds;
     Double_t ev_energy, ev_pos_x, ev_pos_y, ev_pos_z, ev_pos_r, ev_energy_p1, ev_energy_p2;
     Bool_t ev_validity;
-    ULong64_t ev_index, mc_ev_index_ep, mc_ev_index_n, ev_index_p1, ev_index_p2;
+    ULong64_t ev_index, ev_n_index, mc_n_ev_index, mc_ev_index_ep, mc_ev_index_n, ev_index_p1, ev_index_p2;
 
     // set branches
     tree_output->Branch("entry", &entry, "entry/l");
@@ -99,9 +99,11 @@ void ntload(std::string input_filename, std::string output_filename, std::string
     tree_output->Branch("mc_neutron_position_x", &mc_pos_x_n, "mc_pos_x_n/D");
     tree_output->Branch("mc_neutron_position_y", &mc_pos_y_n, "mc_pos_y_n/D");
     tree_output->Branch("mc_neutron_position_z", &mc_pos_z_n, "mc_pos_z_n/D");
+    tree_output->Branch("mc_n_ev_index", &mc_n_ev_index, "mc_n_ev_index/l");
     tree_output->Branch("mc_ev_index_ep", &mc_ev_index_ep, "mc_ev_index_ep/l");
     tree_output->Branch("mc_ev_index_n", &mc_ev_index_n, "mc_ev_index_n/l");
     tree_output->Branch("ev_index", &ev_index, "ev_index/l");
+    tree_output->Branch("ev_n_index", &ev_n_index, "ev_n_index/l");
     tree_output->Branch("ev_fit_validity", &ev_validity, "ev_validity/O");
     tree_output->Branch("ev_fit_energy", &ev_energy, "ev_energy/D");
     tree_output->Branch("ev_fit_position_r", &ev_pos_r, "ev_pos_r/D");
@@ -172,12 +174,14 @@ void ntload(std::string input_filename, std::string output_filename, std::string
         longitude_i = -9000;
         altitude_i = -9000;
         distance_i = -9000;
-        mc_ev_index_ep = -9000;
-        mc_ev_index_n = -9000;
+        mc_n_ev_index = 9000; //unsigned
+        mc_ev_index_ep = 9000;  //unsigned
+        mc_ev_index_n = 9000; //unsigned
         ev_energy_p1 = -9000;
         ev_energy_p2 = -9000;
-        ev_index_p1 = -9000;
-        ev_index_p2 = -9000;
+        ev_n_index = 9000; //unsigned
+        ev_index_p1 = 9000; //unsigned
+        ev_index_p2 = 9000; //unsigned
 
         if ((rMC.GetMCParticleCount()==2)&&(rMC.GetMCParent(n_mcparent).GetPDGCode()==-12)){ // check the parent is an anti-neutrino and there are two child particles
 
@@ -197,6 +201,7 @@ void ntload(std::string input_filename, std::string output_filename, std::string
             mc_pos_z_nu = mc_parent.GetPosition().Z();
 
             // child particle properties
+            mc_n_ev_index = rMC.GetMCParticleCount();
             for(ULong64_t i_mcparticle = 0; i_mcparticle < rMC.GetMCParticleCount(); i_mcparticle++) {
                 const RAT::DS::MCParticle &mc_particle = rMC.GetMCParticle(i_mcparticle);
                 if (mc_particle.GetPDGCode()==-11){  // positron properties
@@ -234,6 +239,7 @@ void ntload(std::string input_filename, std::string output_filename, std::string
         }
 
         //*** EV tree entries
+        ev_n_index = ds_entry.GetEVCount();
         for(ULong64_t i_ev = 0; i_ev < ds_entry.GetEVCount(); i_ev++) {
 
             const RAT::DS::EV &rEV = ds_entry.GetEV(i_ev);
@@ -242,10 +248,10 @@ void ntload(std::string input_filename, std::string output_filename, std::string
             ev_time_days = time_day_sec_ns.GetDays();
             ev_time_seconds = time_day_sec_ns.GetSeconds();
             ev_time_nanoseconds = time_day_sec_ns.GetNanoSeconds();
-            ev_validity = false;
             ev_index = i_ev;
 
             // set all to some unphysical value, maintain correspondence of number of events in tree to events in root file
+            ev_validity = false;
             ev_energy = -9000;
             ev_pos_x = -9000;
             ev_pos_y = -9000;
@@ -265,10 +271,31 @@ void ntload(std::string input_filename, std::string output_filename, std::string
                         ev_pos_z = fitVertex.GetPosition().Z();
                         ev_pos_r = fitVertex.GetPosition().Mag();
                     }
-                    catch (RAT::DS::FitResult::NoVertexError &e){;}
-                    catch (RAT::DS::FitResult::NoFitResultError &e){;}
-                    catch (RAT::DS::FitVertex::NoValueError &e){;}
-                    break;
+                    catch (RAT::DS::FitResult::NoVertexError &e){
+                        ev_validity = false;
+                        ev_energy = -9000;
+                        ev_pos_x = -9000;
+                        ev_pos_y = -9000;
+                        ev_pos_z = -9000;
+                        ev_pos_r = -9000;
+                    }
+                    catch (RAT::DS::FitResult::NoFitResultError &e){
+                        ev_validity = false;
+                        ev_energy = -9000;
+                        ev_pos_x = -9000;
+                        ev_pos_y = -9000;
+                        ev_pos_z = -9000;
+                        ev_pos_r = -9000;
+                    }
+                    catch (RAT::DS::FitVertex::NoValueError &e){
+                        ev_validity = false;
+                        ev_energy = -9000;
+                        ev_pos_x = -9000;
+                        ev_pos_y = -9000;
+                        ev_pos_z = -9000;
+                        ev_pos_r = -9000;
+                    }
+                    //break;
                 }
             }
             tree_output->Fill();
