@@ -10,7 +10,7 @@
 #include <TObject.h>
 #include <math.h>
 
-void process_cuts(const std::string filename_input, const std::string filename_output, Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max, Double_t deltaT = 1000000, Double_t deltaP = 6000, Double_t deltaD = 6000){
+void process_cuts(const std::string filename_input, const std::string filename_output, Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max, Double_t deltaTmin = 500, Double_t deltaTmax = 1000000, Double_t deltaP = 6000, Double_t deltaD = 6000){
 
     // load input file
     TFile *file_input = new TFile(filename_input.c_str());
@@ -197,14 +197,14 @@ void process_cuts(const std::string filename_input, const std::string filename_o
         // ev cut
         for (ULong64_t ii=0; ii < entries_neutrons.size(); ii++){
             i = entries_neutrons.at(ii);
-            
+
             // print progress
             progress_countdown--;
             if (progress_countdown==0){
                 progress_countdown = percent_interval;
                 printf("ev cut %.0f%% done\n",(Double_t)(ii+1)/n_entries*100);
             }
-            
+
             tree_input->GetEntry(i);
             entry_i = entry;
             ev_index_p2 = 0; // reset to 0 i.e positron like.
@@ -233,7 +233,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                             //std::cout<<"e: ev_index_p1: "<<ev_index_p1<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy<<" n_pairs: "<<n_pairs<<std::endl;
                             //std::cout<<"n: ev_index_p2: "<<ev_index_p2<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy_p2<<" n_pairs: "<<n_pairs<<std::endl;
                             //if (ev_index == 1) std::cout<<"n: ev_index_p2: "<<ev_index_p2<<"/"<<ev_n_index<<" entry: "<<entry<<" ev_energy: "<<ev_energy_p2<<" n_pairs: "<<n_pairs<<std::endl; // check to see if positron is evindex > 0
-                            
+
                         }
                     }
                 }
@@ -291,7 +291,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
                             }
                             else { // seconds are equal
                                 time_ns_diff = std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds);
-                                if(std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds) < deltaT){ // nanosec are to within deltaT
+                                if ((std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds) > deltaTmin)&&(std::abs(ev_time_nanoseconds_p2 - ev_time_nanoseconds) < deltaTmax)){ // nanosec are to within deltaT
                                     entries_coincidence_n.push_back(i);
                                     entries_coincidence_ep.push_back(j);
                                 }
@@ -309,7 +309,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
         // Inter-particle distance cut
         for (ULong64_t ii=0; ii < n_entries; ii++){
             i = entries_coincidence_n.at(ii);
-            
+
             // print progress
             progress_countdown--;
             if (progress_countdown==0){
@@ -505,15 +505,15 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     //write csv output file with event numbers
     sprintf(name, "%s.csv",filename_output.c_str());
     FILE *fOut = fopen(name,"w");
-    fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaT,deltaP,deltaD,initial_entries,final_entries,already_tagged,finished\n");
-    fprintf(fOut,"%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD, n_parent_entries, n_passed, already_tagged,1);
+    fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaTmin,deltaTmax,deltaP,deltaD,initial_entries,final_entries,already_tagged,finished\n");
+    fprintf(fOut,"%s,%s,%f,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaTmin, deltaTmax, deltaP, deltaD, n_parent_entries, n_passed, already_tagged,1);
     fclose(fOut);
 }
 
 Int_t main(Int_t argc, char *argv[]) {
 
-    if (argc != 10) {
-        std::cout<<"Error: 9 arguments expected. Got: "<<argc-1<<std::endl;
+    if (argc != 12) {
+        std::cout<<"Error: 11 arguments expected. Got: "<<argc-1<<std::endl;
         return 1; // return>0 indicates error code
     }
     else {
@@ -524,9 +524,11 @@ Int_t main(Int_t argc, char *argv[]) {
         double energy_ep_max = atof(argv[4]);
         double energy_n_min = atof(argv[5]);
         double energy_n_max = atof(argv[6]);
-        double deltaT = atof(argv[7]);
-        double deltaP = atof(argv[8]);
-        double deltaD = atof(argv[9]);
+        double deltaTmin = atof(argv[7]);
+        double deltaTmax = atof(argv[8]);
+        double promptRmax = atof(argv[9]);
+        double lateRmax = atof(argv[10]); // using this one
+        double deltaRmax = atof(argv[11]);
 
         //write csv output file to show process has begun (values filled upon completion)
         char *name = new char[1000];
@@ -536,7 +538,7 @@ Int_t main(Int_t argc, char *argv[]) {
         fprintf(fOut,"%s,%s,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i\n", filename_input.c_str(), filename_output.c_str(), -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000,0);
         fclose(fOut);
 
-        process_cuts(filename_input, filename_output, energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaT, deltaP, deltaD);
+        process_cuts(filename_input, filename_output, energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaTmin, deltaTmax, lateRmax, deltaRmax);
 
         return 0; // completed successfully
     }

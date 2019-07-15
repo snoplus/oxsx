@@ -18,9 +18,6 @@
 #include <RAT/DB.hh>
 //#include <TObject.h>
 
-const TVector3 ECEF_coord_ = TVector3(672.87, -4347.18, 4600.51);
-//const TVector3 ECEF_coord_ = TVector3(-3777.14425893, 3483.58137383, 3766.0181443); // Kamland
-
 Double_t CalculateDistance(TVector3 point1, TVector3 point2) {
     return (point2 - point1).Mag();
 }
@@ -45,11 +42,12 @@ TVector3 LLAtoECEF(Double_t latitude, Double_t longitude, Double_t altitude) {
     return ECEF;
 }
 
-Double_t GetReactorDistanceLLA(Double_t latitude, Double_t longitude, Double_t altitude) {
-    return CalculateDistance(ECEF_coord_,LLAtoECEF(latitude, longitude, altitude));
+Double_t GetReactorDistanceLLA(Double_t latitude, Double_t longitude, Double_t altitude, TVector3 ECEF_coord) {
+    std::cout << " Using coord: " << ECEF_coord << std::endl;
+    return CalculateDistance(ECEF_coord, LLAtoECEF(latitude, longitude, altitude));
 }
 
-void ntload(std::string input_filename, std::string output_filename, std::string fitter_name) {
+void ntload(std::string input_filename, std::string output_filename, std::string fitter_name, std::string coord_name) {
 
     TTree *tree_output = new TTree("nt","Anti-neutrino processed tree");
     ULong64_t n_total_events = 0;
@@ -235,7 +233,12 @@ void ntload(std::string input_filename, std::string output_filename, std::string
             latitude_i = latitude[coreNumber];
             longitude_i = longitude[coreNumber];
             altitude_i = altitude[coreNumber];
-            distance_i = GetReactorDistanceLLA(latitude_i, longitude_i, altitude_i);
+
+            TVector3 ECEF_coord = 0;
+            if (coord_name == "SNO") ECEF_coord = TVector3(672.87, -4347.18, 4600.51);
+            if (coord_name == "KAMLAND") ECEF_coord = TVector3(-3777.14425893, 3483.58137383, 3766.0181443); // Kamland
+            std::cout << " Using: " << coord_name << " co-ord: " << ECEF_coord << std::endl;
+            distance_i = GetReactorDistanceLLA(latitude_i, longitude_i, altitude_i, ECEF_coord);
         }
 
         //*** EV tree entries
@@ -312,15 +315,16 @@ void ntload(std::string input_filename, std::string output_filename, std::string
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 4) {
-        std::cout<<"Error: 3 arguments expected. Got: "<<argc-1<<std::endl;
+    if (argc != 5) {
+        std::cout<<"Error: 4 arguments expected. Got: "<<argc-1<<std::endl;
         return 1; // return>0 indicates error code
     }
     else{
         std::string input_filename = argv[1];
         std::string output_filename = argv[2];
         std::string fitter_name = argv[3];
-        ntload(input_filename, output_filename, fitter_name);
+        std::string coord_name = argv[4];
+        ntload(input_filename, output_filename, fitter_name, coord_name);
         return 0; // return=0 indicates no error
     }
 }
