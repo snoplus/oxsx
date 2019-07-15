@@ -43,7 +43,7 @@ TVector3 LLAtoECEF(Double_t latitude, Double_t longitude, Double_t altitude) {
 }
 
 Double_t GetReactorDistanceLLA(Double_t latitude, Double_t longitude, Double_t altitude, TVector3 ECEF_coord) {
-    std::cout << " Using coord: " << ECEF_coord << std::endl;
+    //std::cout << " Using coord: x:" << ECEF_coord.x() << "," << ECEF_coord.y() << "," << ECEF_coord.z() << std::endl;
     return CalculateDistance(ECEF_coord, LLAtoECEF(latitude, longitude, altitude));
 }
 
@@ -234,10 +234,10 @@ void ntload(std::string input_filename, std::string output_filename, std::string
             longitude_i = longitude[coreNumber];
             altitude_i = altitude[coreNumber];
 
-            TVector3 ECEF_coord = 0;
-            if (coord_name == "SNO") ECEF_coord = TVector3(672.87, -4347.18, 4600.51);
+            TVector3 ECEF_coord;
+            if (coord_name == "SNO") ECEF_coord = TVector3(672.87, -4347.18, 4600.51); // SNO
             if (coord_name == "KAMLAND") ECEF_coord = TVector3(-3777.14425893, 3483.58137383, 3766.0181443); // Kamland
-            std::cout << " Using: " << coord_name << " co-ord: " << ECEF_coord << std::endl;
+            //std::cout << " Using: " << coord_name << " co-ord: "  << ECEF_coord.x() << "," << ECEF_coord.y() << "," << ECEF_coord.z() << std::endl;
             distance_i = GetReactorDistanceLLA(latitude_i, longitude_i, altitude_i, ECEF_coord);
         }
 
