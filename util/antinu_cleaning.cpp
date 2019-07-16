@@ -105,17 +105,13 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     
     //Iwan
     ULong64_t numsimmed = 1;
-    ULong64_t numtagged = 1;
+    ULong64_t numtagged = 0;
     ULong64_t ev01 = 0;
     ULong64_t ev02 = 0;
     ULong64_t ev03 = 0;
     ULong64_t badev1 = 0;
     Double_t totalbadevdeltaT = 0.;
     
-
-    Double_t time_ns_diff;
-    ULong64_t i_original, j;
-    Bool_t all_pass, energy_pass, coincidence_pass, position_r_pass, particle_distance_pass, partner_passed;
 
     // properties to load from tree
     ULong64_t mc_entry, mc_entryb4;//entry, entry_i;
@@ -227,14 +223,15 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 	    tree_input->GetEntry(i-EVcount+j);// potential positron event
 	    bool goodpair = false;
 	    //std::cout<<"timeD: "<<timeD<<std::endl;
-	    //std::cout<<"\n MCentry: "<<mc_entry<<" EVindex: "<<ev_index<<" E: "<<ev_energy<<std::endl;
-	    //std::cout<<"MCentry: "<<mc_entry<<" EVindex2: "<<ev_next_index<<" E: "<<ev_next_energy<<"\n"<<std::endl;
 	    Double_t deltaT = 0.;
 	    if (ev_validity && ev_next_validity){
 	      TVector3 ev_vecR= TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
 	      ev_time_ns = ev_time_nanoseconds + (ev_time_seconds * pow(10, 9)) + (ev_time_days * 24 * 3600 * pow(10, 9));
 	      deltaT = std::fabs(ev_next_time_ns - ev_time_ns);
 	      Double_t deltaR = (ev_vecR - ev_next_vecR).Mag();
+	      //std::cout<<"\n MCentry: "<<mc_entry<<" EVindex: "<<ev_index<<" E: "<<ev_energy<<" R: "<<ev_vecR.Mag()<<std::endl;
+	      //std::cout<<"MCentry: "<<mc_entry<<" EVindex2: "<<ev_next_index<<" E: "<<ev_next_energy<<" R: "<<ev_next_vecR.Mag()<<std::endl;
+	      //std::cout<<"delatR: "<<deltaR<<" deltaT: "<<deltaT<<"\n"<<std::endl;
 	      if(deltaT > deltaTmin && deltaT < deltaTmax){
 		if (ev_vecR.Mag() < promptRmax){
 		  if (ev_next_vecR.Mag() < lateRmax){
@@ -255,7 +252,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 			  //}
 
 			  numtagged += 1;		
-	
+			  //std::cout<<"tagged \n"<<std::endl;
 			  //std::cout<<"\n MCentry: "<<MCentry<<" EVindex: "<<evindex<<" nhits: "<<nhit<<" day: "<<days<<std::endl;
 			  //std::cout<<"MCentry2: "<<nextMCentry<<" EVindex2: "<<nextevindex<<" nhits2: "<<nextnhit<<" day2: "<<nextdays<<std::endl;
 			  //std::cout<<"timeD: "<<timeD<<std::endl;
@@ -397,7 +394,191 @@ void process_cuts(const std::string filename_input, const std::string filename_o
       }
       mc_entryb4 = mc_entry;
     }
-    // finished tagging (though the last mc entry is skipped due to the method, negligible for high stats)
+
+    
+    // have to repeat process for very last mc entry
+    ULong64_t lastentry = (n_entries - 1);
+    tree_input->GetEntry(lastentry);
+
+    ULong64_t EVcount = ev_index + 1; 
+
+    ULong64_t j = 0;  // j index for potential positron event
+    bool pairfound = false;
+    //move j index within MC index group, move onto next group when j reaches second to last event
+    while (j < EVcount - 1){
+      ULong64_t k = 1; // k index for potential neutron event
+      Double_t time_diff_condition = 0;
+      //move j index within MC index group, move on to next group if nothing within deltaT or no more events to look at
+      while((time_diff_condition < deltaTmax) && (k < EVcount - j)){
+	tree_input->GetEntry(lastentry-EVcount+j+k+1); // store potential neutron event parameters
+	ev_next_validity = ev_validity;
+	ev_next_time_ns = ev_time_nanoseconds + (ev_time_seconds * pow(10, 9)) + (ev_time_days * 24 * 3600 * pow(10, 9));
+	ev_next_nhit = ev_nhit;
+	ev_next_index = ev_index;
+	ev_next_energy = ev_energy;
+	TVector3 ev_next_vecR = TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
+	  
+	tree_input->GetEntry(lastentry+1-EVcount+j);// potential positron event
+	bool goodpair = false;
+	Double_t deltaT = 0.;
+	if (ev_validity && ev_next_validity){
+	  TVector3 ev_vecR= TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
+	  ev_time_ns = ev_time_nanoseconds + (ev_time_seconds * pow(10, 9)) + (ev_time_days * 24 * 3600 * pow(10, 9));
+	  deltaT = std::fabs(ev_next_time_ns - ev_time_ns);
+	  Double_t deltaR = (ev_vecR - ev_next_vecR).Mag();
+	  if(deltaT > deltaTmin && deltaT < deltaTmax){
+	    if (ev_vecR.Mag() < promptRmax){
+	      if (ev_next_vecR.Mag() < lateRmax){
+		if (deltaR < deltaRmax){
+		  // if want to apply nhit cuts
+		  //if (nhit1Min <= nhit  && nhit <= nhit1Max){
+		  //if (nhit2Min <= nextnhit && nextnhit <= nhit2Max){
+		
+		  //if want to correc energies
+		  //double corrected_ev_energy = ev_energy + correction(ev_energy);
+		  //if (energy_ep_min <= corrected_ev_energy && corrected_ev_energy <= energy_ep_max){
+		  //double corrected_ev_next_energy = nextEnergy + correction(nextEnergy);
+		  //if (energy_n_min <= corrected_ev_next_energy && corrected_ev_next_energy <= energy_n_max){
+		  if (energy_ep_min <= ev_energy && ev_energy <= energy_ep_max){
+		    if (energy_n_min <= ev_next_energy && ev_next_energy <= energy_n_max){ //|| (4. <= nextEnergycorrec && nextEnergycorrec <= 5.8)){ //if want to allow for carbon capture?
+		      //EPromptvsEDelay2Cut.Fill(ev_energy,ev_next_energy);
+		      //E2EVindex2Cut.Fill(ev_next_energy);
+		      //}
+
+		      numtagged += 1;		
+		      
+		      h_after_cut_emc_nu.Fill(mc_energy_nu);
+		      h_after_cut_emc_p1.Fill(mc_energy_ep);
+		      h_after_cut_emc_p2.Fill(mc_energy_n);
+		      h2_after_cut_emc_p2_vs_p1.Fill(mc_energy_ep, mc_energy_n);
+
+		      h_after_cut_deltaT.Fill(deltaT);
+		      h_after_cut_deltaR.Fill(deltaR);
+		      h2_after_cut_deltaT_vs_deltaR.Fill(deltaR, deltaT);
+		      h_after_cut_efit_prompt.Fill(ev_energy);
+		      h_after_cut_efit_delayed.Fill(ev_next_energy);
+		      h2_after_cut_efit_delayed_vs_prompt.Fill(ev_energy, ev_next_energy);
+
+		      delE_efit_prompt.Fill(ev_energy,mc_energy_ep + annihilation - ev_energy);
+		      delE_emc_p1.Fill(mc_energy_ep,mc_energy_ep + annihilation - ev_energy);
+
+		      ev_energy_p1 = ev_energy;
+		      ev_index_p1 = ev_index;
+		      ev_energy_p2 = ev_next_energy;
+		      ev_index_p2 = ev_next_index;
+		      tree_output->Fill();
+			  
+		      if (ev_index == 0 && ev_next_index == 1){
+			ev01 += 1;
+			h_after_cut_deltaT_0_1.Fill(deltaT);
+			h_after_cut_deltaR_0_1.Fill(deltaR);
+
+			delE_emc_p1_0_1.Fill(mc_energy_ep,mc_energy_ep + annihilation - ev_energy);
+			  
+			/*E1_KE_x_01vec.push_back(ev_energy);
+			  E1_KE_y_01vec.push_back(fabs(ev_energy-part1ke));
+			  //delE_E101.Fill(Energy,part1ke + 1.022 - Energy);
+			  delT0_1.Fill(timeD);
+			  E1evindex0_1.Fill(ev_energy);
+			  KE1evindex0_1.Fill(part1ke);
+			  posKE_E1_0_1.Fill(ev_energy-part1ke);
+			  EDepevindex0_1.Fill(EDep);
+			  QuenchEDepevindex0_1.Fill(QuenchEDep);
+			  posKEvsEDepv0_1.Fill(EDep,part1ke);
+			  EDepvsQuenchEDep0_1.Fill(QuenchEDep,EDep);
+			  EDepvsEPrompt0_1.Fill(ev_energy,EDep);
+			  posKEvsEPrompt0_1.Fill(ev_energy,part1ke);
+			*/
+		      }
+		      if (ev_index == 0 && ev_next_index == 2){
+			ev02 += 1;
+			h_after_cut_deltaT_0_2.Fill(deltaT);
+			h_after_cut_deltaR_0_2.Fill(deltaR);
+
+			delE_emc_p1_0_2.Fill(mc_energy_ep,mc_energy_ep + annihilation - ev_energy);
+
+			Double_t ev_time0_ns = ev_time_ns;
+			TVector3 ev_vecR0 = ev_vecR;
+			tree_input->GetEntry(lastentry+1-EVcount+j+k-1);
+			if (ev_validity){
+			  badev1 += 1;
+			  Double_t ev_time1_ns = ev_time_nanoseconds + (ev_time_seconds * pow(10, 9)) + (ev_time_days * 24 * 3600 * pow(10, 9));
+			  TVector3 ev_vecR1 = TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
+			  Double_t deltaR01 = (ev_vecR0 - ev_vecR1).Mag();
+			  Double_t deltaT01 = std::fabs(ev_time1_ns - ev_time0_ns);
+			      
+			  deltaTimeBadEVindex1.Fill(deltaT01);
+			  deltaRBadEVindex1.Fill(deltaR01);
+			  totalbadevdeltaT += deltaT01;
+			}
+			  
+			/*
+			  E1_KE_x_02vec.push_back(ev_energy);
+			  E1_KE_y_02vec.push_back(fabs(ev_energy-part1ke));
+			  delT0_2.Fill(timeD);
+			  E1evindex0_2.Fill(ev_energy);
+			  KE1evindex0_2.Fill(part1ke);
+			  posKE_E1_0_2.Fill(ev_energy-part1ke);
+			  posKEvsEDepv0_2.Fill(EDep,part1ke);
+			  EDepevindex0_2.Fill(EDep);
+			  QuenchEDepevindex0_2.Fill(QuenchEDep);
+			  EDepvsQuenchEDep0_2.Fill(QuenchEDep,EDep);
+			  EDepvsEPrompt0_2.Fill(ev_energy,EDep);
+			  posKEvsEPrompt0_2.Fill(ev_energy,part1ke);
+			*/
+		      }
+		      if (ev_index == 0 && ev_next_index == 3)
+			ev03 += 1;
+
+			
+			
+		      /*if (evindex == 0)
+			h2.Fill(ev_energy,parke);
+			nubarKE_posKE.Fill(parke-part1ke);
+			nubarKE_E1.Fill(parke-ev_energy);
+			EDepvsEPrompt.Fill(ev_energy,EDep);
+			QuenchvsEPrompt.Fill(ev_energy,QuenchEDep);
+			delQuenchvsEPrompt2d.Fill(ev_energy,fabs(QuenchEDep-ev_energy));
+	
+			KEPart1plus.Fill(part1ke + 1.022);
+
+			EPromptvsEDelay.Fill(ev_energy,ev_next_energy);
+
+			KEminuspdf.Fill(parke - 0.8);
+			posKEpluspdf.Fill(part1ke + 1.022);
+			E1pdf.Fill(ev_energy);
+			E1pdfcorrec.Fill(ev_energy + correction(ev_energy));
+			
+			KESmear.Fill(smearKE(part1ke));
+		      */
+			      
+
+		      goodpair = true;  //pair passed quality cuts, if not continue search in group
+		      pairfound = true; // a pair was found
+		      k += 100; // cancel sub search
+		    }
+		  }
+		}
+	      }
+	    }
+	  }
+	} // if pair failed quality cuts, continue sub group search
+	if (!goodpair){
+	  k += 1;
+	  if (!ev_validity){ //if positron/j_index not a valid fit, move onto next sub group
+	    k += 100;
+	  }else{ //else if good, check that it satisfies time diff, if not move onto next sub group
+	    time_diff_condition = deltaT;
+	  }
+	}
+      }
+      if (pairfound){
+	j += 100;
+      }else{
+	j += 1;
+      }
+    }
+    // finished tagging
 
 
     // look at how reconstruction compares w/ MC truth
@@ -502,7 +683,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     fitfunc->SetParameters(r1->Rndm()*(Cmax),(r1->Rndm())*mmax);  
     fitfunc->SetParLimits(0, 0., Cmax);
     fitfunc->SetParLimits(1, 0., mmax);
-    gr_dele_e1->Fit(fitfunc);  // should this be ->Fit(fitfunc, "NQR")??
+    gr_dele_e1->Fit(fitfunc);
     Double_t par[2];
     fitfunc->GetParameters(par);
     gStyle->SetOptFit(1);
