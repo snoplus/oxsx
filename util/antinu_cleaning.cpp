@@ -815,7 +815,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     sprintf(name, "%s.csv",filename_output.c_str());
     FILE *fOut = fopen(name,"w");
     fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaTmin,deltaTmax,deltaRmax,initial_entries,final_entries,finished\n");
-    fprintf(fOut,"%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaTmin, deltaTmax, deltaRmax, numsimmed, numtagged,1);
+    fprintf(fOut,"%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaTmin, deltaTmax, promptRmax, lateRmax, deltaRmax, numsimmed, numtagged,1);
     fclose(fOut);
 
     std::cout<<"fin: "<<filename_input<<" \n fout: "<<filename_output<<"\n e1min "<<energy_ep_min<<"\n e1max "<<energy_ep_max<<"\n e2min "<<energy_n_min<<"\n e2max "<<energy_n_max<<"\n delT "<<deltaTmin<<"\n delTmax "<<deltaTmax<<"\n R1 "<<promptRmax<<"\n R2 "<<lateRmax<<"\n delR "<<deltaRmax<<std::endl;
@@ -846,8 +846,8 @@ Int_t main(Int_t argc, char *argv[]) {
         char *name = new char[1000];
         sprintf(name, "%s.csv",filename_output.c_str());
         FILE *fOut = fopen(name,"w");
-	fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaTmin,deltaTmax,deltaRmax,initial_entries,final_entries,finished\n");
-        fprintf(fOut,"%s,%s,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i\n", filename_input.c_str(), filename_output.c_str(), -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000, -9000,0);
+	fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaTmin,deltaTmax,promptRmax,lateRmax,deltaRmax,initial_entries,final_entries,finished\n");
+        fprintf(fOut,"%s,%s,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i\n", filename_input.c_str(), filename_output.c_str(), -9000, -9000, -9000, -9000, -9000, -9000, -9000 -9000, -9000, -9000, -9000, -9000,0);
         fclose(fOut);
 
         process_cuts(filename_input, filename_output, energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaTmin, deltaTmax, promptRmax, lateRmax, deltaRmax);
