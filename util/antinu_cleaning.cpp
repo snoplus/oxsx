@@ -809,9 +809,6 @@ void process_cuts(const std::string filename_input, const std::string filename_o
       //h_before_cut_emc_nu.Write();
       //h_before_cut_emc.Write();
 
-      tree_output->AutoSave();
-      file_output->Close();
-
       //write csv output file with event numbers
       sprintf(name, "%s.csv",filename_output.c_str());
       FILE *fOut = fopen(name,"w");
@@ -822,6 +819,9 @@ void process_cuts(const std::string filename_input, const std::string filename_o
       std::cout<<"fin: "<<filename_input<<" \n fout: "<<filename_output<<"\n e1min "<<energy_ep_min<<"\n e1max "<<energy_ep_max<<"\n e2min "<<energy_n_min<<"\n e2max "<<energy_n_max<<"\n delT "<<deltaTmin<<"\n delTmax "<<deltaTmax<<"\n R1 "<<promptRmax<<"\n R2 "<<lateRmax<<"\n delR "<<deltaRmax<<std::endl;
       //const std::string filename_input, const std::string filename_output, Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max,Double_t deltaTmin, Double_t deltaTmax, Double_t promptRmax, Double_t lateRmax, Double_t deltaRmax
     }
+    tree_output->AutoSave();
+    file_output->Close();
+    
 }
 Int_t main(Int_t argc, char *argv[]) {
 
