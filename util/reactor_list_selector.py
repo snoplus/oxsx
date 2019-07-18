@@ -331,10 +331,10 @@ def main(args):
                         default="All")
     parser.add_argument("-i", dest='REACTORS_filename', type=str, nargs='?',
                         help='filename & path to REACTORS.ratdb',
-                        default="/home/lidgard/rat-7/data/REACTORS.ratdb")
+                        default="~/rat/data/REACTORS.ratdb")
     parser.add_argument("-s", dest='REACTORS_STATUS_filename', type=str, nargs='?',
                         help='filename & path to REACTORS_STATUS.ratdb',
-                        default="/home/lidgard/rat-7/data/REACTORS_STATUS.ratdb")
+                        default="~/rat/data/REACTORS_STATUS.ratdb")
     parser.add_argument("-o", dest='output_filename', type=str, nargs='?',
                         help='filename & path to output file.ratdb',
                         default="reactor_list_selection.csv")
