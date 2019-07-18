@@ -368,7 +368,7 @@ def main(args):
         reactor_info = get_reactor_info(reactor_ratdb_info, \
             reactor_status_ratdb_info,\
             reactor_list_name, \
-            position)
+            args.position)
         write_output_file(args.output_filename, reactor_info)
     else:
         print "One of the specified ratdb files cannot be found, check paths. Exiting..."
