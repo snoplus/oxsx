@@ -18,7 +18,7 @@ Double_t NuSurvProb(Double_t nuE, Double_t baseline, Double_t del_m_sqr_21, Doub
     return f_osc_prob;
 }
 
-void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_ke, TNtuple *out_tree_prompt, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13, Double_t fixed_distance) {
+void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13, Double_t fixed_distance) {
 
     //
     // takes a TTree with multiple branches, oscillates using KE branch, fills two TNtuples each with a single branch
@@ -45,14 +45,14 @@ void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_ke, TNtuple *out_tree_
 
         if (surv_prob > random){
             //printf("ke:%0.5f ev:%0.5f diff:%0.5f\n", (Float_t)mc_energy_nu, (Float_t)ev_energy_p1, (Float_t)mc_energy_nu-(Float_t)ev_energy_p1);
-            out_tree_ke->Fill((Float_t)mc_energy_nu);
+            //out_tree_ke->Fill((Float_t)mc_energy_nu);
             out_tree_prompt->Fill((Float_t)ev_energy_p1);
         }
     }
 }
 
-void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_ke, TNtuple *out_tree_prompt, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
-    ntOscillate_pruned(in_tree, out_tree_ke, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, -9000);
+void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
+    ntOscillate_pruned(in_tree, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, -9000);
 }
 
 void ntOscillate(TTree *in_tree, TTree *out_tree, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
@@ -89,28 +89,28 @@ void write_file(const char* nt_in, const char* nt_out, Double_t del_m_sqr_21, Do
     out_tree->Write();
 }
 
-void write_file_pruned(const char* nt_in, const char* nt_ke_out, const char* nt_prompt_out, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13, Double_t distance) {
+void write_file_pruned(const char* nt_in, const char* nt_prompt_out, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13, Double_t distance) {
 
     TFile *f_in = new TFile(nt_in);
     TTree *in_tree = (TTree*)f_in->Get("nt");
     
     // the ordering of things here to keep ROOT happy is exactly the following (TFile then TTree, TFile again TTree) 
-    TFile *f_ke_out = new TFile(nt_ke_out, "RECREATE");
-    TNtuple *out_tree_ke = new TNtuple("nt","Anti-neutrino processed tree", "mc_neutrino_energy");
+    //TFile *f_ke_out = new TFile(nt_ke_out, "RECREATE");
+    //TNtuple *out_tree_ke = new TNtuple("nt","Anti-neutrino processed tree", "mc_neutrino_energy");
     
     TFile *f_prompt_out = new TFile(nt_prompt_out, "RECREATE");
-    TNtuple *out_tree_prompt = new TNtuple("nt","Anti-neutrino processed tree", "ev_fit_energy_p1");
+    TNtuple *out_tree_prompt = new TNtuple("nt", "Oscillated Prompt Energy", "ev_fit_energy_p1");
 
     if (distance<0)
-        ntOscillate_pruned(in_tree, out_tree_ke, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
+        ntOscillate_pruned(in_tree, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
     else
-        ntOscillate_pruned(in_tree, out_tree_ke, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, distance);
+        ntOscillate_pruned(in_tree, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, distance);
 
-    f_ke_out->cd();
-    out_tree_ke->Write();
-    f_ke_out->Close();
-    delete f_ke_out;
-    
+    //f_ke_out->cd();
+    //out_tree_ke->Write();
+    //f_ke_out->Close();
+    //delete f_ke_out;
+
     f_prompt_out->cd();
     out_tree_prompt->Write();
     f_prompt_out->Close();
@@ -121,8 +121,8 @@ void write_file_pruned(const char* nt_in, const char* nt_ke_out, const char* nt_
     delete f_in;
 }
 
-void write_file_pruned(const char* nt_in, const char* nt_ke_out, const char* nt_prompt_out, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
-    write_file_pruned(nt_in, nt_ke_out, nt_prompt_out, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, -9000);
+void write_file_pruned(const char* nt_in, const char* nt_prompt_out, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
+    write_file_pruned(nt_in, nt_prompt_out, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, -9000);
 }
 
 // alternate way of doing this:

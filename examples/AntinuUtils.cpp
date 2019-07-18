@@ -285,3 +285,41 @@ BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, 
     printf("End init--------------------------------------\n");
     return data_set_pdf;
 }
+
+BinnedED LHFit_initialise_kamland(BinnedED &data_set_pdf, const double e_min, const double e_max, const size_t n_bins){
+    //
+    // Load pdf's for reactor types
+    // Load data pdf
+    //
+
+    printf("Begin init--------------------------------------\n");
+    printf("LHFit_initialise...\n");
+
+    char name[1000];
+
+    // setup ntuple
+    ObsSet data_rep(0);
+
+
+    // *********************** setup data set PDF
+    // set up binning
+    data_set_pdf.SetObservables(data_rep);
+
+    const int array_num = 8;
+    double data_set_array[array_num] = {7, 11, 9, 8, 8, 4, 5, 2};
+    if (n_bins != array_num){
+        std::cout<<"wrong number of bins!!"<<std::endl;
+        exit(1);
+    }
+    std::vector<double> data_set_vector;
+    for(size_t i = 0; i < array_num; i++)
+        data_set_vector.push_back(data_set_array[i]);
+    data_set_pdf.SetBinContents(data_set_vector);
+
+    // load (oscillated) data ntuple
+    data_set_pdf.SetObservables(data_rep);
+
+    // *********************** finished loading data
+
+    printf("End init--------------------------------------\n");
+}
