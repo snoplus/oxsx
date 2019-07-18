@@ -312,9 +312,9 @@ def lat_long_to_distance(position, latitude, longitude, altitude=0):
     kamland_ecef = np.array([-3777.14425893, 3483.58137383, 3766.0181443]) #using kamland (lat, long, alt) = (36.4225, 137.3153, 0.358)
     sno_ecef = np.array([672.87, -4347.18, 4600.51]) # converted numbers
     ecef = lat_long_to_ecef(latitude, longitude, altitude)
-    if position == "sno":
+    if position == "SNO":
         displacement = np.subtract(sno_ecef, ecef)
-    if position == "kamland":
+    if position == "KAMLAND":
         displacement = np.subtract(kamland_ecef, ecef)
     distance = np.linalg.norm(displacement)
     return round(distance, 2)
