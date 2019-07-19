@@ -82,7 +82,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_unosc_fil
         reactor_pdf[i] = new BinnedED(reactor_names[i], axes);
         reactor_pdf[i]->SetObservables(0);
 
-        sprintf(spectrum_osc_prompt_filepath, "/home/lidgard/antinu_analysis/sensitivity_plot/processed/data/osc_ntp_prompt_%s_%d_%d_%d.root", reactor_names[i].c_str(), (int)(param_d21*1e9), (int)(param_s12*1e7), (int)(param_s13*1e7));
+        sprintf(spectrum_osc_prompt_filepath, "/home/lidgard/antinu_analysis/sensitivity_plot/processed/data/osc_ntp_prompt_%s_%d_%d_%d.root", reactor_names[i].c_str(), (int)(param_d21*1e9), (int)(param_s12*1e7), (int)(param_s13*1e7)); // change this to use the output path of the csv file
 
         if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR")){
             printf("adding pwr reactor: ");
@@ -92,7 +92,6 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_unosc_fil
 
         else if (reactor_types[i]=="PHWR"){
             printf("adding phwr reactor: ");
-
             if (test_file_exists(spectrum_osc_prompt_filepath)==false)
                 write_file_pruned(spectrum_unosc_filepath.c_str(), spectrum_osc_prompt_filepath, param_d21, param_s12, param_s13, distances[i]); // currently using PWR, change filename for reactor type!!!!
         }
@@ -104,11 +103,19 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_unosc_fil
 	    // load newly created oscillated ntuple
         printf("adding unosc reactor: ");
         
-        ROOTNtuple reactor_unosc_ntp(spectrum_unosc_filepath.c_str(), "nt");
+        //ROOTNtuple reactor_unosc_ntp(spectrum_unosc_filepath.c_str(), "nt"); // make this work for specific branches
+        TFile *f_in = new TFile(spectrum_unosc_filepath.c_str());
+        TTree *reactor_unosc_ntp = (TTree*)f_in->Get("nt");
+        Double_t ev_energy_p1;
+        reactor_unosc_ntp->SetBranchAddress("ev_fit_energy_p1", &ev_energy_p1);
         reactor_unosc_pdf[i] = new BinnedED(reactor_names[i], axes);
         reactor_unosc_pdf[i]->SetObservables(0);
-        for(size_t j = 0; j < reactor_unosc_ntp.GetNEntries(); j++)
-            reactor_unosc_pdf[i]->Fill(reactor_unosc_ntp.GetEntry(j));
+        for(size_t j = 0; j < reactor_unosc_ntp->GetEntries(); j++){
+            reactor_unosc_ntp->GetEntry(j);
+            reactor_unosc_pdf[i]->Fill(ev_energy_p1);
+        }
+        f_in->Close();
+            //reactor_unosc_pdf[i]->Fill(reactor_unosc_ntp.GetEntry(j));
         //reactor_unosc_pdf[i]->Scale(1./flux_data);
 
         ROOTNtuple reactor_ntp(spectrum_osc_prompt_filepath, "nt");
@@ -144,8 +151,9 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_unosc_fil
         // Setting optimisation limits
         sprintf(name, "%s_norm", reactor_names[i].c_str());
         Double_t min = constraint_osc_normalised-2.*constraint_osc_normalised_sigma; // let min and max float within 2 sigma (but constrained later)
-        Double_t max = constraint_osc_normalised-2.*constraint_osc_normalised_sigma;
+        Double_t max = constraint_osc_normalised+2.*constraint_osc_normalised_sigma;
         if (min < 0) min = 0;
+        //if (max < 0) max = 1000;
         minima[name] = min;
         maxima[name] = max;
         printf("  added reactor %d/%d: %s, norm: %.3f (min:%.3f max:%.3f) err: %.3f\n", i+1, n_pdf, reactor_names[i].c_str(), constraint_osc_normalised, min, max, constraint_osc_normalised_sigma);
@@ -267,7 +275,6 @@ int main(int argc, char *argv[]) {
         std::vector<Double_t> powers;
         std::vector<Double_t> power_errs;
         readInfoFile(info_file, reactor_names, distances, reactor_types, n_cores, powers, power_errs);
-        reactor_names.push_back("combinedpwr");
 
         // read in constraint information
         std::vector<Double_t> constraint_means;
@@ -304,13 +311,14 @@ int main(int argc, char *argv[]) {
 
         LHFit_initialise_kamland(data_set_pdf, e_min, e_max, n_bins);
 
-        // save objects to file
+        ////save objects to file
         printf("Save objects to file...\n");
         TFile *file_out = 0;
         bool fit_validity = 0;
         size_t fit_try = 0;
         size_t fit_try_max = 10;
         //while ((fit_try <= fit_try_max)&&(fit_validity==0)) {
+            fit_try++;
             for (ULong64_t i=0; i<n_parameter_sets; i++) {
 
                 if (d_21s[i]>=7.48e-05 && d_21s[i]<=7.89e-05 && s_12s[i]>=0.333 && s_12s[i]<=0.375)

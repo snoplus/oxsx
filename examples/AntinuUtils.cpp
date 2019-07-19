@@ -286,7 +286,7 @@ BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, 
     return data_set_pdf;
 }
 
-BinnedED LHFit_initialise_kamland(BinnedED &data_set_pdf, const double e_min, const double e_max, const size_t n_bins){
+void LHFit_initialise_kamland(BinnedED &data_set_pdf, const double e_min, const double e_max, const size_t n_bins){
     //
     // Load pdf's for reactor types
     // Load data pdf
@@ -299,7 +299,6 @@ BinnedED LHFit_initialise_kamland(BinnedED &data_set_pdf, const double e_min, co
 
     // setup ntuple
     ObsSet data_rep(0);
-
 
     // *********************** setup data set PDF
     // set up binning
