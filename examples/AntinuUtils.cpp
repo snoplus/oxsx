@@ -246,7 +246,7 @@ BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, 
     for(ULong64_t i = 0; i < pwr_spectrum_ke_ntp.GetNEntries(); i++)
         spectra_ke_pdf[0]->Fill(pwr_spectrum_ke_ntp.GetEntry(i));
     //spectra_ke_pdf[0]->Scale(1./flux_mc);
-    spectra_ke_pdf[0]->Normalise(); 
+    spectra_ke_pdf[0]->Normalise();
     spectra_ke_pdf[0]->Scale(scale_factor_unosc);
 
     // EV branch
@@ -257,7 +257,7 @@ BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, 
     for(ULong64_t i = 0; i < pwr_spectrum_ev_ntp.GetNEntries(); i++)
         spectra_ev_pdf[0]->Fill(pwr_spectrum_ev_ntp.GetEntry(i));
     //spectra_ev_pdf[0]->Scale(1./flux_mc);
-    spectra_ev_pdf[0]->Normalise(); 
+    spectra_ev_pdf[0]->Normalise();
     spectra_ev_pdf[0]->Scale(scale_factor_unosc);
 
     // phwr spectrum
@@ -268,7 +268,7 @@ BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, 
     for(ULong64_t i = 0; i < phwr_spectrum_ke_ntp.GetNEntries(); i++)
         spectra_ke_pdf[1]->Fill(phwr_spectrum_ke_ntp.GetEntry(i));
     //spectra_ke_pdf[1]->Scale(1./flux_mc);
-    spectra_ke_pdf[1]->Normalise(); 
+    spectra_ke_pdf[1]->Normalise();
     spectra_ke_pdf[1]->Scale(scale_factor_unosc);
 
     // phwr spectrum
@@ -279,7 +279,7 @@ BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, 
     for(ULong64_t i = 0; i < phwr_spectrum_ev_ntp.GetNEntries(); i++)
         spectra_ev_pdf[1]->Fill(phwr_spectrum_ev_ntp.GetEntry(i));
     //spectra_ev_pdf[1]->Scale(1./flux_mc);
-    spectra_ev_pdf[1]->Normalise(); 
+    spectra_ev_pdf[1]->Normalise();
     spectra_ev_pdf[1]->Scale(scale_factor_unosc);
 
     printf("End init--------------------------------------\n");
@@ -304,8 +304,8 @@ void LHFit_initialise_kamland(BinnedED &data_set_pdf, const double e_min, const 
     // set up binning
     data_set_pdf.SetObservables(data_rep);
 
-    const int array_num = 8;
-    double data_set_array[array_num] = {7, 11, 9, 8, 8, 4, 5, 2};
+    const int array_num = 13;
+    double data_set_array[array_num] = {7, 11, 9, 8, 8, 4, 5, 2, 0, 0, 0, 0, 0};
     if (n_bins != array_num){
         std::cout<<"wrong number of bins!!"<<std::endl;
         exit(1);
