@@ -10,6 +10,7 @@
 #include <ROOTNtuple.h>
 #include <TRandom3.h>
 #include <TH1D.h>
+#include <TTree.h>
 
 #include <BinnedED.h>
 #include <BinnedEDGenerator.h>
@@ -175,7 +176,7 @@ void readParameterFile(const std::string &runParameterFileName, std::vector<Doub
         // printf("i:%llu, d_21:%.5f, s_12:%.5f, s_13:%.5f\n", i, d_21s[i], s_12s[i], s_13s[i]);
 }
 
-BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, const std::string &in_path, const std::string &data_path, ULong64_t flux_data){
+void LHFit_initialise(BinnedED &data_set_pdf, const std::string &data_path, const double e_min, const double e_max, const size_t n_bins){
     //
     // Load pdf's for reactor types
     // Load data pdf
@@ -184,106 +185,30 @@ BinnedED LHFit_initialise(BinnedED **spectra_ke_pdf, BinnedED **spectra_ev_pdf, 
     printf("Begin init--------------------------------------\n");
     printf("LHFit_initialise...\n");
 
-    char name[1000];
-    ULong64_t flux_mc = 1;
-
-    // setup spectra filenames
-    const std::string pwr_file = std::string("combinedpwr");
-    const std::string phwr_file = std::string("combinedpwr");//std::string("combinedphwr");
-
-    // ke filenames
-    printf("Using unoscillated spectrum for:\n");
-    sprintf(name, "%sflux%llu/%s_flux%llu_year100_cleanround1_ke_oxsx.root", in_path.c_str(), flux_mc, pwr_file.c_str(), flux_mc);
-    printf("\ttype PWR & BWR: %s\n", name);
-    const std::string pwr_unosc_ke_path = std::string(name);
-    sprintf(name, "%sflux%llu/%s_flux%llu_year100_cleanround1_ke_oxsx.root", in_path.c_str(), flux_mc, phwr_file.c_str(), flux_mc);
-    printf("\ttype PHWR: %s\n", name);
-    const std::string phwr_unosc_ke_path = std::string(name);
-
-    // ev filename
-    sprintf(name, "%sflux%llu/%s_flux%llu_year100_cleanround1_prompt_oxsx.root", in_path.c_str(), flux_mc, pwr_file.c_str(), flux_mc);
-    printf("\ttype PWR & BWR: %s\n", name);
-    const std::string pwr_unosc_ev_path = std::string(name);
-    sprintf(name, "%sflux%llu/%s_flux%llu_year100_cleanround1_prompt_oxsx.root", in_path.c_str(), flux_mc, phwr_file.c_str(), flux_mc);
-    printf("\ttype PHWR: %s\n", name);
-    const std::string phwr_unosc_ev_path = std::string(name);
-
-    // setup (oscillated) data filename
-    sprintf(name, "%s", data_path.c_str());
-    printf("Loading data spectrum: %s\n\n", name);
-
     // setup ntuple
     ObsSet data_rep(0);
 
+    // *********************** setup data set PDF
+    // set up binning
+    data_set_pdf.SetObservables(data_rep);
+
     // set up binning
     AxisCollection axes;
-    Double_t e_min = 0.425*2; //2; //*6 for kamland paper #1, *2 for paper #2
-    Double_t e_max = 0.425*19; //8;
-    Int_t n_bins = 17; //(8-2)*10; //13 for paper #1, 17 for paper #2
-    axes.AddAxis(BinAxis("mc_neutrino_energy", e_min, e_max, n_bins));
+    axes.AddAxis(BinAxis("ev_prompt_fit", e_min, e_max, n_bins));
 
     // load (oscillated) data ntuple
-    BinnedED data_set_pdf("dataSetPdf", axes);
-    data_set_pdf.SetObservables(data_rep);
-    ROOTNtuple data_ntp(data_path, "nt");
-    for(ULong64_t i = 0; i < data_ntp.GetNEntries(); i++)
-        data_set_pdf.Fill(data_ntp.GetEntry(i));
+    TFile *f_in = new TFile(data_path.c_str());
+    TTree *data_set_ntp = (TTree*)f_in->Get("nt");
+    Double_t ev_energy_p1;
+    data_set_ntp->SetBranchAddress("ev_fit_energy_p1", &ev_energy_p1);
 
-    // for kamland reproduction change:
-    data_set_pdf.Normalise();
-    Double_t scale_factor = 1.27845e+003; // integral of kamland oscillated spectrum
-    Double_t scale_factor_unosc = 2.15808e+003; // integral of kamland unoscillated spectrum
-    data_set_pdf.Scale(scale_factor);
-
-    printf("Loading data: %s (osc)integral:%.3f\n", data_path.c_str(), data_set_pdf.Integral());
-
-    // pwr spectrum
-    // KE branch
-    ROOTNtuple pwr_spectrum_ke_ntp(pwr_unosc_ke_path, "nt");
-    sprintf(name, "pwr_spectrum_ke_pdf");
-    spectra_ke_pdf[0] = new BinnedED(name, axes);
-    spectra_ke_pdf[0]->SetObservables(0);
-    for(ULong64_t i = 0; i < pwr_spectrum_ke_ntp.GetNEntries(); i++)
-        spectra_ke_pdf[0]->Fill(pwr_spectrum_ke_ntp.GetEntry(i));
-    //spectra_ke_pdf[0]->Scale(1./flux_mc);
-    spectra_ke_pdf[0]->Normalise();
-    spectra_ke_pdf[0]->Scale(scale_factor_unosc);
-
-    // EV branch
-    ROOTNtuple pwr_spectrum_ev_ntp(pwr_unosc_ev_path, "nt");
-    sprintf(name, "pwr_spectrum_ev_pdf");
-    spectra_ev_pdf[0] = new BinnedED(name, axes);
-    spectra_ev_pdf[0]->SetObservables(0);
-    for(ULong64_t i = 0; i < pwr_spectrum_ev_ntp.GetNEntries(); i++)
-        spectra_ev_pdf[0]->Fill(pwr_spectrum_ev_ntp.GetEntry(i));
-    //spectra_ev_pdf[0]->Scale(1./flux_mc);
-    spectra_ev_pdf[0]->Normalise();
-    spectra_ev_pdf[0]->Scale(scale_factor_unosc);
-
-    // phwr spectrum
-    ROOTNtuple phwr_spectrum_ke_ntp(phwr_unosc_ke_path, "nt");
-    sprintf(name, "phwr_spectrum_ke_pdf");
-    spectra_ke_pdf[1] = new BinnedED(name, axes);
-    spectra_ke_pdf[1]->SetObservables(0);
-    for(ULong64_t i = 0; i < phwr_spectrum_ke_ntp.GetNEntries(); i++)
-        spectra_ke_pdf[1]->Fill(phwr_spectrum_ke_ntp.GetEntry(i));
-    //spectra_ke_pdf[1]->Scale(1./flux_mc);
-    spectra_ke_pdf[1]->Normalise();
-    spectra_ke_pdf[1]->Scale(scale_factor_unosc);
-
-    // phwr spectrum
-    ROOTNtuple phwr_spectrum_ev_ntp(phwr_unosc_ev_path, "nt");
-    sprintf(name, "phwr_spectrum_ev_pdf");
-    spectra_ev_pdf[1] = new BinnedED(name, axes);
-    spectra_ev_pdf[1]->SetObservables(0);
-    for(ULong64_t i = 0; i < phwr_spectrum_ev_ntp.GetNEntries(); i++)
-        spectra_ev_pdf[1]->Fill(phwr_spectrum_ev_ntp.GetEntry(i));
-    //spectra_ev_pdf[1]->Scale(1./flux_mc);
-    spectra_ev_pdf[1]->Normalise();
-    spectra_ev_pdf[1]->Scale(scale_factor_unosc);
+    for(size_t j = 0; j < data_set_ntp->GetEntries(); j++){
+        data_set_ntp->GetEntry(j);
+        data_set_pdf.Fill(ev_energy_p1);
+    }
+    f_in->Close();
 
     printf("End init--------------------------------------\n");
-    return data_set_pdf;
 }
 
 void LHFit_initialise_kamland(BinnedED &data_set_pdf, const double e_min, const double e_max, const size_t n_bins){
