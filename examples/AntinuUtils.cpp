@@ -176,7 +176,7 @@ void readParameterFile(const std::string &runParameterFileName, std::vector<Doub
         // printf("i:%llu, d_21:%.5f, s_12:%.5f, s_13:%.5f\n", i, d_21s[i], s_12s[i], s_13s[i]);
 }
 
-void LHFit_initialise(BinnedED &data_set_pdf, const std::string &data_path, const double e_min, const double e_max, const size_t n_bins){
+void LHFit_initialise(BinnedED &data_set_pdf, const std::string &data_path, const double flux_data, const double e_min, const double e_max, const size_t n_bins){
     //
     // Load pdf's for reactor types
     // Load data pdf
@@ -207,6 +207,8 @@ void LHFit_initialise(BinnedED &data_set_pdf, const std::string &data_path, cons
         data_set_pdf.Fill(ev_energy_p1);
     }
     f_in->Close();
+    data_set_pdf.Scale(1./flux_data);
+    printf("data scale: %.5f\n",flux_data);
 
     printf("End init--------------------------------------\n");
 }

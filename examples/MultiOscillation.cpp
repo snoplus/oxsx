@@ -45,7 +45,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
     printf("LHFit_fit:: del_21:%.9f, sin2_12:%.7f, sin2_13:%.7f\n", param_d21, param_s12, param_s13);
 
     char name[1000];
-    char spectrum_osc_prompt_filepath[1000];
+    TRandom3 *random_generator = new TRandom3();
+    //char spectrum_osc_prompt_filepath[1000];
     const ULong64_t n_pdf = reactor_names.size();
 
     // set up binning
@@ -68,87 +69,75 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 
     TH1D *reactor_hist = new TH1D[n_pdf];
 
-    BinnedED reactor_pdf_fitosc_sum("reactor_pdf_fitosc_sum",axes);
-    reactor_pdf_fitosc_sum.SetObservables(data_rep);
+    BinnedED reactor_osc_pdf_fitosc_sum("reactor_osc_pdf_fitosc_sum",axes);
+    reactor_osc_pdf_fitosc_sum.SetObservables(data_rep);
 
     BinnedED **reactor_unosc_pdf = new BinnedED*[n_pdf];
-    BinnedED **reactor_pdf = new BinnedED*[n_pdf];
+    BinnedED **reactor_osc_pdf = new BinnedED*[n_pdf];
 
     Double_t constraint_osc_mean_total = 0.;
     Double_t data_set_pdf_integral = data_set_pdf.Integral();
 
     for (ULong64_t i = 0; i < n_pdf; i++){
         // for each reactor, load spectrum pdf for reactor type
-        reactor_pdf[i] = new BinnedED(reactor_names[i], axes);
-        reactor_pdf[i]->SetObservables(0);
+        sprintf(name, "%s_unosc", reactor_names[i].c_str());
+        reactor_unosc_pdf[i] = new BinnedED(name, axes);
+        reactor_unosc_pdf[i]->SetObservables(0);
+        reactor_osc_pdf[i] = new BinnedED(reactor_names[i], axes);
+        reactor_osc_pdf[i]->SetObservables(0);
 
-        sprintf(spectrum_osc_prompt_filepath, "/data/snoplus/lidgard/antinu_analysis/sensitivity_plot/processed/data/osc_ntp_prompt_%s_%d_%d_%d.root", reactor_names[i].c_str(), (int)(param_d21*1e9), (int)(param_s12*1e7), (int)(param_s13*1e7)); // change this to use the output path of the csv file
-
-        if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR")){
-            printf("adding pwr reactor: ");
-            if (test_file_exists(spectrum_osc_prompt_filepath)==false)
-                write_file_pruned(spectrum_pwr_unosc_filepath.c_str(), spectrum_osc_prompt_filepath, param_d21, param_s12, param_s13, distances[i]);
-        }
-
-        else if (reactor_types[i]=="PHWR"){
-            printf("adding phwr reactor: ");
-            if (test_file_exists(spectrum_osc_prompt_filepath)==false)
-                write_file_pruned(spectrum_phwr_unosc_filepath.c_str(), spectrum_osc_prompt_filepath, param_d21, param_s12, param_s13, distances[i]); // currently using PWR, change filename for reactor type!!!!
-        }
-        else{
-            printf("Throw: Reactor doesn't match any loaded type...\n");
-            exit(0); // throw std::exception(); //continue;
-        }
-
-	    // load newly created oscillated ntuple
-        printf("adding unosc reactor: ");
-
-        if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR")){
+        if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR"))
             sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
-        }
-        else if (reactor_types[i]=="PHWR"){
+        else if (reactor_types[i]=="PHWR")
             sprintf(name, "%s", spectrum_phwr_unosc_filepath.c_str());
-        }
         else{
             printf("Throw: Reactor doesn't match any loaded type...\n");
             exit(0); // throw std::exception(); //continue;
         }
 
-        //ROOTNtuple reactor_unosc_ntp(spectrum_unosc_filepath.c_str(), "nt"); // make this work for specific branches
+        // load unoscillated reactor file (to oscillate, and to plot)
+        //ROOTNtuple reactor_unosc_ntp(spectrum_unosc_filepath.c_str(), "nt"); // this would be made easier if this worked for specific branches!!
         TFile *f_in = new TFile(name);
         TTree *reactor_unosc_ntp = (TTree*)f_in->Get("nt");
-        Double_t ev_energy_p1;
-        reactor_unosc_ntp->SetBranchAddress("ev_fit_energy_p1", &ev_energy_p1);
-        reactor_unosc_pdf[i] = new BinnedED(reactor_names[i], axes);
-        reactor_unosc_pdf[i]->SetObservables(0);
+        TNtuple *reactor_osc_ntp = new TNtuple("nt", "Oscillated Prompt Energy", "ev_fit_energy_p1");
+
+        // oscillate tree
+        ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13);
+        
+        // reset branch addresses after oscillating in function (otherwise crash before setting again below..)
+        reactor_unosc_ntp->SetBranchStatus("*", 0);
+        reactor_unosc_ntp->SetBranchStatus("ev_fit_energy_p1", 1); // (re-enable all branches in use)
+
+        // fill unoscillated pdf
+        Double_t ev_unosc_energy_p1;
+        reactor_unosc_ntp->SetBranchAddress("ev_fit_energy_p1", &ev_unosc_energy_p1);
         for(size_t j = 0; j < reactor_unosc_ntp->GetEntries(); j++){
             reactor_unosc_ntp->GetEntry(j);
-            reactor_unosc_pdf[i]->Fill(ev_energy_p1);
+            reactor_unosc_pdf[i]->Fill(ev_unosc_energy_p1);
         }
-        f_in->Close();
-            //reactor_unosc_pdf[i]->Fill(reactor_unosc_ntp.GetEntry(j));
-        //reactor_unosc_pdf[i]->Scale(1./flux_data);
 
-        ROOTNtuple reactor_ntp(spectrum_osc_prompt_filepath, "nt");
-        for(size_t j = 0; j < reactor_ntp.GetNEntries(); j++)
-            reactor_pdf[i]->Fill(reactor_ntp.GetEntry(j));
-        //reactor_pdf[i]->Scale(1./flux_data);
+        // fill oscillated pdf
+        Float_t ev_osc_energy_p1;
+        reactor_osc_ntp->SetBranchAddress("ev_fit_energy_p1", &ev_osc_energy_p1);
+        for(size_t j = 0; j < reactor_osc_ntp->GetEntries(); j++){
+            reactor_osc_ntp->GetEntry(j);
+            reactor_osc_pdf[i]->Fill(ev_osc_energy_p1);
+        }
+
+        // close unoscillated reactor file
+        f_in->Close();
 
         // work out total oscillated integral of constraints
         Double_t normalisation_unosc = reactor_unosc_pdf[i]->Integral();
-        Double_t normalisation_reactor = reactor_pdf[i]->Integral();
+        Double_t normalisation_reactor = reactor_osc_pdf[i]->Integral();
         Double_t osc_loss = normalisation_reactor/normalisation_unosc;
 
         Double_t constraint_osc_mean = constraint_means[i]*osc_loss;
         Double_t constraint_osc_sigma = constraint_sigmas[i]*osc_loss; //pow(pow(constraint_sigmas[i]/constraint_means[i],2)+pow(constraint_sigmas[n_pdf]/constraint_means[n_pdf],2),0.5)*contribution_factor;
 
-        // reactor pdf is the mc spectrum scaled to the kamland unosc spectrum. total events.
-        // here we have reactor individual contributions. so scale by contribution to total. find this with our mc spectra.
-        // this is the average number of events to the total in mc (before scaling by kamland).
+        reactor_osc_pdf[i]->Normalise(); //remove number of events from mc
 
-        reactor_pdf[i]->Normalise(); //remove number of events from mc
-
-        printf("reactor_names:%s\tconstraint_osc_normalised:%.4f\tconstraint_osc_normalised_sigma:%.4f\tdata_set_pdf_integral:%.4f\n",
+        printf("reactor:%s\tconst_osc_norm:%.4f\tconst_osc_norm_sigma:%.4f\tdata_pdf_int:%.4f\n",
             reactor_names[i].c_str(), constraint_osc_mean, constraint_osc_sigma, data_set_pdf_integral);
 
         // Setting optimisation limits
@@ -159,26 +148,12 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
         minima[name] = min;
         maxima[name] = max;
         printf("  added reactor %d/%d: %s, norm: %.3f (min:%.3f max:%.3f) err: %.3f\n", i+1, n_pdf, reactor_names[i].c_str(), constraint_osc_mean, min, max, constraint_osc_sigma);
-        initial_val[name] = constraint_osc_mean;
+        Double_t random = random_generator->Uniform(0.5,1.5);
+        initial_val[name] = constraint_osc_mean*random;
         initial_err[name] = constraint_osc_sigma;
 
-        lh_function.AddDist(*reactor_pdf[i]);
+        lh_function.AddDist(*reactor_osc_pdf[i]);
         lh_function.SetConstraint(name, constraint_osc_mean, constraint_osc_sigma);
-
-        // create histograms to save
-        if (param_d21>=param_d21_plot_min && param_d21<=param_d21_plot_min && param_s12>=param_s12_plot_min && param_s12<=param_s12_plot_max){
-            reactor_hist[i] = DistTools::ToTH1D(*reactor_pdf[i]);
-            sprintf(name, "%s_hist_d21%.9f_s12%.7f_s13%.7f", reactor_names[i].c_str(), param_d21, param_s12, param_s13);
-            reactor_hist[i].SetName(name);
-            reactor_hist[i].GetXaxis()->SetTitle("Energy (MeV)");
-            reactor_hist[i].GetYaxis()->SetTitle("Counts");
-            reactor_hist[i].SetLineColor(kRed);
-            file_out->cd();
-            reactor_hist[i].Write();
-        }
-
-        //delete oscillated ntp root files
-        remove(spectrum_osc_prompt_filepath);
     }
 
     // fit
@@ -198,24 +173,23 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
     fit_result.Print();
     fit_validity = fit_result.GetValid();
 
-    for (ULong64_t i = 0; i < n_pdf; i++){
-        sprintf(name, "%s_norm", reactor_names[i].c_str());
-        reactor_pdf[i]->Normalise();
-        reactor_pdf[i]->Scale(best_fit.at(name));
-        reactor_pdf_fitosc_sum.Add(*reactor_pdf[i]);
+    for (ULong64_t j = 0; j < n_pdf; j++){
+        sprintf(name, "%s_norm", reactor_names[j].c_str());
+        reactor_osc_pdf[j]->Normalise();
+        reactor_osc_pdf[j]->Scale(best_fit.at(name));
+        reactor_osc_pdf_fitosc_sum.Add(*reactor_osc_pdf[j]);
     }
 
     Double_t lh_val = 99999; // positive non-sensical value to return if fit is not valid
     if (fit_validity == true)
         lh_val =(-1)*lh_function.Evaluate();
 
-
     // write plots to file (only 'good' plots - those with the best fit values)
     if (param_d21>=param_d21_plot_min && param_d21<=param_d21_plot_max && param_s12>=param_s12_plot_min && param_s12<=param_s12_plot_max){
         file_out->cd();
         // and their sum
-        TH1D reactor_hist_fitosc_sum = DistTools::ToTH1D(reactor_pdf_fitosc_sum);
-        sprintf(name, "reactor_hist_fitosc_sum");
+        TH1D reactor_hist_fitosc_sum = DistTools::ToTH1D(reactor_osc_pdf_fitosc_sum);
+        sprintf(name, "reactor_hist_fitosc_sum_d21%.9f_s12%.7f_s13%.7f", param_d21, param_s12, param_s13);
         reactor_hist_fitosc_sum.SetName(name);
         reactor_hist_fitosc_sum.GetXaxis()->SetTitle("Energy (MeV)");
         reactor_hist_fitosc_sum.GetYaxis()->SetTitle("Counts");
@@ -230,23 +204,30 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
         data_set_hist.GetYaxis()->SetTitle("Counts");
         data_set_hist.GetXaxis()->SetTitle("Energy (MeV)");
         data_set_hist.Write();
+        
+        // reactor pdfs
+        TH1D reactor_osc_hist;
+        for (ULong64_t j = 0; j < n_pdf; j++){
+            reactor_osc_hist = DistTools::ToTH1D(*reactor_osc_pdf[j]);
+            // data_hist.Sumw2();
+            sprintf(name, "reactor_osc_pdf_%s_d21%.9f_s12%.7f_s13%.7f", reactor_names[j].c_str(), param_d21, param_s12, param_s13);
+            reactor_osc_hist.SetName(name);
+            reactor_osc_hist.GetYaxis()->SetTitle("Counts");
+            reactor_osc_hist.GetXaxis()->SetTitle("Energy (MeV)");
+            reactor_osc_hist.Write();
+        }
 
         // pdfs of spectra
-        TH1D pwr_spectrum_hist = DistTools::ToTH1D(*reactor_unosc_pdf[0]);
-        // pwr_spectrum_hist.Sumw2();
-        sprintf(name, "pwr_spectrum_hist");
-        pwr_spectrum_hist.SetName(name);
-        pwr_spectrum_hist.GetYaxis()->SetTitle("Counts");
-        pwr_spectrum_hist.GetXaxis()->SetTitle("Energy (MeV)");
-        pwr_spectrum_hist.Write();
-
-        // TH1D phwr_spectrum_hist = DistTools::ToTH1D(*spectra_ev_pdf[1]);
-        // // phwr_spectrum_hist.Sumw2();
-        // sprintf(name, "phwr_spectrum_hist");
-        // phwr_spectrum_hist.SetName(name);
-        // phwr_spectrum_hist.GetYaxis()->SetTitle("Counts");
-        // phwr_spectrum_hist.GetXaxis()->SetTitle("Energy (MeV)");
-        // phwr_spectrum_hist.Write();
+        TH1D reactor_unosc_hist;
+        for (ULong64_t j = 0; j < n_pdf; j++){
+            reactor_unosc_hist = DistTools::ToTH1D(*reactor_unosc_pdf[j]);
+            // reactor_unosc_hist.Sumw2();
+            sprintf(name, "reactor_unosc_pdf_%s_d21%.9f_s12%.7f_s13%.7f", reactor_names[j].c_str(), param_d21, param_s12, param_s13);
+            reactor_unosc_hist.SetName(name);
+            reactor_unosc_hist.GetYaxis()->SetTitle("Counts");
+            reactor_unosc_hist.GetXaxis()->SetTitle("Energy (MeV)");
+            reactor_unosc_hist.Write();
+        }
     }
 
     printf("fit valid: %d, lh_value:%.9f\n", fit_validity, lh_val);
@@ -268,7 +249,7 @@ int main(int argc, char *argv[]) {
         const std::string &spectrum_pwr_unosc_filepath = argv[5];
         const std::string &constraints_info_file = argv[6];
         const std::string &parameter_file = argv[7];
-        const double flux_data = atoi(argv[8]);
+        const double flux_data = atof(argv[8]);
         const std::string &out_filename_plots = argv[9];
         const std::string &out_filename_csv = argv[10];
         const double e_min = atof(argv[11]);
@@ -276,8 +257,8 @@ int main(int argc, char *argv[]) {
         const size_t n_bins = atoi(argv[13]);
         const double param_d21_plot_min = atof(argv[14]);
         const double param_d21_plot_max = atof(argv[15]);
-        const double param_s12_plot_min = atoi(argv[16]);
-        const double param_s12_plot_max = atoi(argv[17]);
+        const double param_s12_plot_min = atof(argv[16]);
+        const double param_s12_plot_max = atof(argv[17]);
         printf("Begin--------------------------------------\n");
 
         // read in reactor information
@@ -322,25 +303,28 @@ int main(int argc, char *argv[]) {
         axes.AddAxis(BinAxis("ev_prompt_fit", e_min, e_max, n_bins));
         BinnedED data_set_pdf("data_set_pdf", axes);
 
-        LHFit_initialise(data_set_pdf, data_path, e_min, e_max, n_bins);
+        // initialise data
+        LHFit_initialise(data_set_pdf, data_path, flux_data, e_min, e_max, n_bins);
 
         ////save objects to file
         printf("Save objects to file...\n");
         TFile *file_out = 0;
         bool fit_validity = 0;
-        size_t fit_try = 0;
-        size_t fit_try_max = 10;
-        //while ((fit_try <= fit_try_max)&&(fit_validity==0)) {
-            fit_try++;
-            for (ULong64_t i=0; i<n_parameter_sets; i++) {
+        ULong64_t fit_try_max = 30;
 
-                if (d_21s[i]>=param_d21_plot_min && d_21s[i]<=param_d21_plot_max && s_12s[i]>=param_s12_plot_min && s_12s[i]<=param_s12_plot_max)
-                    if (file_out==0) {
-                        printf("writing plots to: %s\n", out_filename_plots.c_str());
-                        file_out = new TFile(out_filename_plots.c_str(), "RECREATE");
-                    }
+        for (ULong64_t i=0; i<n_parameter_sets; i++) {
+ 
+            if (d_21s[i]>=param_d21_plot_min && d_21s[i]<=param_d21_plot_max && s_12s[i]>=param_s12_plot_min && s_12s[i]<=param_s12_plot_max)
+            if (file_out==0) {
+                printf("writing plots to: %s\n", out_filename_plots.c_str());
+                file_out = new TFile(out_filename_plots.c_str(), "RECREATE");
+            }
 
-                printf("Fit number: %llu of %llu\n", i+1, n_parameter_sets);
+            printf("Fit number: %llu of %llu\n", i+1, n_parameter_sets);
+            
+            fit_validity = 0;
+            for (ULong64_t fit_try=0; fit_try<=fit_try_max; fit_try++) {
+                fit_try++;
                 lh_values[i] = LHFit_fit(data_set_pdf, spectrum_phwr_unosc_filepath, spectrum_pwr_unosc_filepath,
                                 reactor_names, distances, reactor_types,
                                 constraint_means, constraint_sigmas,
@@ -349,8 +333,15 @@ int main(int argc, char *argv[]) {
                                 fit_validity, e_min, e_max, n_bins,
                                 flux_data,
                                 param_d21_plot_min, param_d21_plot_max, param_s12_plot_min, param_s12_plot_max);
+
+                if (fit_validity==0)
+                    printf("Fit invalid... retrying (attempt no: %llu)\n", fit_try);
+                else{
+                    printf("Fit valid. (attempt no: %llu)\n", fit_try);
+                    fit_try = fit_try_max+1;
+                }
             }
-        //}
+        }
 
         if (file_out!=0) file_out->Close();
 

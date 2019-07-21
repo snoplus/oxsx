@@ -23,7 +23,6 @@ void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, Double_t del_m
     //
     // takes a TTree with multiple branches, oscillates using KE branch, fills two TNtuples each with a single branch
     //
-
     ULong64_t n_entries = in_tree->GetEntries();
     Double_t surv_prob, mc_energy_nu, ev_energy_p1, distance;
     in_tree->SetBranchAddress("mc_neutrino_energy", &mc_energy_nu);
