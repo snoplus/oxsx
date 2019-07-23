@@ -104,7 +104,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 
         // oscillate tree
         ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13);
-        
+
         // reset branch addresses after oscillating in function (otherwise crash before setting again below..)
         reactor_unosc_ntp->SetBranchStatus("*", 0);
         reactor_unosc_ntp->SetBranchStatus("ev_fit_energy_p1", 1); // (re-enable all branches in use)
@@ -206,7 +206,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
         data_set_hist.GetYaxis()->SetTitle("Counts");
         data_set_hist.GetXaxis()->SetTitle("Energy (MeV)");
         data_set_hist.Write();
-        
+
         // reactor pdfs
         TH1D reactor_osc_hist;
         for (ULong64_t j = 0; j < n_pdf; j++){
@@ -316,7 +316,7 @@ int main(int argc, char *argv[]) {
         ULong64_t print_plots = 0;
 
         for (ULong64_t i=0; i<n_parameter_sets; i++) {
- 
+
             if (d_21s[i]>=param_d21_plot_min && d_21s[i]<=param_d21_plot_max && s_12s[i]>=param_s12_plot_min && s_12s[i]<=param_s12_plot_max)
             if (file_out==0) {
                 printf("writing plots to: %s\n", out_filename_plots.c_str());
@@ -324,7 +324,7 @@ int main(int argc, char *argv[]) {
             }
 
             printf("Fit number: %llu of %llu\n", i+1, n_parameter_sets);
-            
+
             fit_validity = 0;
             for (ULong64_t fit_try=0; fit_try<=fit_try_max; fit_try++) {
                 fit_try++;
