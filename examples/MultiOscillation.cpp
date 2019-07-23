@@ -98,6 +98,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
         // load unoscillated reactor file (to oscillate, and to plot)
         //ROOTNtuple reactor_unosc_ntp(spectrum_unosc_filepath.c_str(), "nt"); // this would be made easier if this worked for specific branches!!
         TFile *f_in = new TFile(name);
+        file_out->cd(); // switch to output file (for ntuple to use)
         TTree *reactor_unosc_ntp = (TTree*)f_in->Get("nt");
         TNtuple *reactor_osc_ntp = new TNtuple("nt", "Oscillated Prompt Energy", "ev_fit_energy_p1");
 
@@ -309,16 +310,17 @@ int main(int argc, char *argv[]) {
 
         ////save objects to file
         printf("Save objects to file...\n");
-        TFile *file_out = 0;
+        TFile *file_out = new TFile(out_filename_plots.c_str(), "RECREATE");
         bool fit_validity = 0;
         ULong64_t fit_try_max = 30;
+        ULong64_t print_plots = 0;
 
         for (ULong64_t i=0; i<n_parameter_sets; i++) {
  
             if (d_21s[i]>=param_d21_plot_min && d_21s[i]<=param_d21_plot_max && s_12s[i]>=param_s12_plot_min && s_12s[i]<=param_s12_plot_max)
             if (file_out==0) {
                 printf("writing plots to: %s\n", out_filename_plots.c_str());
-                file_out = new TFile(out_filename_plots.c_str(), "RECREATE");
+                print_plots++;
             }
 
             printf("Fit number: %llu of %llu\n", i+1, n_parameter_sets);
@@ -344,7 +346,9 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        if (file_out!=0) file_out->Close();
+        // close output file
+        file_out->Close();
+        if (print_plots==0) remove(out_filename_plots.c_str()); //if no plots passed the plot cuts, then delete the then empty output file.
 
         //Write fit coefficients to txt file
         printf("writing to: %s\n", out_filename_csv.c_str());
