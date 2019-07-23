@@ -136,6 +136,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
         Double_t constraint_osc_sigma = constraint_sigmas[i]*osc_loss; //pow(pow(constraint_sigmas[i]/constraint_means[i],2)+pow(constraint_sigmas[n_pdf]/constraint_means[n_pdf],2),0.5)*contribution_factor;
 
         reactor_osc_pdf[i]->Normalise(); //remove number of events from mc
+        reactor_unosc_pdf[i]->Scale(1./flux_data); // osc pdf gets fitted, the unosc doesn't, scale it simply for plotting..
 
         printf("reactor:%s\tconst_osc_norm:%.4f\tconst_osc_norm_sigma:%.4f\tdata_pdf_int:%.4f\n",
             reactor_names[i].c_str(), constraint_osc_mean, constraint_osc_sigma, data_set_pdf_integral);
