@@ -38,7 +38,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
     TFile *file_out,
     Double_t param_d21, Double_t param_s12, Double_t param_s13,
     bool &fit_validity,
-    const double e_min, const double e_max, const size_t n_bins, const double flux_data,
+    const double e_min, const double e_max, const size_t n_bins, 
+    const double flux_data, const double mc_scale_factor,
     const double param_d21_plot_min, const double param_d21_plot_max, const double param_s12_plot_min, const double param_s12_plot_max){
 
     printf("Begin fit--------------------------------------\n");
@@ -46,7 +47,6 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 
     char name[1000];
     TRandom3 *random_generator = new TRandom3();
-    //char spectrum_osc_prompt_filepath[1000];
     const ULong64_t n_pdf = reactor_names.size();
 
     // set up binning
@@ -133,23 +133,20 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
         Double_t normalisation_reactor = reactor_osc_pdf[i]->Integral();
         Double_t osc_loss = normalisation_reactor/normalisation_unosc;
 
-        Double_t constraint_osc_mean = constraint_means[i]*osc_loss;
-        Double_t constraint_osc_sigma = constraint_sigmas[i]*osc_loss; //pow(pow(constraint_sigmas[i]/constraint_means[i],2)+pow(constraint_sigmas[n_pdf]/constraint_means[n_pdf],2),0.5)*contribution_factor;
+        Double_t constraint_osc_mean = constraint_means[i]*osc_loss*mc_scale_factor;
+        Double_t constraint_osc_sigma = (constraint_sigmas[i]/constraint_means[i])*constraint_osc_mean; //pow(pow(constraint_sigmas[i]/constraint_means[i],2)+pow(constraint_sigmas[n_pdf]/constraint_means[n_pdf],2),0.5)*contribution_factor;
 
         reactor_osc_pdf[i]->Normalise(); //remove number of events from mc
         reactor_unosc_pdf[i]->Scale(1./flux_data); // osc pdf gets fitted, the unosc doesn't, scale it simply for plotting..
 
-        printf("reactor:%s\tconst_osc_norm:%.4f\tconst_osc_norm_sigma:%.4f\tdata_pdf_int:%.4f\n",
-            reactor_names[i].c_str(), constraint_osc_mean, constraint_osc_sigma, data_set_pdf_integral);
-
         // Setting optimisation limits
         sprintf(name, "%s_norm", reactor_names[i].c_str());
-        Double_t min = constraint_osc_mean-2.*constraint_osc_sigma; // let min and max float within 2 sigma (but constrained later)
+        Double_t min = constraint_osc_mean-2.*constraint_osc_sigma; // let min and max float within 2 sigma
         Double_t max = constraint_osc_mean+2.*constraint_osc_sigma;
         if (min < 0) min = 0;
         minima[name] = min;
         maxima[name] = max;
-        printf("  added reactor %d/%d: %s, norm: %.3f (min:%.3f max:%.3f) err: %.3f\n", i+1, n_pdf, reactor_names[i].c_str(), constraint_osc_mean, min, max, constraint_osc_sigma);
+        printf("  added reactor %d/%d: %s, norm: %.3f (min:%.3f max:%.3f) err: %.3f data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), constraint_osc_mean, min, max, constraint_osc_sigma, data_set_pdf_integral);
         Double_t random = random_generator->Uniform(0.5,1.5);
         initial_val[name] = constraint_osc_mean*random;
         initial_err[name] = constraint_osc_sigma;
@@ -162,8 +159,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
     printf("Built LH function, fitting...\n");
     Minuit min;
     min.SetMethod("Migrad");
-    min.SetMaxCalls(100000);
-    min.SetTolerance(0.01);
+    min.SetMaxCalls(1000000);
+    min.SetTolerance(3);
     min.SetMinima(minima);
     min.SetMaxima(maxima);
     min.SetInitialValues(initial_val);
@@ -239,8 +236,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 18){
-        std::cout<<"Error: 17 arguments expected."<<std::endl;
+    if (argc != 19){
+        std::cout<<"Error: 18 arguments expected."<<std::endl;
         return 1; // return>0 indicates error code
     }
     else{
@@ -252,15 +249,16 @@ int main(int argc, char *argv[]) {
         const std::string &constraints_info_file = argv[6];
         const std::string &parameter_file = argv[7];
         const double flux_data = atof(argv[8]);
-        const std::string &out_filename_plots = argv[9];
-        const std::string &out_filename_csv = argv[10];
-        const double e_min = atof(argv[11]);
-        const double e_max = atof(argv[12]);
-        const size_t n_bins = atoi(argv[13]);
-        const double param_d21_plot_min = atof(argv[14]);
-        const double param_d21_plot_max = atof(argv[15]);
-        const double param_s12_plot_min = atof(argv[16]);
-        const double param_s12_plot_max = atof(argv[17]);
+        const double mc_scale_factor = atof(argv[9]);
+        const std::string &out_filename_plots = argv[10];
+        const std::string &out_filename_csv = argv[11];
+        const double e_min = atof(argv[12]);
+        const double e_max = atof(argv[13]);
+        const size_t n_bins = atoi(argv[14]);
+        const double param_d21_plot_min = atof(argv[15]);
+        const double param_d21_plot_max = atof(argv[16]);
+        const double param_s12_plot_min = atof(argv[17]);
+        const double param_s12_plot_max = atof(argv[18]);
         printf("Begin--------------------------------------\n");
 
         // read in reactor information
@@ -312,13 +310,12 @@ int main(int argc, char *argv[]) {
         printf("Save objects to file...\n");
         TFile *file_out = new TFile(out_filename_plots.c_str(), "RECREATE");
         bool fit_validity = 0;
-        ULong64_t fit_try_max = 30;
+        ULong64_t fit_try_max = 3;
         ULong64_t print_plots = 0;
 
         for (ULong64_t i=0; i<n_parameter_sets; i++) {
 
-            if (d_21s[i]>=param_d21_plot_min && d_21s[i]<=param_d21_plot_max && s_12s[i]>=param_s12_plot_min && s_12s[i]<=param_s12_plot_max)
-            if (file_out==0) {
+            if (d_21s[i]>=param_d21_plot_min && d_21s[i]<=param_d21_plot_max && s_12s[i]>=param_s12_plot_min && s_12s[i]<=param_s12_plot_max){
                 printf("writing plots to: %s\n", out_filename_plots.c_str());
                 print_plots++;
             }
@@ -326,15 +323,14 @@ int main(int argc, char *argv[]) {
             printf("Fit number: %llu of %llu\n", i+1, n_parameter_sets);
 
             fit_validity = 0;
-            for (ULong64_t fit_try=0; fit_try<=fit_try_max; fit_try++) {
-                fit_try++;
+            for (ULong64_t fit_try=1; fit_try<=fit_try_max; fit_try++) {
                 lh_values[i] = LHFit_fit(data_set_pdf, spectrum_phwr_unosc_filepath, spectrum_pwr_unosc_filepath,
                                 reactor_names, distances, reactor_types,
                                 constraint_means, constraint_sigmas,
                                 file_out,
                                 d_21s[i], s_12s[i], s_13s[i],
                                 fit_validity, e_min, e_max, n_bins,
-                                flux_data,
+                                flux_data, mc_scale_factor,
                                 param_d21_plot_min, param_d21_plot_max, param_s12_plot_min, param_s12_plot_max);
 
                 if (fit_validity==0)

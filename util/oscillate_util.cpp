@@ -27,7 +27,7 @@ void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, Double_t del_m
     Double_t surv_prob, mc_energy_nu, ev_energy_p1, distance;
     in_tree->SetBranchAddress("mc_neutrino_energy", &mc_energy_nu);
     in_tree->SetBranchAddress("ev_fit_energy_p1", &ev_energy_p1);
-    
+
     if (fixed_distance>0)
         distance = fixed_distance;
     else
@@ -64,9 +64,9 @@ void ntOscillate(TTree *in_tree, TTree *out_tree, Double_t del_m_sqr_21, Double_
 
     for (ULong64_t i = 0; i < n_entries; i++){
         in_tree->GetEntry(i);
- 
+
         surv_prob = NuSurvProb(mc_energy_nu, distance, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
-        
+
         //const Double_t random = CLHEP::HepUniformRand();
         Double_t random = random_generator->Uniform();
 
@@ -92,11 +92,11 @@ void write_file_pruned(const char* nt_in, const char* nt_prompt_out, Double_t de
 
     TFile *f_in = new TFile(nt_in);
     TTree *in_tree = (TTree*)f_in->Get("nt");
-    
-    // the ordering of things here to keep ROOT happy is exactly the following (TFile then TTree, TFile again TTree) 
+
+    // the ordering of things here to keep ROOT happy is exactly the following (TFile then TTree, TFile again TTree)
     //TFile *f_ke_out = new TFile(nt_ke_out, "RECREATE");
     //TNtuple *out_tree_ke = new TNtuple("nt","Anti-neutrino processed tree", "mc_neutrino_energy");
-    
+
     TFile *f_prompt_out = new TFile(nt_prompt_out, "RECREATE");
     TNtuple *out_tree_prompt = new TNtuple("nt", "Oscillated Prompt Energy", "ev_fit_energy_p1");
 
@@ -114,7 +114,7 @@ void write_file_pruned(const char* nt_in, const char* nt_prompt_out, Double_t de
     out_tree_prompt->Write();
     f_prompt_out->Close();
     delete f_prompt_out;
-    
+
     f_in->cd();
     f_in->Close();
     delete f_in;
@@ -129,7 +129,7 @@ void write_file_pruned(const char* nt_in, const char* nt_prompt_out, Double_t de
 
     // TFile *f_in = new TFile(nt_in);
     // TTree *in_tree = (TTree*)f_in->Get("nt");
-    
+
     // TFile *f_ke_out = new TFile(nt_ke_out, "RECREATE");
     // TTree *out_tree = in_tree->CloneTree(0);
     // ntOscillate(in_tree, out_tree, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
@@ -140,7 +140,7 @@ void write_file_pruned(const char* nt_in, const char* nt_prompt_out, Double_t de
     // out_tree_ke->Write();
     // f_ke_out->Close();
     // delete f_ke_out;
-    
+
     // TFile *f_prompt_out = new TFile(nt_prompt_out, "RECREATE");
     // out_tree = in_tree->CloneTree(0);
     // ntOscillate(in_tree, out_tree, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
@@ -151,7 +151,7 @@ void write_file_pruned(const char* nt_in, const char* nt_prompt_out, Double_t de
     // out_tree_prompt->Write();
     // f_prompt_out->Close();
     // delete f_prompt_out;
-    
+
     // f_in->Close();
     // delete f_in;
 // }
