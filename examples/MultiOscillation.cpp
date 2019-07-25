@@ -57,7 +57,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
     // create LH function
     BinnedNLLH lh_function;
     lh_function.SetBufferAsOverflow(true);
-    int buff = 0;
+    int buff = 1;
     lh_function.SetBuffer(0, buff, buff);
     lh_function.SetDataDist(data_set_pdf); // initialise withe the data set
 
