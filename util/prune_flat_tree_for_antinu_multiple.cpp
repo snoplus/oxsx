@@ -330,7 +330,8 @@ int main(int argc, char* argv[]) {
         char input_filename_i[1000];
         char output_filename_i[1000];
 
-        for (size_t pass_i = pass_min; pass_i < pass_max; pass_i++){
+        for (size_t pass_i = pass_min; pass_i <= pass_max; pass_i++){
+            printf("pruning: %s_pass%d.root\n", input_filename.c_str(), pass_i);
             sprintf(input_filename_i, "%s_pass%d.root", input_filename.c_str(), pass_i);
             sprintf(output_filename_i, "%s_pass%d.root", output_filename.c_str(), pass_i);
 

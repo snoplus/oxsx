@@ -54,12 +54,17 @@ void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, Double_t del_m
     ntOscillate_pruned(in_tree, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, -9000);
 }
 
-void ntOscillate(TTree *in_tree, TTree *out_tree, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
+void ntOscillate(TTree *in_tree, TTree *out_tree, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13, Double_t fixed_distance) {
 
     ULong64_t n_entries = in_tree->GetEntries();
     Double_t surv_prob, mc_energy_nu, distance;
     in_tree->SetBranchAddress("mc_neutrino_energy", &mc_energy_nu);
-    in_tree->SetBranchAddress("reactor_info_distance", &distance);
+
+    if (fixed_distance>0)
+        distance = fixed_distance;
+    else
+        in_tree->SetBranchAddress("reactor_info_distance", &distance);
+    
     TRandom3 *random_generator = new TRandom3();
 
     for (ULong64_t i = 0; i < n_entries; i++){
@@ -75,6 +80,10 @@ void ntOscillate(TTree *in_tree, TTree *out_tree, Double_t del_m_sqr_21, Double_
     }
 }
 
+void ntOscillate(TTree *in_tree, TTree *out_tree, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
+    ntOscillate(in_tree, out_tree, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, -9000);
+}
+
 void write_file(const char* nt_in, const char* nt_out, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
 
     TFile *f_in = new TFile(nt_in);
@@ -86,6 +95,27 @@ void write_file(const char* nt_in, const char* nt_out, Double_t del_m_sqr_21, Do
 
     f_out->cd();
     out_tree->Write();
+    f_in->Close();
+    f_out->Close();
+    delete f_in;
+    delete f_out;
+}
+
+void write_file(const char* nt_in, const char* nt_out, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13, Double_t fixed_distance) {
+
+    TFile *f_in = new TFile(nt_in);
+    TTree *in_tree = (TTree*)f_in->Get("nt");
+    TFile *f_out = new TFile(nt_out, "RECREATE");
+    TTree *out_tree = in_tree->CloneTree(0);
+
+    ntOscillate(in_tree, out_tree, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, fixed_distance);
+
+    f_out->cd();
+    out_tree->Write();
+    f_in->Close();
+    f_out->Close();
+    delete f_in;
+    delete f_out;
 }
 
 void write_file_pruned(const char* nt_in, const char* nt_prompt_out, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13, Double_t distance) {
