@@ -32,13 +32,14 @@
 #include "AntinuUtils.cpp"
 #include "../util/oscillate_util.cpp"
 
-Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unosc_filepath, const std::string &spectrum_pwr_unosc_filepath,
-    std::vector<std::string> &reactor_names, std::vector<Double_t> &distances, std::vector<std::string> &reactor_types,
+Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unosc_filepath,
+    const std::string &spectrum_pwr_unosc_filepath, const std::string &spectrum_further_unosc_filepath,
+    std::vector<std::string> &reactor_names, std::vector<std::string> &reactor_types,
     std::vector<Double_t> &constraint_means, std::vector<Double_t> &constraint_sigmas,
     TFile *file_out,
     Double_t param_d21, Double_t param_s12, Double_t param_s13,
     bool &fit_validity,
-    const double e_min, const double e_max, const size_t n_bins, 
+    const double e_min, const double e_max, const size_t n_bins,
     const double flux_data, const double mc_scale_factor,
     const double param_d21_plot_min, const double param_d21_plot_max, const double param_s12_plot_min, const double param_s12_plot_max){
 
@@ -57,7 +58,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
     // create LH function
     BinnedNLLH lh_function;
     lh_function.SetBufferAsOverflow(true);
-    int buff = 1;
+    int buff = 0;
     lh_function.SetBuffer(0, buff, buff);
     lh_function.SetDataDist(data_set_pdf); // initialise withe the data set
 
@@ -90,6 +91,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
             sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
         else if (reactor_types[i]=="PHWR")
             sprintf(name, "%s", spectrum_phwr_unosc_filepath.c_str());
+        else if (reactor_types[i]=="further_reactors") // if reactor type is the set of further reactors
+            sprintf(name, "%s", spectrum_further_unosc_filepath.c_str());
         else{
             printf("Throw: Reactor doesn't match any loaded type...\n");
             exit(0); // throw std::exception(); //continue;
@@ -103,7 +106,10 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
         TNtuple *reactor_osc_ntp = new TNtuple("nt", "Oscillated Prompt Energy", "ev_fit_energy_p1");
 
         // oscillate tree
-        ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13);
+        if (reactor_types[i]=="further_reactors")
+            ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13, 10000);
+        else
+            ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13);
 
         // reset branch addresses after oscillating in function (otherwise crash before setting again below..)
         reactor_unosc_ntp->SetBranchStatus("*", 0);
@@ -236,8 +242,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 19){
-        std::cout<<"Error: 18 arguments expected."<<std::endl;
+    if (argc != 20){
+        std::cout<<"Error: 19 arguments expected."<<std::endl;
         return 1; // return>0 indicates error code
     }
     else{
@@ -246,19 +252,20 @@ int main(int argc, char *argv[]) {
         const std::string &info_file = argv[3];
         const std::string &spectrum_phwr_unosc_filepath = argv[4];
         const std::string &spectrum_pwr_unosc_filepath = argv[5];
-        const std::string &constraints_info_file = argv[6];
-        const std::string &parameter_file = argv[7];
-        const double flux_data = atof(argv[8]);
-        const double mc_scale_factor = atof(argv[9]);
-        const std::string &out_filename_plots = argv[10];
-        const std::string &out_filename_csv = argv[11];
-        const double e_min = atof(argv[12]);
-        const double e_max = atof(argv[13]);
-        const size_t n_bins = atoi(argv[14]);
-        const double param_d21_plot_min = atof(argv[15]);
-        const double param_d21_plot_max = atof(argv[16]);
-        const double param_s12_plot_min = atof(argv[17]);
-        const double param_s12_plot_max = atof(argv[18]);
+        const std::string &spectrum_further_unosc_filepath = argv[6];
+        const std::string &constraints_info_file = argv[7];
+        const std::string &parameter_file = argv[8];
+        const double flux_data = atof(argv[9]);
+        const double mc_scale_factor = atof(argv[10]);
+        const std::string &out_filename_plots = argv[11];
+        const std::string &out_filename_csv = argv[12];
+        const double e_min = atof(argv[13]);
+        const double e_max = atof(argv[14]);
+        const size_t n_bins = atoi(argv[15]);
+        const double param_d21_plot_min = atof(argv[16]);
+        const double param_d21_plot_max = atof(argv[17]);
+        const double param_s12_plot_min = atof(argv[18]);
+        const double param_s12_plot_max = atof(argv[19]);
         printf("Begin--------------------------------------\n");
 
         // read in reactor information
@@ -269,6 +276,8 @@ int main(int argc, char *argv[]) {
         std::vector<Double_t> powers;
         std::vector<Double_t> power_errs;
         readInfoFile(info_file, reactor_names, distances, reactor_types, n_cores, powers, power_errs);
+        //reactor_names.push_back("reactors_greater1000km"); //comment these 2 lines out to remove the further reactors
+        //reactor_types.push_back("further_reactors");
 
         // read in constraint information
         std::vector<Double_t> constraint_means;
@@ -315,17 +324,17 @@ int main(int argc, char *argv[]) {
 
         for (ULong64_t i=0; i<n_parameter_sets; i++) {
 
+            printf("running: d_21:%.9f(%.9f-%.9f) s_12:%.7f(%.7f-%.7f)\n", d_21s[i], param_d21_plot_min, param_d21_plot_max, s_12s[i], param_s12_plot_min, param_s12_plot_max);
             if (d_21s[i]>=param_d21_plot_min && d_21s[i]<=param_d21_plot_max && s_12s[i]>=param_s12_plot_min && s_12s[i]<=param_s12_plot_max){
                 printf("writing plots to: %s\n", out_filename_plots.c_str());
                 print_plots++;
             }
 
             printf("Fit number: %llu of %llu\n", i+1, n_parameter_sets);
-
             fit_validity = 0;
             for (ULong64_t fit_try=1; fit_try<=fit_try_max; fit_try++) {
-                lh_values[i] = LHFit_fit(data_set_pdf, spectrum_phwr_unosc_filepath, spectrum_pwr_unosc_filepath,
-                                reactor_names, distances, reactor_types,
+                lh_values[i] = LHFit_fit(data_set_pdf, spectrum_phwr_unosc_filepath, spectrum_pwr_unosc_filepath, spectrum_further_unosc_filepath,
+                                reactor_names, reactor_types,
                                 constraint_means, constraint_sigmas,
                                 file_out,
                                 d_21s[i], s_12s[i], s_13s[i],
@@ -344,7 +353,12 @@ int main(int argc, char *argv[]) {
 
         // close output file
         file_out->Close();
-        if (print_plots==0) remove(out_filename_plots.c_str()); //if no plots passed the plot cuts, then delete the then empty output file.
+
+        if (print_plots==0) { //if no plots passed the plot cuts, then delete the then empty output file.
+            usleep(10000); // wait for the file to finish writing
+            if (remove(out_filename_plots.c_str()) != 0)
+                printf("Error: deletetion of temporary file not successful...\n");
+        }
 
         //Write fit coefficients to txt file
         printf("writing to: %s\n", out_filename_csv.c_str());
