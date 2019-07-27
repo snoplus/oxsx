@@ -319,7 +319,7 @@ int main(int argc, char *argv[]) {
         printf("Save objects to file...\n");
         TFile *file_out = new TFile(out_filename_plots.c_str(), "RECREATE");
         bool fit_validity = 0;
-        ULong64_t fit_try_max = 3;
+        ULong64_t fit_try_max = 20;
         ULong64_t print_plots = 0;
 
         for (ULong64_t i=0; i<n_parameter_sets; i++) {
