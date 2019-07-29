@@ -187,7 +187,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 
     Double_t lh_val = 99999; // positive non-sensical value to return if fit is not valid
     if (fit_validity == true)
-        lh_val =(-1)*lh_function.Evaluate();
+        lh_val = -1.*lh_function.Evaluate();
 
     // write plots to file (only 'good' plots - those with the best fit values)
     if (param_d21>=param_d21_plot_min && param_d21<=param_d21_plot_max && param_s12>=param_s12_plot_min && param_s12<=param_s12_plot_max){
@@ -324,6 +324,7 @@ int main(int argc, char *argv[]) {
 
         for (ULong64_t i=0; i<n_parameter_sets; i++) {
 
+            lh_values[i] = 99999;
             printf("running: d_21:%.9f(%.9f-%.9f) s_12:%.7f(%.7f-%.7f)\n", d_21s[i], param_d21_plot_min, param_d21_plot_max, s_12s[i], param_s12_plot_min, param_s12_plot_max);
             if (d_21s[i]>=param_d21_plot_min && d_21s[i]<=param_d21_plot_max && s_12s[i]>=param_s12_plot_min && s_12s[i]<=param_s12_plot_max){
                 printf("writing plots to: %s\n", out_filename_plots.c_str());
@@ -331,6 +332,7 @@ int main(int argc, char *argv[]) {
             }
 
             printf("Fit number: %llu of %llu\n", i+1, n_parameter_sets);
+
             fit_validity = 0;
             for (ULong64_t fit_try=1; fit_try<=fit_try_max; fit_try++) {
                 lh_values[i] = LHFit_fit(data_set_pdf, spectrum_phwr_unosc_filepath, spectrum_pwr_unosc_filepath, spectrum_further_unosc_filepath,
@@ -365,7 +367,7 @@ int main(int argc, char *argv[]) {
         FILE *fOut = fopen(out_filename_csv.c_str(), "w");
         fprintf(fOut,"d21,s12,s13,lh_value,fitValidity\n");
         for (ULong64_t i=0; i<n_parameter_sets; i++)
-            fprintf(fOut,"%.9f,%.7f,%.7f,%.9f,%llu\n", d_21s[i], s_12s[i], s_13s[i], lh_values[i], fit_validity);
+            fprintf(fOut,"%.9f,%.7f,%.7f,%.9f,%d\n", d_21s[i], s_12s[i], s_13s[i], lh_values[i], fit_validity);
         fclose(fOut);
 
         printf("End--------------------------------------\n");
