@@ -20,4 +20,5 @@ include/*
 config/userconfig.ini
 *.log
 gsl/
+bin/compile.sh
 bin/compile*.sh
