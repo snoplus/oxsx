@@ -14,6 +14,8 @@
 #include <TRandom3.h>
 #include <TStyle.h>
 #include <TNtuple.h>
+#include <TChain.h>
+#include <TSystemDirectory.h>
 
 /*double correction(double x){
   double correc = 8.83411e-02 + (9.02287e-03)*x;
@@ -46,14 +48,17 @@ double myline (double *x, double *par){
 void process_cuts(const std::string filename_input, const std::string filename_output, Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max,Double_t deltaTmin, Double_t deltaTmax, Double_t promptRmax, Double_t lateRmax, Double_t deltaRmax){
 
     // load input file
-    TFile *file_input = TFile::Open(filename_input.c_str());
-    TNtuple *tree_input = (TNtuple*)file_input->Get("output");
-    
+    char *name = new char[1000];
+    sprintf(name, "%s/output",filename_input.c_str());
+    //TFile *file_input = TFile::Open(filename_input.c_str()); // for loading ntuples directly (old way)
+    //TNtuple *tree_input = (TNtuple*)file_input->Get("output"); // for loading ntuples directly (old way)
+    TChain *tree_input = new TChain("output");
+    tree_input->Add(name);
+
     // setup output file
     TFile *file_output = new TFile(filename_output.c_str(), "RECREATE");
     TTree *tree_output = new TTree("nt","Tagged positron + neutron events");
 
-    char *name = new char[1000];
 
     TH1D h_after_cut_emc_nu("h_after_cut_emc_nu", "Parent antinu KE (MeV)", 300, 0, 9);
     TH1D h_after_cut_emc_p1("h_after_cut_emc_p1", "Particle 1 KE (MeV)", 300, 0, 9);
@@ -634,7 +639,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
     
       // save file
-      file_input->Close();
+      //file_input->Close();
       file_output->cd();
 
       // write objects...
@@ -677,5 +682,6 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     }
     tree_output->AutoSave();
     file_output->Close();
-    
+    delete tree_input;
+    delete file_output;
 }

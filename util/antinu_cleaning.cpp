@@ -23,7 +23,6 @@ Int_t main(Int_t argc, char *argv[]) {
         return 1; // return>0 indicates error code
     }
     else {
-        //TH1::AddDirectory(kFALSE);
         const std::string &filename_input = argv[1];
         const std::string &filename_output = argv[2];
         double energy_ep_min = atof(argv[3]);
