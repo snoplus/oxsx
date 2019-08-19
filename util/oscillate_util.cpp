@@ -34,7 +34,8 @@ void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, Double_t del_m
         in_tree->SetBranchAddress("reactor_info_distance", &distance);
 
     TRandom3 *random_generator = new TRandom3();
-
+    random_generator->SetSeed(0);
+    
     for (ULong64_t i = 0; i < n_entries; i++){
         in_tree->GetEntry(i);
         surv_prob = NuSurvProb(mc_energy_nu, distance, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
