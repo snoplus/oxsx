@@ -43,8 +43,8 @@ Int_t main(Int_t argc, char *argv[]) {
 
         for (size_t pass_i = pass_min; pass_i <= pass_max; pass_i++){
             printf("cleaning: %s_pass%d.root\n", filename_input.c_str(), pass_i);
-            sprintf(filename_input_i, "%s_pass%d.root", filename_input.c_str(), pass_i);
-            sprintf(filename_output_i, "%s_pass%d_cleanround%d.root", filename_output.c_str(), pass_i, cut_no);
+            sprintf(filename_input_i, "%s_pass%d.ntuple.root", filename_input.c_str(), pass_i);
+            sprintf(filename_output_i, "%s_pass%d_cleanround%d.ntuple.root", filename_output.c_str(), pass_i, cut_no);
 
             //write csv output file to show process has begun (values filled upon completion)
             char *name = new char[1000];
