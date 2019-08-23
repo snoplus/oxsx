@@ -266,6 +266,20 @@ SurvProb::Integral(const std::vector<double>& mins_, const std::vector<double>& 
     return integral;  
 }
 
+double 
+SurvProb::Integral(const std::vector<double>& mins_, const std::vector<double>& maxs_, const double& bincentre) const{
+    std::cout<<"Are you using energy depency for SurvProb? This function is currently unusable"<<std::endl;
+    exit(1);
+    if(mins_.size() != GetNDims() || maxs_.size() != GetNDims())
+        throw DimensionError("SurvProb::SurvProb, tried to integrate over interval of wrong dimensionality");
+
+    double integral = 1;
+    for(size_t i = 0; i < mins_.size(); i++){
+      integral *= ( Cdf(i, maxs_[i]) - Cdf(i, mins_[i]))/( maxs_[i] - mins_[i] );
+    }
+    return integral;  
+}
+
 //BL - implement this!!
 std::vector<double>
 SurvProb::Sample() const{
