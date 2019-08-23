@@ -78,10 +78,14 @@ void readConstraintsInfoFile(const std::string &runConstraintsInfoFileName, std:
     in.close();
 
     // if no reactor is found, or if more than one reactor of the same name is found, show an error
-    if (count>1)
+    if (count>1){
         printf("Error: More than 1 of the reactor found, %s (times: %llu)\n", reactor_name.c_str(), count);
-    if (count==0)
+	exit(1);
+    }
+    if (count==0){
         printf("Error: Reactor not found in constraint info file, %s\n", reactor_name.c_str());
+	exit(1);
+    }
     //if (count==1)
     //    printf("Reactor found %s\n", reactor_name.c_str());
 
