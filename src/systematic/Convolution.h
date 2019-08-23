@@ -17,6 +17,7 @@ class Convolution : public Systematic{
     Convolution(const std::string& name_): fDist(NULL), fCachedCompatibleBins(false), fName(name_) {}
     ~Convolution();
     void SetFunction(PDF* function_);
+    void SetEResolution(PDF* function_);
     void SetConditionalPDF(ConditionalPDF* function_);
     void Construct();    
 
@@ -38,7 +39,8 @@ class Convolution : public Systematic{
     void                     Reset();
     ConditionalPDF*          fDist;
     bool                     fCachedCompatibleBins;
-
+    bool                     fIsEResolution;
+    
     AxisCollection  fSubMapAxes;
     void  CacheCompatibleBins();
     std::vector<std::vector<size_t> > fCompatibleBins;

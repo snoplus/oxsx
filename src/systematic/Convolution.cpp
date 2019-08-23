@@ -4,11 +4,22 @@
 #include <DenseMatrix.h>
 #include <Exceptions.h>
 #include <string>
+
 void 
 Convolution::SetFunction(PDF* function_){
     // wrap this up if position independent kernel of the form P(x | x2) = P(x - x2)
     delete fDist;
+    fIsEResolution = false;
     fDist = static_cast<ConditionalPDF*>(new JumpPDF("kernel", function_));
+}
+
+void 
+Convolution::SetEResolution(PDF* function_){
+    // wrap this up if position independent kernel of the form P(x | x2) = P(x - x2)
+    std::cout<<"setting EResolution"<<std::endl;
+    delete fDist;
+    fDist = static_cast<ConditionalPDF*>(new JumpPDF("kernel", function_));
+    fIsEResolution = true;
 }
 
 void
@@ -44,13 +55,16 @@ Convolution::Construct(){
     for (size_t origBin = 0; origBin < fSubMapAxes.GetNBins(); origBin++){
         // get the centre of the bin. Need to offset by this for a convolution
         fSubMapAxes.GetBinCentres(origBin, binCentres);
-
+	const double bincentre = binCentres[0]; // must be dimension 1 !!! Need to change this if want more dimensions
+	//std::cout<<"\n \n E: "<<bincentre<<std::endl;
         // loop over the bins it can be smeared into 
         for(size_t destBin = 0; destBin < fSubMapAxes.GetNBins(); destBin++){
             fSubMapAxes.GetBinLowEdges(destBin, lowEdges);
             fSubMapAxes.GetBinHighEdges(destBin, highEdges);
-            
-            subMap.SetComponent(destBin, origBin, fDist -> Integral(lowEdges, highEdges, binCentres));
+            if (!fIsEResolution)
+	      subMap.SetComponent(destBin, origBin, fDist -> Integral(lowEdges, highEdges, binCentres));
+	    else
+	      subMap.SetComponent(destBin, origBin, fDist -> Integral(lowEdges, highEdges, binCentres, bincentre));
         }        
     }
 
