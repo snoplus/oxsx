@@ -86,6 +86,7 @@ JumpPDF::Sample(const std::vector<double>& x2_) const{
   std::vector<double> samp = fPDF->Sample();
   return Sum(samp, x2_);
 }
+
 double
 JumpPDF::Integral(const std::vector<double>& mins_,
                                     const std::vector<double>& maxs_,
@@ -96,7 +97,18 @@ JumpPDF::Integral(const std::vector<double>& mins_,
   
   return fPDF->Integral( Diff(mins_, x2_) , Diff(maxs_, x2_) );
 }
-                                      
+
+double
+JumpPDF::Integral(const std::vector<double>& mins_,
+                  const std::vector<double>& maxs_,
+		  const std::vector<double>& x2_,
+		  const double& bincentre) const{
+  if(!fPDF)
+    throw NULLPointerAccessError("JumpPDF::IntegralERes",
+                                 "Have you set the function?");
+  
+  return fPDF->Integral( Diff(mins_, x2_) , Diff(maxs_, x2_), bincentre );
+}
 
 /////////////////////////////
 // FIT COMPONENT INTERFACE //

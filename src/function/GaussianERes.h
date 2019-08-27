@@ -1,28 +1,28 @@
-#ifndef __OXSX_GAUSSIAN__
-#define __OXSX_GAUSSIAN__
+#ifndef __OXSX_GAUSSIANERES__
+#define __OXSX_GAUSSIANERES__
 #include <PDF.h>
 #include <ParameterManager.h>
 #include <string>
-#include <GaussianFitter.h>
+#include <GaussianEResFitter.h>
 
-class Gaussian : public PDF{
+class GaussianERes : public PDF{
  public:
     // Constructory things
-    Gaussian();
-    Gaussian(size_t nDims_, const std::string& name_ = "");// means = 0, stdDevs = 1
-    Gaussian(double mean_, double stdDev_, const std::string& name_ = "");
-    Gaussian(const std::vector<double>& mean_, 
-            const std::vector<double>& stdDev_, const std::string& name_ = "");
+    GaussianERes();
+    GaussianERes(size_t nDims_, const std::string& name_ = "");// means = 0, stdDevs = 1
+    GaussianERes(double ERes_, const std::string& name_ = "");
+    GaussianERes(const std::vector<double>& ERes_, const std::string& name_ = "");
 
-    Gaussian(const Gaussian& copy_);
+    GaussianERes(const GaussianERes& copy_);
 
-    Gaussian& operator=(const Gaussian& other_);
+    GaussianERes& operator=(const GaussianERes& other_);
 
     virtual   Function* Clone() const;
 
     // Probability
     virtual double operator()(const std::vector<double>& vals_) const;
     double  Cdf(size_t dim_, double val_) const;
+    double  Cdf(size_t dim_, double val_, const double bincentre) const;
     double Integral(const std::vector<double>& mins_, 
                     const std::vector<double>& maxs_) const;
     double Integral(const std::vector<double>& mins_, 
@@ -32,14 +32,11 @@ class Gaussian : public PDF{
     std::vector<double> Sample() const;
 
     // Getters/Setters
-    double GetMean(size_t dimension_) const;
-    double GetStDev(size_t dimension_) const;    
+    double GetERes(size_t dimension_) const;    
 
-    void SetMean(const size_t& dim_ , const double& value_);
-    void SetStDev(const size_t& dim_ , const double& value_);
+    void SetERes(const size_t& dim_ , const double& value_);
 
-    std::vector<double> GetMeans() const;
-    std::vector<double> GetStdDevs() const;
+    std::vector<double> GetERess() const;
     double GetCdfCutOff() const;
     void   SetCdfCutOff(double);
     int    GetNDims() const;
@@ -57,26 +54,19 @@ class Gaussian : public PDF{
     
     std::string GetName() const;
     void SetName(const std::string&);
-    void SetMeans(const std::vector<double>& means_);
-    void SetStDevs(const std::vector<double>& stddev_);
-    std::vector<std::string> GetMeanNames() const;
-    std::vector<std::string> GetStDevNames() const;
+    void SetERess(const std::vector<double>& ERes_);
+    std::vector<std::string> GetEResNames() const;
  private:
-    GaussianFitter fFitter;
-    std::vector<double> fMeans;
-    std::vector<double> fStdDevs;
+    GaussianEResFitter fFitter;
+    std::vector<double> fERess;
     
     double fCdfCutOff; // number of stDevs away from the mean
                        // assumed to be zero or 1 for speed integration
     int fNDims;
     std::string fName;
     
-    void   Initialise(const std::vector<double>& means_, 
-                      const std::vector<double>& stdDevs_,
+    void   Initialise(const std::vector<double>& ERess_,
                       const std::string& name_);
     
-    // this is private, we want the dimensionality to be fixed at creation
-    void SetMeansStdDevs(const std::vector<double>& means_, 
-                         const std::vector<double>& stdDevs_);
 };
 #endif
