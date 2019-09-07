@@ -33,8 +33,11 @@
 #include "../util/oscillate_util.cpp"
 
 Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unosc_filepath,
-    const std::string &spectrum_pwr_unosc_filepath, const std::string &spectrum_further_unosc_filepath,
+    const std::string &spectrum_pwr_unosc_filepath,
+    const std::string &spectrum_uranium_unosc_filepath,
+    const std::string &spectrum_thorium_unosc_filepath,
     std::vector<std::string> &reactor_names, std::vector<std::string> &reactor_types,
+    std::vector<Double_t> &distances,
     std::vector<Double_t> &constraint_means, std::vector<Double_t> &constraint_sigmas,
     TFile *file_out,
     Double_t param_d21, Double_t param_s12, Double_t param_s13,
@@ -87,12 +90,21 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
         reactor_osc_pdf[i] = new BinnedED(reactor_names[i], axes);
         reactor_osc_pdf[i]->SetObservables(0);
 
-        if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR"))
+	bool apply_oscillation = false;
+	bool is_further_reactors = false;
+	if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR")){
             sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
-        else if (reactor_types[i]=="PHWR")
+	    apply_oscillation = true;
+	}else if (reactor_types[i]=="PHWR"){
             sprintf(name, "%s", spectrum_phwr_unosc_filepath.c_str());
-        else if (reactor_types[i]=="further_reactors") // if reactor type is the set of further reactors
-            sprintf(name, "%s", spectrum_further_unosc_filepath.c_str());
+	    apply_oscillation = true;
+	}else if (reactor_types[i]=="further_reactors"){
+	    sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
+	    is_further_reactors = true;
+	}else if (reactor_names[i]=="uranium")
+            sprintf(name, "%s", spectrum_uranium_unosc_filepath.c_str());
+        else if (reactor_names[i]=="thorium")
+            sprintf(name, "%s", spectrum_thorium_unosc_filepath.c_str());
         else{
             printf("Throw: Reactor doesn't match any loaded type...\n");
             exit(0); // throw std::exception(); //continue;
@@ -106,12 +118,12 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
         TNtuple *reactor_osc_ntp = new TNtuple("nt", "Oscillated Prompt Energy", "ev_fit_energy_p1");
 
         // oscillate tree
-        if (reactor_types[i]=="further_reactors")
-            ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13, 10000);
+        if (apply_oscillation)
+	    ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13, distances[i]);
         else
-            ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13);
+	    ntNoOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp);
 
-        // reset branch addresses after oscillating in function (otherwise crash before setting again below..)
+	// reset branch addresses after oscillating in function (otherwise crash before setting again below..)
         reactor_unosc_ntp->SetBranchStatus("*", 0);
         reactor_unosc_ntp->SetBranchStatus("ev_fit_energy_p1", 1); // (re-enable all branches in use)
 
@@ -134,39 +146,56 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
         // close unoscillated reactor file
         f_in->Close();
 
-        // work out total oscillated integral of constraints
-        Double_t normalisation_unosc = reactor_unosc_pdf[i]->Integral();
-        Double_t normalisation_reactor = reactor_osc_pdf[i]->Integral();
-        Double_t osc_loss = normalisation_reactor/normalisation_unosc;
+	if (apply_oscillation || is_further_reactors){
+	  // work out total oscillated integral of constraints
+	  Double_t normalisation_unosc = reactor_unosc_pdf[i]->Integral();
+	  Double_t normalisation_reactor = reactor_osc_pdf[i]->Integral();
+	  Double_t osc_loss = normalisation_reactor/normalisation_unosc;
 
-        Double_t constraint_osc_mean = constraint_means[i]*osc_loss*mc_scale_factor;
-        Double_t constraint_osc_sigma = (constraint_sigmas[i]/constraint_means[i])*constraint_osc_mean; //pow(pow(constraint_sigmas[i]/constraint_means[i],2)+pow(constraint_sigmas[n_pdf]/constraint_means[n_pdf],2),0.5)*contribution_factor;
+	  Double_t constraint_osc_mean = constraint_means[i]*osc_loss*mc_scale_factor;
+	  Double_t constraint_osc_sigma = (constraint_sigmas[i]/constraint_means[i])*constraint_osc_mean;
+	  reactor_osc_pdf[i]->Normalise(); //remove number of events from mc
+	  reactor_unosc_pdf[i]->Scale(1./flux_data); // osc pdf gets fitted, the unosc doesn't, scale it simply for plotting..
 
-        reactor_osc_pdf[i]->Normalise(); //remove number of events from mc
-        reactor_unosc_pdf[i]->Scale(1./flux_data); // osc pdf gets fitted, the unosc doesn't, scale it simply for plotting..
-
-        // Setting optimisation limits
-        sprintf(name, "%s_norm", reactor_names[i].c_str());
-        Double_t min = constraint_osc_mean-2.*constraint_osc_sigma; // let min and max float within 2 sigma
-        Double_t max = constraint_osc_mean+2.*constraint_osc_sigma;
-        if (min < 0) min = 0;
-        minima[name] = min;
-        maxima[name] = max;
-        printf("  added reactor %d/%d: %s, norm: %.3f (min:%.3f max:%.3f) err: %.3f data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), constraint_osc_mean, min, max, constraint_osc_sigma, data_set_pdf_integral);
-        Double_t random = random_generator->Uniform(0.5,1.5);
-        initial_val[name] = constraint_osc_mean*random;
-        initial_err[name] = constraint_osc_sigma;
-
-        lh_function.AddDist(*reactor_osc_pdf[i]);
-        lh_function.SetConstraint(name, constraint_osc_mean, constraint_osc_sigma);
+	  // Setting optimisation limits
+	  sprintf(name, "%s_norm", reactor_names[i].c_str());
+	  Double_t min = constraint_osc_mean-2.*constraint_osc_sigma; // let min and max float within 2 sigma
+	  Double_t max = constraint_osc_mean+2.*constraint_osc_sigma;
+	  if (min < 0) min = 0;
+	  minima[name] = min;
+	  maxima[name] = max;
+	  printf("  added reactor %d/%d: %s, norm: %.3f (min:%.3f max:%.3f) err: %.3f data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), constraint_osc_mean, min, max, constraint_osc_sigma, data_set_pdf_integral);
+	  Double_t random = random_generator->Uniform(0.5,1.5);
+	  initial_val[name] = constraint_osc_mean*random;
+	  initial_err[name] = constraint_osc_sigma;
+	  
+	  lh_function.AddDist(*reactor_osc_pdf[i]);
+	  lh_function.SetConstraint(name, constraint_osc_mean, constraint_osc_sigma);
+	}else{
+	  // Setting optimisation limits
+	  sprintf(name, "%s_norm", reactor_names[i].c_str());
+	  Double_t min = 0; // let min and max float within 2 sigma
+	  Double_t max = 500;
+	  if (min < 0) min = 0;
+	  minima[name] = min;
+	  maxima[name] = max;
+	  printf("  added reactor %d/%d: %s, norm: %.3f (min:%.3f max:%.3f) sigma: %.3f data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), 0 , min, max, 0, data_set_pdf_integral);
+	  Double_t random = random_generator->Uniform(0.5,1.5);
+	  initial_val[name] = min + (max-min)*random;
+	  initial_err[name] = min + (max-min)*random;
+	  
+	  lh_function.AddDist(*reactor_osc_pdf[i]);
+	  //lh_function.SetConstraint(name, constraint_osc_mean, constraint_osc_sigma);
+	}
+	
     }
 
     // fit
     printf("Built LH function, fitting...\n");
     Minuit min;
     min.SetMethod("Migrad");
-    min.SetMaxCalls(1000000);
-    min.SetTolerance(3);
+    min.SetMaxCalls(100000);
+    min.SetTolerance(0.01);
     min.SetMinima(minima);
     min.SetMaxima(maxima);
     min.SetInitialValues(initial_val);
@@ -187,7 +216,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 
     Double_t lh_val = 99999; // positive non-sensical value to return if fit is not valid
     if (fit_validity == true)
-        lh_val = -1.*lh_function.Evaluate();
+      lh_val = (-1.)*lh_function.Evaluate(); //lh_function.Evaluate(); 
 
     // write plots to file (only 'good' plots - those with the best fit values)
     if (param_d21>=param_d21_plot_min && param_d21<=param_d21_plot_max && param_s12>=param_s12_plot_min && param_s12<=param_s12_plot_max){
@@ -247,12 +276,12 @@ int main(int argc, char *argv[]) {
         return 1; // return>0 indicates error code
     }
     else{
-        const std::string &in_path = argv[1];
-        const std::string &data_path = argv[2];
-        const std::string &info_file = argv[3];
-        const std::string &spectrum_phwr_unosc_filepath = argv[4];
-        const std::string &spectrum_pwr_unosc_filepath = argv[5];
-        const std::string &spectrum_further_unosc_filepath = argv[6];
+        const std::string &data_path = argv[1];
+        const std::string &info_file = argv[2];
+        const std::string &spectrum_phwr_unosc_filepath = argv[3];
+        const std::string &spectrum_pwr_unosc_filepath = argv[4];
+        const std::string &spectrum_uranium_unosc_filepath = argv[5];
+        const std::string &spectrum_thorium_unosc_filepath = argv[6];
         const std::string &constraints_info_file = argv[7];
         const std::string &parameter_file = argv[8];
         const double flux_data = atof(argv[9]);
@@ -276,9 +305,7 @@ int main(int argc, char *argv[]) {
         std::vector<Double_t> powers;
         std::vector<Double_t> power_errs;
         readInfoFile(info_file, reactor_names, distances, reactor_types, n_cores, powers, power_errs);
-        //reactor_names.push_back("reactors_greater1000km"); //comment these 2 lines out to remove the further reactors
-        //reactor_types.push_back("further_reactors");
-
+        
         // read in constraint information
         std::vector<Double_t> constraint_means;
         std::vector<Double_t> constraint_mean_errs;
@@ -335,14 +362,19 @@ int main(int argc, char *argv[]) {
 
             fit_validity = 0;
             for (ULong64_t fit_try=1; fit_try<=fit_try_max; fit_try++) {
-                lh_values[i] = LHFit_fit(data_set_pdf, spectrum_phwr_unosc_filepath, spectrum_pwr_unosc_filepath, spectrum_further_unosc_filepath,
-                                reactor_names, reactor_types,
-                                constraint_means, constraint_sigmas,
-                                file_out,
-                                d_21s[i], s_12s[i], s_13s[i],
-                                fit_validity, e_min, e_max, n_bins,
-                                flux_data, mc_scale_factor,
-                                param_d21_plot_min, param_d21_plot_max, param_s12_plot_min, param_s12_plot_max);
+	        lh_values[i] = LHFit_fit(data_set_pdf, spectrum_phwr_unosc_filepath,
+					 spectrum_pwr_unosc_filepath,
+					 spectrum_uranium_unosc_filepath,
+					 spectrum_thorium_unosc_filepath,
+					 reactor_names, reactor_types,
+					 distances,
+					 constraint_means, constraint_sigmas,
+					 file_out,
+					 d_21s[i], s_12s[i], s_13s[i],
+					 fit_validity, e_min, e_max, n_bins,
+					 flux_data, mc_scale_factor,
+					 param_d21_plot_min, param_d21_plot_max,
+					 param_s12_plot_min, param_s12_plot_max);
 
                 if (fit_validity==0)
                     printf("Fit invalid... retrying (attempt no: %llu)\n", fit_try);
