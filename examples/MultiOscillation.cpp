@@ -120,6 +120,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
         // oscillate tree
         if (apply_oscillation)
 	    ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13, distances[i]);
+	else if (is_further_reactors)
+	    ntOscillate_geo(reactor_unosc_ntp, reactor_osc_ntp, param_s12);
         else
 	    ntNoOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp);
 
@@ -164,7 +166,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 	  if (min < 0) min = 0;
 	  minima[name] = min;
 	  maxima[name] = max;
-	  printf("  added reactor %d/%d: %s, norm: %.3f (min:%.3f max:%.3f) err: %.3f data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), constraint_osc_mean, min, max, constraint_osc_sigma, data_set_pdf_integral);
+	  printf("  added reactor %d/%d: %s, osc_survival: %.3f, norm_constraint: %.3f (min:%.3f max:%.3f) err: %.3f data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), osc_loss,constraint_osc_mean, min, max, constraint_osc_sigma, data_set_pdf_integral);
 	  Double_t random = random_generator->Uniform(0.5,1.5);
 	  initial_val[name] = constraint_osc_mean*random;
 	  initial_err[name] = constraint_osc_sigma;
@@ -221,6 +223,9 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
     // write plots to file (only 'good' plots - those with the best fit values)
     if (param_d21>=param_d21_plot_min && param_d21<=param_d21_plot_max && param_s12>=param_s12_plot_min && param_s12<=param_s12_plot_max){
         file_out->cd();
+	TCanvas* c_data_fit = new TCanvas("c_data_fit");
+	c_data_fit->cd();
+	
         // and their sum
         TH1D reactor_hist_fitosc_sum = DistTools::ToTH1D(reactor_osc_pdf_fitosc_sum);
         sprintf(name, "reactor_hist_fitosc_sum_d21%.9f_s12%.7f_s13%.7f", param_d21, param_s12, param_s13);
@@ -229,16 +234,19 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
         reactor_hist_fitosc_sum.GetYaxis()->SetTitle("Counts");
         reactor_hist_fitosc_sum.SetLineColor(kRed);
         reactor_hist_fitosc_sum.Write();
+	reactor_hist_fitosc_sum.Draw("same");
 
-        // data set
+	// data set
         TH1D data_set_hist = DistTools::ToTH1D(data_set_pdf);
         // data_hist.Sumw2();
         sprintf(name, "data_set_hist");
         data_set_hist.SetName(name);
         data_set_hist.GetYaxis()->SetTitle("Counts");
         data_set_hist.GetXaxis()->SetTitle("Energy (MeV)");
+	data_set_hist.SetLineColor(kBlue);
         data_set_hist.Write();
-
+	data_set_hist.Draw("same");
+	
         // reactor pdfs
         TH1D reactor_osc_hist;
         for (ULong64_t j = 0; j < n_pdf; j++){
@@ -271,8 +279,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 20){
-        std::cout<<"Error: 19 arguments expected."<<std::endl;
+    if (argc != 24){
+        std::cout<<"Error: 23 arguments expected."<<std::endl;
         return 1; // return>0 indicates error code
     }
     else{
@@ -283,18 +291,23 @@ int main(int argc, char *argv[]) {
         const std::string &spectrum_uranium_unosc_filepath = argv[5];
         const std::string &spectrum_thorium_unosc_filepath = argv[6];
         const std::string &constraints_info_file = argv[7];
-        const std::string &parameter_file = argv[8];
-        const double flux_data = atof(argv[9]);
-        const double mc_scale_factor = atof(argv[10]);
-        const std::string &out_filename_plots = argv[11];
-        const std::string &out_filename_csv = argv[12];
-        const double e_min = atof(argv[13]);
-        const double e_max = atof(argv[14]);
-        const size_t n_bins = atoi(argv[15]);
-        const double param_d21_plot_min = atof(argv[16]);
-        const double param_d21_plot_max = atof(argv[17]);
-        const double param_s12_plot_min = atof(argv[18]);
-        const double param_s12_plot_max = atof(argv[19]);
+        //const std::string &parameter_file = argv[8];
+	const double s12 = atof(argv[8]);
+	const double d21 = atof(argv[9]);
+	const size_t x_bin = atoi(argv[10]);
+	const size_t y_bin = atoi(argv[11]);
+	const double s13 = atof(argv[12]);
+        const double flux_data = atof(argv[13]);
+        const double mc_scale_factor = atof(argv[14]);
+        const std::string &out_filename_plots = argv[15];
+        const std::string &out_filename_csv = argv[16];
+        const double e_min = atof(argv[17]);
+        const double e_max = atof(argv[18]);
+        const size_t n_bins = atoi(argv[19]);
+        const double param_d21_plot_min = atof(argv[20]);
+        const double param_d21_plot_max = atof(argv[21]);
+        const double param_s12_plot_min = atof(argv[22]);
+        const double param_s12_plot_max = atof(argv[23]);
         printf("Begin--------------------------------------\n");
 
         // read in reactor information
@@ -326,14 +339,16 @@ int main(int argc, char *argv[]) {
             printf("i:%llu, reactor_name:%s, fit_mean: %.3f, fit_sigma: %.3f\n", i, reactor_names[i].c_str(), constraint_means[i], constraint_sigmas[i]);
 
         // read in parameter information
-        std::vector<Double_t> d_21s;
-        std::vector<Double_t> s_12s;
-        std::vector<Double_t> s_13s;
-        readParameterFile(parameter_file, d_21s, s_12s, s_13s);
+        //std::vector<Double_t> s_12s;
+        //std::vector<Double_t> d_21s;
+        //std::vector<size_t> xbins;
+        //std::vector<size_t> ybins;
+        //std::vector<Double_t> s_13s;
+        //readParameterFile(parameter_file, s_12s, d_21s, xbins, ybins, s_13s);
 
         const ULong64_t n_pdf = reactor_names.size();
-        const ULong64_t n_parameter_sets = d_21s.size();
-        Double_t lh_values[n_parameter_sets];
+        //const ULong64_t n_parameter_sets = d_21s.size();
+        //Double_t lh_values[n_parameter_sets];
 
         AxisCollection axes;
         axes.AddAxis(BinAxis("ev_prompt_fit", e_min, e_max, n_bins));
@@ -341,7 +356,16 @@ int main(int argc, char *argv[]) {
 
         // initialise data
         LHFit_initialise(data_set_pdf, data_path, flux_data, e_min, e_max, n_bins);
+	///////////////////////////////////////////////////////////
+	//LHFit_load_fake_data(data_set_pdf, data_path, flux_data, e_min, e_max, n_bins);
 
+	/*
+	TFile *file_out_test = new TFile("/data/snoplus/blakei/antinu/mc/ntuples/data/fake_test.root", "RECREATE");
+	TH1D DataDist = DistTools::ToTH1D(data_set_pdf);
+	DataDist.Write();
+	file_out_test->Close();
+	*/
+	
         ////save objects to file
         printf("Save objects to file...\n");
         TFile *file_out = new TFile(out_filename_plots.c_str(), "RECREATE");
@@ -349,58 +373,66 @@ int main(int argc, char *argv[]) {
         ULong64_t fit_try_max = 20;
         ULong64_t print_plots = 0;
 
-        for (ULong64_t i=0; i<n_parameter_sets; i++) {
+        //for (ULong64_t i=0; i<n_parameter_sets; i++) {
 
-            lh_values[i] = 99999;
-            printf("running: d_21:%.9f(%.9f-%.9f) s_12:%.7f(%.7f-%.7f)\n", d_21s[i], param_d21_plot_min, param_d21_plot_max, s_12s[i], param_s12_plot_min, param_s12_plot_max);
-            if (d_21s[i]>=param_d21_plot_min && d_21s[i]<=param_d21_plot_max && s_12s[i]>=param_s12_plot_min && s_12s[i]<=param_s12_plot_max){
-                printf("writing plots to: %s\n", out_filename_plots.c_str());
+	//lh_values[i] = 99999;
+	printf("running: d_21:%.9f(%.9f-%.9f) s_12:%.7f(%.7f-%.7f)\n", d21, param_d21_plot_min, param_d21_plot_max, s12, param_s12_plot_min, param_s12_plot_max);
+	if (d21 >= param_d21_plot_min && d21 <= param_d21_plot_max && s12 >= param_s12_plot_min && s12<=param_s12_plot_max){
+	        printf("writing plots to: %s\n", out_filename_plots.c_str());
                 print_plots++;
-            }
+	}
 
-            printf("Fit number: %llu of %llu\n", i+1, n_parameter_sets);
+	printf("print plots: %d\n", print_plots);
+	//printf("Fit number: %llu of %llu\n", i+1, n_parameter_sets);
 
-            fit_validity = 0;
-            for (ULong64_t fit_try=1; fit_try<=fit_try_max; fit_try++) {
-	        lh_values[i] = LHFit_fit(data_set_pdf, spectrum_phwr_unosc_filepath,
-					 spectrum_pwr_unosc_filepath,
-					 spectrum_uranium_unosc_filepath,
-					 spectrum_thorium_unosc_filepath,
-					 reactor_names, reactor_types,
-					 distances,
-					 constraint_means, constraint_sigmas,
-					 file_out,
-					 d_21s[i], s_12s[i], s_13s[i],
-					 fit_validity, e_min, e_max, n_bins,
-					 flux_data, mc_scale_factor,
-					 param_d21_plot_min, param_d21_plot_max,
-					 param_s12_plot_min, param_s12_plot_max);
+	double lh_value;
+	
+	fit_validity = 0;
+	for (ULong64_t fit_try=1; fit_try<=fit_try_max; fit_try++) {
+	    lh_value = LHFit_fit(data_set_pdf, spectrum_phwr_unosc_filepath,
+				     spectrum_pwr_unosc_filepath,
+				     spectrum_uranium_unosc_filepath,
+				     spectrum_thorium_unosc_filepath,
+				     reactor_names, reactor_types,
+				     distances,
+				     constraint_means, constraint_sigmas,
+				     file_out,
+				     d21, s12, s13,
+				     fit_validity, e_min, e_max, n_bins,
+				     flux_data, mc_scale_factor,
+				     param_d21_plot_min, param_d21_plot_max,
+				     param_s12_plot_min, param_s12_plot_max);
 
-                if (fit_validity==0)
-                    printf("Fit invalid... retrying (attempt no: %llu)\n", fit_try);
-                else{
-                    printf("Fit valid. (attempt no: %llu)\n", fit_try);
-                    fit_try = fit_try_max+1;
-                }
-            }
-        }
+	    if (fit_validity==0)
+	        printf("Fit invalid... retrying (attempt no: %llu)\n", fit_try);
+	    else{
+	        printf("Fit valid. (attempt no: %llu)\n", fit_try);
+		fit_try = fit_try_max+1;
+	    }
+	}
+    
 
         // close output file
         file_out->Close();
 
         if (print_plots==0) { //if no plots passed the plot cuts, then delete the then empty output file.
-            usleep(10000); // wait for the file to finish writing
+	    usleep(10000); // wait for the file to finish writing
             if (remove(out_filename_plots.c_str()) != 0)
                 printf("Error: deletetion of temporary file not successful...\n");
         }
 
         //Write fit coefficients to txt file
         printf("writing to: %s\n", out_filename_csv.c_str());
-        FILE *fOut = fopen(out_filename_csv.c_str(), "w");
-        fprintf(fOut,"d21,s12,s13,lh_value,fitValidity\n");
-        for (ULong64_t i=0; i<n_parameter_sets; i++)
-            fprintf(fOut,"%.9f,%.7f,%.7f,%.9f,%d\n", d_21s[i], s_12s[i], s_13s[i], lh_values[i], fit_validity);
-        fclose(fOut);
+        ofstream outcsvfile;
+	outcsvfile.open(out_filename_csv.c_str(),std::ios_base::app);
+	outcsvfile<<s12<<","<<d21<<","<<x_bin<<","<<y_bin<<","<<lh_value<<"\n";
+	outcsvfile.close();
+
+	//FILE *fOut = fopen(out_filename_csv.c_str(), "w");
+	//fprintf(fOut,"s12,d21,xbin,ybin,lh_value,fitValidity\n");
+        //for (ULong64_t i=0; i<n_parameter_sets; i++)
+	//fprintf(fOut,"%.7f,%.9f,%d,%d,%.7f,%.9f,%d\n", s_12s[i], d_21s[i], xbins[i], ybins[i], s_13s[i], lh_values[i], fit_validity);
+        //fclose(fOut);
 
         printf("End--------------------------------------\n");
         return 0; // completed successfully
