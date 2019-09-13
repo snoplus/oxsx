@@ -95,12 +95,15 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 	if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR")){
             sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
 	    apply_oscillation = true;
+	    std::cout<<"reactor: "<<reactor_names[i];
 	}else if (reactor_types[i]=="PHWR"){
             sprintf(name, "%s", spectrum_phwr_unosc_filepath.c_str());
+	    std::cout<<"reactor: "<<reactor_names[i];
 	    apply_oscillation = true;
 	}else if (reactor_types[i]=="further_reactors"){
 	    sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
 	    is_further_reactors = true;
+	    std::cout<<"further reactor";
 	}else if (reactor_names[i]=="uranium")
             sprintf(name, "%s", spectrum_uranium_unosc_filepath.c_str());
         else if (reactor_names[i]=="thorium")
@@ -118,12 +121,16 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
         TNtuple *reactor_osc_ntp = new TNtuple("nt", "Oscillated Prompt Energy", "ev_fit_energy_p1");
 
         // oscillate tree
-        if (apply_oscillation)
+        if (apply_oscillation){
 	    ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13, distances[i]);
-	else if (is_further_reactors)
-	    ntOscillate_geo(reactor_unosc_ntp, reactor_osc_ntp, param_s12);
-        else
+	    std::cout<<" oscillate ";
+	}else if (is_further_reactors){
+	    ntOscillate_pruned_geo(reactor_unosc_ntp, reactor_osc_ntp, param_s12);
+	    std::cout<<" oscillate_geo";
+        }else{
 	    ntNoOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp);
+
+	}
 
 	// reset branch addresses after oscillating in function (otherwise crash before setting again below..)
         reactor_unosc_ntp->SetBranchStatus("*", 0);
@@ -134,7 +141,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
         reactor_unosc_ntp->SetBranchAddress("ev_fit_energy_p1", &ev_unosc_energy_p1);
         for(size_t j = 0; j < reactor_unosc_ntp->GetEntries(); j++){
             reactor_unosc_ntp->GetEntry(j);
-            reactor_unosc_pdf[i]->Fill(ev_unosc_energy_p1);
+	    reactor_unosc_pdf[i]->Fill(ev_unosc_energy_p1);
         }
 
         // fill oscillated pdf
@@ -246,6 +253,9 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 	data_set_hist.SetLineColor(kBlue);
         data_set_hist.Write();
 	data_set_hist.Draw("same");
+
+	file_out->cd();
+	c_data_fit->Write();
 	
         // reactor pdfs
         TH1D reactor_osc_hist;
@@ -291,7 +301,6 @@ int main(int argc, char *argv[]) {
         const std::string &spectrum_uranium_unosc_filepath = argv[5];
         const std::string &spectrum_thorium_unosc_filepath = argv[6];
         const std::string &constraints_info_file = argv[7];
-        //const std::string &parameter_file = argv[8];
 	const double s12 = atof(argv[8]);
 	const double d21 = atof(argv[9]);
 	const size_t x_bin = atoi(argv[10]);
@@ -338,17 +347,7 @@ int main(int argc, char *argv[]) {
         for (size_t i=0; i<(size_t)reactor_names.size(); i++)
             printf("i:%llu, reactor_name:%s, fit_mean: %.3f, fit_sigma: %.3f\n", i, reactor_names[i].c_str(), constraint_means[i], constraint_sigmas[i]);
 
-        // read in parameter information
-        //std::vector<Double_t> s_12s;
-        //std::vector<Double_t> d_21s;
-        //std::vector<size_t> xbins;
-        //std::vector<size_t> ybins;
-        //std::vector<Double_t> s_13s;
-        //readParameterFile(parameter_file, s_12s, d_21s, xbins, ybins, s_13s);
-
         const ULong64_t n_pdf = reactor_names.size();
-        //const ULong64_t n_parameter_sets = d_21s.size();
-        //Double_t lh_values[n_parameter_sets];
 
         AxisCollection axes;
         axes.AddAxis(BinAxis("ev_prompt_fit", e_min, e_max, n_bins));
@@ -373,19 +372,16 @@ int main(int argc, char *argv[]) {
         ULong64_t fit_try_max = 20;
         ULong64_t print_plots = 0;
 
-        //for (ULong64_t i=0; i<n_parameter_sets; i++) {
-
-	//lh_values[i] = 99999;
 	printf("running: d_21:%.9f(%.9f-%.9f) s_12:%.7f(%.7f-%.7f)\n", d21, param_d21_plot_min, param_d21_plot_max, s12, param_s12_plot_min, param_s12_plot_max);
 	if (d21 >= param_d21_plot_min && d21 <= param_d21_plot_max && s12 >= param_s12_plot_min && s12<=param_s12_plot_max){
 	        printf("writing plots to: %s\n", out_filename_plots.c_str());
                 print_plots++;
 	}
 
-	printf("print plots: %d\n", print_plots);
+	printf("print plots: %d\n\n ", print_plots);
 	//printf("Fit number: %llu of %llu\n", i+1, n_parameter_sets);
 
-	double lh_value;
+	double lh_value = 999999;
 	
 	fit_validity = 0;
 	for (ULong64_t fit_try=1; fit_try<=fit_try_max; fit_try++) {
