@@ -18,6 +18,12 @@ Double_t NuSurvProb(Double_t nuE, Double_t baseline, Double_t del_m_sqr_21, Doub
     return f_osc_prob;
 }
 
+Double_t NuSurvProb_geo(Double_t sin_sqr_theta_12){
+    Double_t f_s_sqr2_theta_12 = pow(sin(2.0 * TMath::ASin(sqrt(sin_sqr_theta_12))), 2.0);
+    Double_t f_osc_prob = 1.0 - (0.5*f_s_sqr2_theta_12);
+    return f_osc_prob;
+}
+
 void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13, Double_t fixed_distance) {
 
     //
@@ -55,6 +61,40 @@ void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, Double_t del_m
     ntOscillate_pruned(in_tree, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, -9000);
 }
 
+void ntOscillate_pruned_geo(TTree *in_tree, TNtuple *out_tree_prompt, Double_t sin_sqr_theta_12) {
+
+    ULong64_t n_entries = in_tree->GetEntries();
+    Double_t surv_prob, ev_energy_p1;
+    in_tree->SetBranchAddress("ev_fit_energy_p1", &ev_energy_p1);
+
+    TRandom3 *random_generator = new TRandom3();
+    random_generator->SetSeed(0);
+
+    for (ULong64_t i = 0; i < n_entries; i++){
+        in_tree->GetEntry(i);
+
+	surv_prob = NuSurvProb_geo(sin_sqr_theta_12);  
+        Double_t random = random_generator->Uniform();
+
+        if (surv_prob > random)
+	    out_tree_prompt->Fill((Float_t)ev_energy_p1);
+    }
+}
+
+void ntNoOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt) {
+    //
+    // takes a TTree with multiple branches, doesn't apply any oscillation, to made osc_pdf == unosc_pdf, keep things tidy in MultiOscillation.cpp
+    //
+    ULong64_t n_entries = in_tree->GetEntries();
+    Double_t ev_energy_p1;
+    in_tree->SetBranchAddress("ev_fit_energy_p1", &ev_energy_p1);
+    
+    for (ULong64_t i = 0; i < n_entries; i++){
+        in_tree->GetEntry(i);
+	out_tree_prompt->Fill((Float_t)ev_energy_p1);
+    }
+}
+
 void ntOscillate(TTree *in_tree, TTree *out_tree, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13, Double_t fixed_distance) {
 
     ULong64_t n_entries = in_tree->GetEntries();
@@ -67,17 +107,62 @@ void ntOscillate(TTree *in_tree, TTree *out_tree, Double_t del_m_sqr_21, Double_
         in_tree->SetBranchAddress("reactor_info_distance", &distance);
     
     TRandom3 *random_generator = new TRandom3();
-
+    random_generator->SetSeed(0);
+    
     for (ULong64_t i = 0; i < n_entries; i++){
         in_tree->GetEntry(i);
 
-        surv_prob = NuSurvProb(mc_energy_nu, distance, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
-
+	surv_prob = NuSurvProb(mc_energy_nu, distance, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);  
         //const Double_t random = CLHEP::HepUniformRand();
         Double_t random = random_generator->Uniform();
 
         if (surv_prob > random)
             out_tree->Fill();
+    }
+}
+
+void ntOscillate_pdf(TTree *in_tree, TTree *out_tree, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
+
+    ULong64_t n_entries = in_tree->GetEntries();
+    Double_t surv_prob, mc_energy_nu, distance;
+    in_tree->SetBranchAddress("mc_neutrino_energy", &mc_energy_nu);
+
+    in_tree->SetBranchAddress("reactor_info_distance", &distance);
+    
+    TRandom3 *random_generator = new TRandom3();
+    random_generator->SetSeed(0);
+    
+    for (ULong64_t i = 0; i < n_entries; i++){
+        in_tree->GetEntry(i);
+
+	if (distance > 0)
+	  surv_prob = NuSurvProb(mc_energy_nu, distance, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
+	else
+	  surv_prob = NuSurvProb_geo(sin_sqr_theta_12);
+	  
+        //const Double_t random = CLHEP::HepUniformRand();
+        Double_t random = random_generator->Uniform();
+
+        if (surv_prob > random)
+            out_tree->Fill();
+    }
+}
+
+void ntOscillate_geo(TTree *in_tree, TTree *out_tree, Double_t sin_sqr_theta_12) {
+
+    ULong64_t n_entries = in_tree->GetEntries();
+
+    TRandom3 *random_generator = new TRandom3();
+    random_generator->SetSeed(0);
+
+    Double_t surv_prob = NuSurvProb_geo(sin_sqr_theta_12);
+
+    for (ULong64_t i = 0; i < n_entries; i++){
+        in_tree->GetEntry(i);
+	Double_t random = random_generator->Uniform();
+
+        if (surv_prob > random)
+	    out_tree->Fill();
     }
 }
 
@@ -110,6 +195,40 @@ void write_file(const char* nt_in, const char* nt_out, Double_t del_m_sqr_21, Do
     TTree *out_tree = in_tree->CloneTree(0);
 
     ntOscillate(in_tree, out_tree, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, fixed_distance);
+
+    f_out->cd();
+    out_tree->Write();
+    f_in->Close();
+    f_out->Close();
+    delete f_in;
+    delete f_out;
+}
+
+void write_file_pdf(const char* nt_in, const char* nt_out, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
+
+    TFile *f_in = new TFile(nt_in);
+    TTree *in_tree = (TTree*)f_in->Get("nt");
+    TFile *f_out = new TFile(nt_out, "RECREATE");
+    TTree *out_tree = in_tree->CloneTree(0);
+
+    ntOscillate_pdf(in_tree, out_tree, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
+
+    f_out->cd();
+    out_tree->Write();
+    f_in->Close();
+    f_out->Close();
+    delete f_in;
+    delete f_out;
+}
+
+void write_file_geo(const char* nt_in, const char* nt_out, Double_t sin_sqr_theta_12) {
+
+    TFile *f_in = new TFile(nt_in);
+    TTree *in_tree = (TTree*)f_in->Get("nt");
+    TFile *f_out = new TFile(nt_out, "RECREATE");
+    TTree *out_tree = in_tree->CloneTree(0);
+
+    ntOscillate_geo(in_tree, out_tree, sin_sqr_theta_12);
 
     f_out->cd();
     out_tree->Write();

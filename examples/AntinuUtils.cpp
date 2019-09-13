@@ -11,6 +11,7 @@
 #include <TRandom3.h>
 #include <TH1D.h>
 #include <TTree.h>
+#include <TNtuple.h>
 
 #include <BinnedED.h>
 #include <BinnedEDGenerator.h>
@@ -142,30 +143,36 @@ void readInfoFile(const std::string &runInfoFileName, std::vector<std::string> &
     //    printf("i:%llu,reactor_names[i]:%s, distance: %.5f, type: %s, n_cores: %llu, power: %.5f, power_err: %.5f \n", i, reactor_names[i].c_str(), distances[i], reactor_types[i].c_str(), n_cores[i], powers[i], power_errs[i]);
 }
 
-void readParameterFile(const std::string &runParameterFileName, std::vector<Double_t> &d_21s, std::vector<Double_t> &s_12s, std::vector<Double_t> &s_13s) {
+void readParameterFile(const std::string &runParameterFileName, std::vector<Double_t> &s_12s, std::vector<Double_t> &d_21s, std::vector<size_t> &xbins, std::vector<size_t> &ybins, std::vector<Double_t> &s_13s) {
     // Read text file containing oscillation parameters
     std::ifstream in;
     in.open(runParameterFileName.c_str());
     //std::cout << "opening file: " << runParameterFileName.c_str() << std::endl;
 
-    std::fill(d_21s.begin(), d_21s.end(), 0.);
     std::fill(s_12s.begin(), s_12s.end(), 0.);
+    std::fill(d_21s.begin(), d_21s.end(), 0.);
+    std::fill(xbins.begin(), xbins.end(), 0);
+    std::fill(ybins.begin(), ybins.end(), 0);
     std::fill(s_13s.begin(), s_13s.end(), 0.);
 
-    std::string d_21, s_12, s_13;
+    std::string s_12, d_21, xbin, ybin, s_13;
     ULong64_t line_no = 0;
 
     // read until end of file.
     // format of file: 'd_21,s_12,s_13\n'
     while(in.good()){
-        std::getline(in,d_21,',');
         std::getline(in,s_12,',');
+        std::getline(in,d_21,',');
+        std::getline(in,xbin,',');
+        std::getline(in,ybin,',');
         std::getline(in,s_13,'\n');
 
         if (line_no>0){ //skip csv header
             if (strcmp(d_21.c_str(),"")!=0) {
-                d_21s.push_back(atof(d_21.c_str()));
                 s_12s.push_back(atof(s_12.c_str()));
+                d_21s.push_back(atof(d_21.c_str()));
+                xbins.push_back(atoi(xbin.c_str()));
+                ybins.push_back(atoi(ybin.c_str()));
                 s_13s.push_back(atof(s_13.c_str()));
 
                 //std::cout << "v: d_21: " << d_21s[line_no-1] << ", s_12: " << s_12s[line_no-1] << ", s_13: " << s_13s[line_no-1] << std::endl; //debug check ('-1' for header)
@@ -250,6 +257,49 @@ void LHFit_initialise_kamland(BinnedED &data_set_pdf, const double e_min, const 
     data_set_pdf.SetObservables(data_rep);
 
     // *********************** finished loading data
+
+    printf("End init--------------------------------------\n");
+}
+
+void LHFit_load_fake_data(BinnedED &data_set_pdf, const std::string &data_path, const double flux_data, const double e_min, const double e_max, const size_t n_bins){
+    //
+    // Load pdf's for reactor types
+    // Load data pdf
+    //
+
+    printf("Begin init--------------------------------------\n");
+    printf("LHFit_initialise...\n");
+    
+    // setup ntuple
+    ObsSet data_rep(0);
+
+    // *********************** setup data set PDF
+    // set up binning
+    data_set_pdf.SetObservables(data_rep);
+
+    // set up binning
+    AxisCollection axes;
+    axes.AddAxis(BinAxis("ev_prompt_fit", e_min, e_max, n_bins));
+
+    TFile *f_in = TFile::Open((data_path).c_str(),"READ");
+    //Data
+    TNtuple *datacontentNT = (TNtuple*) f_in->Get("databincontents");
+    float Count;
+    datacontentNT->SetBranchAddress("counts", &Count);
+    std::vector<double> Datacontent;
+    
+    for(int i = 0; i < datacontentNT->GetEntries(); i++){
+      datacontentNT->GetEntry(i);
+      Datacontent.push_back(Count);
+    }
+    
+    data_set_pdf.SetBinContents(Datacontent);
+    
+    f_in->Close();
+  
+    //data_set_pdf.Scale(1./flux_data);
+
+    //printf("data scale: %.5f\n",flux_data);
 
     printf("End init--------------------------------------\n");
 }
