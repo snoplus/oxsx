@@ -34,8 +34,7 @@
 
 Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unosc_filepath,
     const std::string &spectrum_pwr_unosc_filepath,
-    const std::string &spectrum_uranium_unosc_filepath,
-    const std::string &spectrum_thorium_unosc_filepath,
+    const std::string &spectrum_geo_uraniumthorium_unosc_filepath,
     std::vector<std::string> &reactor_names, std::vector<std::string> &reactor_types,
     std::vector<Double_t> &distances,
     std::vector<Double_t> &constraint_means, std::vector<Double_t> &constraint_sigmas,
@@ -104,10 +103,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 	    sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
 	    is_further_reactors = true;
 	    std::cout<<"further reactor";
-	}else if (reactor_names[i]=="uranium")
-            sprintf(name, "%s", spectrum_uranium_unosc_filepath.c_str());
-        else if (reactor_names[i]=="thorium")
-            sprintf(name, "%s", spectrum_thorium_unosc_filepath.c_str());
+	}else if (reactor_names[i]=="uraniumthorium")
+            sprintf(name, "%s", spectrum_geo_uraniumthorium_unosc_filepath.c_str());
         else{
             printf("Throw: Reactor doesn't match any loaded type...\n");
             exit(0); // throw std::exception(); //continue;
@@ -289,8 +286,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 24){
-        std::cout<<"Error: 23 arguments expected."<<std::endl;
+    if (argc != 23){
+        std::cout<<"Error: 22 arguments expected."<<std::endl;
         return 1; // return>0 indicates error code
     }
     else{
@@ -298,25 +295,24 @@ int main(int argc, char *argv[]) {
         const std::string &info_file = argv[2];
         const std::string &spectrum_phwr_unosc_filepath = argv[3];
         const std::string &spectrum_pwr_unosc_filepath = argv[4];
-        const std::string &spectrum_uranium_unosc_filepath = argv[5];
-        const std::string &spectrum_thorium_unosc_filepath = argv[6];
-        const std::string &constraints_info_file = argv[7];
-	const double s12 = atof(argv[8]);
-	const double d21 = atof(argv[9]);
-	const size_t x_bin = atoi(argv[10]);
-	const size_t y_bin = atoi(argv[11]);
-	const double s13 = atof(argv[12]);
-        const double flux_data = atof(argv[13]);
-        const double mc_scale_factor = atof(argv[14]);
-        const std::string &out_filename_plots = argv[15];
-        const std::string &out_filename_csv = argv[16];
-        const double e_min = atof(argv[17]);
-        const double e_max = atof(argv[18]);
-        const size_t n_bins = atoi(argv[19]);
-        const double param_d21_plot_min = atof(argv[20]);
-        const double param_d21_plot_max = atof(argv[21]);
-        const double param_s12_plot_min = atof(argv[22]);
-        const double param_s12_plot_max = atof(argv[23]);
+        const std::string &spectrum_geo_uraniumthorium_unosc_filepath = argv[5];
+        const std::string &constraints_info_file = argv[6];
+        const double s12 = atof(argv[7]);
+        const double d21 = atof(argv[8]);
+        const size_t x_bin = atoi(argv[9]);
+        const size_t y_bin = atoi(argv[10]);
+        const double s13 = atof(argv[11]);
+        const double flux_data = atof(argv[12]);
+        const double mc_scale_factor = atof(argv[13]);
+        const std::string &out_filename_plots = argv[14];
+        const std::string &out_filename_csv = argv[15];
+        const double e_min = atof(argv[16]);
+        const double e_max = atof(argv[17]);
+        const size_t n_bins = atoi(argv[18]);
+        const double param_d21_plot_min = atof(argv[19]);
+        const double param_d21_plot_max = atof(argv[20]);
+        const double param_s12_plot_min = atof(argv[21]);
+        const double param_s12_plot_max = atof(argv[22]);
         printf("Begin--------------------------------------\n");
 
         // read in reactor information
@@ -387,8 +383,7 @@ int main(int argc, char *argv[]) {
 	for (ULong64_t fit_try=1; fit_try<=fit_try_max; fit_try++) {
 	    lh_value = LHFit_fit(data_set_pdf, spectrum_phwr_unosc_filepath,
 				     spectrum_pwr_unosc_filepath,
-				     spectrum_uranium_unosc_filepath,
-				     spectrum_thorium_unosc_filepath,
+				     spectrum_geo_uraniumthorium_unosc_filepath,
 				     reactor_names, reactor_types,
 				     distances,
 				     constraint_means, constraint_sigmas,
