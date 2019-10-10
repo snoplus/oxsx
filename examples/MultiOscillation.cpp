@@ -43,6 +43,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
   bool &fit_validity,
   const double e_min, const double e_max, const size_t n_bins,
   const double flux_data, const double mc_scale_factor,
+  double &fit_geo_uth_norm,
   const double param_d21_plot_min, const double param_d21_plot_max, const double param_s12_plot_min, 
   const double param_s12_plot_max){
 
@@ -82,6 +83,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
   Double_t constraint_osc_mean_total = 0.;
   Double_t data_set_pdf_integral = data_set_pdf.Integral();
 
+  bool geos_included = false;
+
   for (ULong64_t i = 0; i < n_pdf; i++){
     // for each reactor, load spectrum pdf for reactor type
     sprintf(name, "%s_unosc", reactor_names[i].c_str());
@@ -104,9 +107,10 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
       sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
       is_further_reactors = true;
       std::cout<<"further reactor";
-    }else if (reactor_names[i]=="uraniumthorium")
+    }else if (reactor_names[i]=="uraniumthorium"){
       sprintf(name, "%s", spectrum_geo_uraniumthorium_unosc_filepath.c_str());
-    else{
+      geos_included = true;	
+    }else{
       printf("Throw: Reactor doesn't match any loaded type...\n");
       exit(0); // throw std::exception(); //continue;
     }
@@ -220,6 +224,11 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
       reactor_osc_pdf_fitosc_sum.Add(*reactor_osc_pdf[j]);
     }
 
+    if (geos_included)
+      fit_geo_uth_norm = best_fit.at("uraniumthorium_norm");
+    else
+      fit_geo_uth_norm = 0.;
+    
     Double_t lh_val = 99999; // positive non-sensical value to return if fit is not valid
     if (fit_validity == true)
       lh_val = (-1.)*lh_function.Evaluate(); //lh_function.Evaluate();
@@ -374,6 +383,8 @@ int main(int argc, char *argv[]) {
 
     double lh_value = 999999;
 
+    double fit_geo_uth_norm = -999999;
+    
     fit_validity = 0;
     for (ULong64_t fit_try=1; fit_try<=fit_try_max; fit_try++) {
       lh_value = LHFit_fit(data_set_pdf, spectrum_phwr_unosc_filepath,
@@ -386,6 +397,7 @@ int main(int argc, char *argv[]) {
               d21, s12, s13,
               fit_validity, e_min, e_max, n_bins,
               flux_data, mc_scale_factor,
+	      fit_geo_uth_norm,
               param_d21_plot_min, param_d21_plot_max,
               param_s12_plot_min, param_s12_plot_max);
 
@@ -410,7 +422,7 @@ int main(int argc, char *argv[]) {
     printf("writing to: %s\n", out_filename_csv.c_str());
     ofstream outcsvfile;
     outcsvfile.open(out_filename_csv.c_str(), std::ios_base::app);
-    outcsvfile<<s12<<","<<d21<<","<<x_bin<<","<<y_bin<<","<<lh_value<<","<<fit_validity<<"\n";
+    outcsvfile<<s12<<","<<d21<<","<<x_bin<<","<<y_bin<<","<<lh_value<<","<<fit_validity<<","<<fit_geo_uth_norm<<"\n";
     outcsvfile.close();
 
     printf("End--------------------------------------\n");
