@@ -131,7 +131,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
       std::cout<<" oscillate_geo";
     }else{
       ntNoOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp);
-	  }
+    }
 
     // reset branch addresses after oscillating in function (otherwise crash before setting again below..)
     reactor_unosc_ntp->SetBranchStatus("*", 0);
