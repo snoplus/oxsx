@@ -74,7 +74,31 @@ void process_cuts(const std::string filename_input, const std::string filename_o
   TH1D h_after_cut_efit_delayed("h_after_cut_efit_delayed", "Delayed Reconstructed Energy (MeV)", 300, 0, 9);
   TH2D h2_after_cut_efit_delayed_vs_prompt("h2_after_cut_efit_delayed_vs_prompt", "Delayed vs Prompt Reconstructed Energy (MeV)", 300, 0, 9, 300, 0, 9);
 
-  // Comparing Reconstructed to Truth:
+  
+  // properties to load from input ntuple into output ttree
+
+  // mc parent and neutron truth positions not in standard ntuples?
+  // don't need long, lat, altitude, distance here - distances for each reactor saved in a separate txt file
+
+  //Double_t mc_pos_r, mc_pos_x, mc_pos_y, mc_pos_z;
+  //input and/or output
+  Int_t mc_entry, mc_entryb4;
+  Double_t ev_pos_x, ev_pos_y, ev_pos_z;
+  Double_t ev_energy, ev_next_energy, ev_energy_p1, ev_energy_p2;
+  Int_t ev_time_seconds, ev_time_days, ev_time_nanoseconds;
+  Double_t ev_time_ns, ev_next_time_ns;
+  Int_t ev_nhit, ev_next_nhit;
+  Bool_t ev_validity,ev_next_validity;
+  Int_t ev_index, ev_next_index, ev_index_p1, ev_index_p2;
+  TString *reactor_core_name = 0;
+
+  //Double_t mc_pos_r_nu, mc_pos_x_nu, mc_pos_y_nu, mc_pos_z_nu;
+  //Double_t mc_pos_n_r, mc_pos_x_n, mc_pos_y_n, mc_pos_z_n;
+  //Double_t mc_pos_r_ep, mc_pos_x_ep, mc_pos_y_ep, mc_pos_z_ep;
+  Double_t mc_quench_i, mc_energy_nu, mc_energy_n, mc_energy_ep;
+  UInt_t mc_time_days, mc_time_seconds;
+  ULong64_t ev_clock50;
+// Comparing Reconstructed to Truth:
   int nxbins = 16;
   double e1min = 0.;
   double e1max = 8.;
@@ -105,29 +129,6 @@ void process_cuts(const std::string filename_input, const std::string filename_o
   ULong64_t badev1 = 0;
   Double_t totalbadevdeltaT = 0.;
 
-
-  // properties to load from input ntuple into output ttree
-
-  // mc parent and neutron truth positions not in standard ntuples?
-  // don't need long, lat, altitude, distance here - distances for each reactor saved in a separate txt file
-
-  //Double_t mc_pos_r, mc_pos_x, mc_pos_y, mc_pos_z;
-  //input and/or output
-  Int_t mc_entry, mc_entryb4;
-  Double_t ev_pos_x, ev_pos_y, ev_pos_z;
-  Double_t ev_energy, ev_next_energy, ev_energy_p1, ev_energy_p2;
-  Int_t ev_time_seconds, ev_time_days, ev_time_nanoseconds;
-  Double_t ev_time_ns, ev_next_time_ns;
-  Int_t ev_nhit, ev_next_nhit;
-  Bool_t ev_validity,ev_next_validity;
-  Int_t ev_index, ev_next_index, ev_index_p1, ev_index_p2;
-  TString *reactor_core_name = 0;
-
-  //Double_t mc_pos_r_nu, mc_pos_x_nu, mc_pos_y_nu, mc_pos_z_nu;
-  //Double_t mc_pos_n_r, mc_pos_x_n, mc_pos_y_n, mc_pos_z_n;
-  //Double_t mc_pos_r_ep, mc_pos_x_ep, mc_pos_y_ep, mc_pos_z_ep;
-  Double_t mc_quench_i, mc_energy_nu, mc_energy_n, mc_energy_ep;
-  UInt_t mc_time_days, mc_time_seconds;
   Double_t mc_time_nanoseconds;
   //Double_t latitude, longitude, altitude, distance;
 
@@ -152,7 +153,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
   tree_input->SetBranchAddress("uTSecs", &ev_time_seconds);
   tree_input->SetBranchAddress("uTNSecs", &ev_time_nanoseconds);
   tree_input->SetBranchAddress("parentMeta1", &reactor_core_name);
-
+  tree_input->SetBranchAddress("clockCount50", &ev_clock50);
+  
   // set branches output pruned ntuple
   tree_output->Branch("entry", &mc_entry);
   //tree_output->Branch("mc_time_days", &mc_time_days);
