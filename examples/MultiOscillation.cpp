@@ -85,8 +85,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
   Double_t data_set_pdf_integral = data_set_pdf.Integral();
 
   bool geos_included = false;
-  bool alphans_included = false;
-
+  
   for (ULong64_t i = 0; i < n_pdf; i++){
     // for each reactor, load spectrum pdf for reactor type
     sprintf(name, "%s_unosc", reactor_names[i].c_str());
@@ -114,7 +113,6 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
       geos_included = true;	
     }else if (reactor_names[i]=="alphan"){
       sprintf(name, "%s", spectrum_bkg_alphan_unosc_filepath.c_str());
-      alphans_included = true;
     }else{
       printf("Throw: Reactor doesn't match any loaded type...\n");
       exit(0); // throw std::exception(); //continue;
@@ -300,8 +298,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 
 int main(int argc, char *argv[]) {
 
-  if (argc != 24){
-      std::cout<<"Error: 23 arguments expected."<<std::endl;
+  if (argc != 25){
+      std::cout<<"Error: 24 arguments expected."<<std::endl;
       return 1; // return>0 indicates error code
   }
   else{
