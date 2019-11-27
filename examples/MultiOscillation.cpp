@@ -298,8 +298,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 
 int main(int argc, char *argv[]) {
 
-  if (argc != 24){
-      std::cout<<"Error: 23 arguments expected."<<std::endl;
+  if (argc != 25){
+      std::cout<<"Error: 24 arguments expected."<<std::endl;
       return 1; // return>0 indicates error code
   }
   else{

@@ -189,8 +189,8 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 16){
-        std::cout<<"Error: 15 arguments expected."<<std::endl;
+    if (argc != 18){
+        std::cout<<"Error: 17 arguments expected."<<std::endl;
         return 1; // return>0 indicates error code
     }
     else{
