@@ -35,6 +35,7 @@
 void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unosc_filepath,
     const std::string &spectrum_pwr_unosc_filepath,
     const std::string &spectrum_geo_uraniumthorium_unosc_filepath,
+    const std::string &spectrum_bkg_alphan_unosc_filepath,
     std::vector<std::string> &reactor_names, std::vector<std::string> &reactor_types,
     std::vector<Double_t> &distances,
     std::vector<Double_t> &constraint_means, std::vector<Double_t> &constraint_sigmas,
@@ -42,7 +43,7 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
     Double_t param_d21, Double_t param_s12, Double_t param_s13,
     const double e_min, const double e_max, const size_t n_bins,
     const double flux_data, const double mc_scale_factor,
-    const double geo_uth_custom_flux){
+    const double geo_uth_custom_flux, const double bkg_alphan_custom_flux){
 
     printf("Beginning Fake data prep--------------------------------------\n");
     printf("Fake Data:: del_21:%.9f, sin2_12:%.7f, sin2_13:%.7f\n", param_d21, param_s12, param_s13);
@@ -62,6 +63,9 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
     Double_t constraint_osc_mean_total = 0.;
     //Double_t data_set_pdf_integral = data_set_pdf.Integral();
 
+    bool geos_included = false;
+    bool alphans_included = false;
+  
     for (ULong64_t i = 0; i < n_pdf; i++){
 
         sprintf(name, "%s_unosc", reactor_names[i].c_str());
@@ -81,9 +85,13 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
 	}else if (reactor_types[i]=="further_reactors"){
 	    sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
 	    is_further_reactors = true;
-	}else if (reactor_names[i]=="uraniumthorium")
+	}else if (reactor_names[i]=="uraniumthorium"){
             sprintf(name, "%s", spectrum_geo_uraniumthorium_unosc_filepath.c_str());
-	else{
+	    geos_included = true;
+	}else if (reactor_names[i]=="alphan"){
+	    sprintf(name, "%s", spectrum_bkg_alphan_unosc_filepath.c_str());
+	    alphans_included = true;
+	}else{
             printf("Throw: Reactor doesn't match any loaded type...\n");
             exit(0); // throw std::exception(); //continue;
         }
@@ -142,22 +150,33 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
 	  printf("  added reactor %d/%d: %s, osc_survival: %.3f, norm_constraint: %.3f err: %.3f data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), osc_loss,constraint_osc_mean, constraint_osc_sigma, data_set_pdf.Integral());
 	  
 	
-	}else{
+	}else if (geos_included){
 	  Double_t normalisation_unosc = reactor_unosc_pdf[i]->Integral();
 	  Double_t normalisation_reactor = reactor_osc_pdf[i]->Integral();
 	  Double_t osc_loss = normalisation_reactor/normalisation_unosc;
 
 	  double scale = 0.;
 	  
-	  //if (reactor_names[i] == "uraniumthorium")
-	    //scale = 20.;
-	  
-	  //reactor_osc_pdf[i]->Normalise();
+	  // geo custom flux = coefficient times 1 years predicted geos
 	  reactor_osc_pdf[i]->Scale(geo_uth_custom_flux/(double)flux_data);
 
 	  data_set_pdf.Add(*reactor_osc_pdf[i]);
 
 	  printf("  added geo %d/%d: %s, osc_survival: %.3f, data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), osc_loss, data_set_pdf.Integral());
+	
+	}else if (alphans_included){
+	  Double_t normalisation_unosc = reactor_unosc_pdf[i]->Integral();
+	  Double_t normalisation_reactor = reactor_osc_pdf[i]->Integral();
+	  Double_t osc_loss = normalisation_reactor/normalisation_unosc;
+
+	  double scale = 0.;
+	  
+	  reactor_osc_pdf[i]->Normalise(); // currently custom flux number = total events in livetime
+	  reactor_osc_pdf[i]->Scale(bkg_alphan_custom_flux);///(double)flux_data);
+
+	  data_set_pdf.Add(*reactor_osc_pdf[i]);
+
+	  printf("  added alpha-n %d/%d: %s, osc_survival: %.3f, data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), osc_loss, data_set_pdf.Integral());
 	
 	}
 	
@@ -180,16 +199,18 @@ int main(int argc, char *argv[]) {
         const std::string &spectrum_phwr_unosc_filepath = argv[3];
         const std::string &spectrum_pwr_unosc_filepath = argv[4];
         const std::string &spectrum_geo_uraniumthorium_unosc_filepath = argv[5];
-        const std::string &constraints_info_file = argv[6];
-        const double s12 = atof(argv[7]);
-	const double d21 = atof(argv[8]);
-	const double s13 = atof(argv[9]);
-        const double flux_data = atof(argv[10]);
-        const double mc_scale_factor = atof(argv[11]);
-        const double geo_uth_custom_flux = atof(argv[12]);
-        const double e_min = atof(argv[13]);
-        const double e_max = atof(argv[14]);
-        const size_t n_bins = atoi(argv[15]);
+        const std::string &spectrum_bkg_alphan_unosc_filepath = argv[6];
+	const std::string &constraints_info_file = argv[7];
+        const double s12 = atof(argv[8]);
+	const double d21 = atof(argv[9]);
+	const double s13 = atof(argv[10]);
+        const double flux_data = atof(argv[11]);
+        const double mc_scale_factor = atof(argv[12]);
+        const double geo_uth_custom_flux = atof(argv[13]);
+        const double bkg_alphan_custom_flux = atof(argv[14]);
+        const double e_min = atof(argv[15]);
+        const double e_max = atof(argv[16]);
+        const size_t n_bins = atoi(argv[17]);
         printf("Begin--------------------------------------\n");
 
         // read in reactor information
@@ -237,13 +258,15 @@ int main(int argc, char *argv[]) {
         Make_Fake_Data(data_set_pdf, spectrum_phwr_unosc_filepath,
 		       spectrum_pwr_unosc_filepath,
 		       spectrum_geo_uraniumthorium_unosc_filepath,
+		       spectrum_bkg_alphan_unosc_filepath,
 		       reactor_names, reactor_types,
 		       distances,
 		       constraint_means, constraint_sigmas,
 		       file_out,
 		       d21, s12, s13,
 		       e_min, e_max, n_bins,
-		       flux_data, mc_scale_factor, geo_uth_custom_flux);
+		       flux_data, mc_scale_factor, geo_uth_custom_flux,
+		       bkg_alphan_custom_flux);
 
 	databincontents = data_set_pdf.GetBinContents();
 
