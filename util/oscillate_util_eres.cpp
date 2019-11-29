@@ -15,8 +15,8 @@ Double_t correction_to_EPrompt (Double_t x){
 }
 
 Double_t correction_to_truth (Double_t x){
-  double correc = (-1.)*(7.63260e-02 + (1.19968e-02)*x);   //vs antinuKE - 0.784
-  //double correc = 0.;
+  //double correc = (-1.)*(7.63260e-02 + (1.19968e-02)*x);   //vs antinuKE - 0.784
+  double correc = 0.;
   return correc;
 }
 
