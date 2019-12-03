@@ -25,12 +25,13 @@
 #include <BoolCut.h>
 #include <BoxCut.h>
 #include <Gaussian.h>
+#include <GaussianERes.h>
 #include <ParameterDict.h>
 #include <ContainerTools.hpp>
 #include <NuOsc.h>
 #include <SurvProb.h>
 #include "AntinuUtils.cpp"
-#include "../util/oscillate_util.cpp"
+#include "../util/oscillate_util_eres.cpp"
 
 Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unosc_filepath,
   const std::string &spectrum_pwr_unosc_filepath,
@@ -46,7 +47,12 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
   const double flux_data, const double mc_scale_factor,
   double &fit_geo_uth_norm,
   const double param_d21_plot_min, const double param_d21_plot_max, const double param_s12_plot_min, 
-  const double param_s12_plot_max){
+  const double param_s12_plot_max,
+  const bool apply_energy_resolution_convolution,
+  const Double_t del_energy,
+  const Double_t e_resolution_estimate,
+  const Double_t e_resolution_estimate_sigma,
+  const Convolution *eres_convolution){
 
   printf("Begin fit--------------------------------------\n");
   printf("LHFit_fit:: del_21:%.9f, sin2_12:%.7f, sin2_13:%.7f\n", param_d21, param_s12, param_s13);
@@ -166,15 +172,23 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
       Double_t constraint_osc_mean = constraint_means[i]*osc_loss*mc_scale_factor;
       constraint_osc_mean_total += constraint_osc_mean;
       Double_t constraint_osc_sigma = (constraint_sigmas[i]/constraint_means[i])*constraint_osc_mean;
-      reactor_osc_pdf[i]->Normalise(); //remove number of events from mc
-      reactor_unosc_pdf[i]->Scale(1./flux_data); // osc pdf gets fitted, the unosc doesn't, scale it simply for plotting..
+      //Double_t constraint_osc_sigma = sqrt(constraint_osc_mean);
+
+      sprintf(name, "%s_unosc", reactor_names[i].c_str());
+      BinnedED reactor_unosc_pdf_smear(name, axes);
+      BinnedED reactor_osc_pdf_smear(reactor_names[i], axes);
+      reactor_unosc_pdf_smear = eres_convolution->operator()(*reactor_unosc_pdf[i]);
+      reactor_osc_pdf_smear = eres_convolution->operator()(*reactor_osc_pdf[i]);
+
+      reactor_osc_pdf_smear.Normalise(); //remove number of events from mc
+      reactor_unosc_pdf_smear.Scale(1./flux_data); // osc pdf gets fitted, the unosc doesn't, scale it simply for plotting..
 
       // Setting optimisation limits
       sprintf(name, "%s_norm", reactor_names[i].c_str());
       Double_t min = constraint_osc_mean-2.*constraint_osc_sigma; // let min and max float within 2 sigma
       Double_t max = constraint_osc_mean+2.*constraint_osc_sigma;
       if (min < 0) min = 0;
-        minima[name] = min;
+      minima[name] = min;
       maxima[name] = max;
       printf("  added reactor %d/%d: %s, osc_survival: %.3f, norm_constraint: %.3f (min:%.3f max:%.3f) err: %.3f data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), osc_loss,constraint_osc_mean, min, max, constraint_osc_sigma, data_set_pdf_integral);
       Double_t random = random_generator->Uniform(0.5,1.5);
@@ -197,13 +211,37 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
       initial_val[name] = min + (max-min)*random;
       initial_err[name] = min + (max-min)*random;
 
-      lh_function.AddDist(*reactor_osc_pdf[i]);
+      BinnedED reactor_osc_pdf_smear(reactor_names[i], axes);
+      reactor_osc_pdf_smear = eres_convolution->operator()(*reactor_osc_pdf[i]);
+
+      lh_function.AddDist(reactor_osc_pdf_smear);
       //lh_function.SetConstraint(name, constraint_osc_mean, constraint_osc_sigma);
     }
   }
   
-  std::cout<<"\n \n Data Int: "<<data_set_pdf_integral<<" constrained oscillated int: "<<\
+  std::cout<<"\n \n Data Int: "<<data_set_pdf_integral<<" constrained oscillated int: "<< \
     constraint_osc_mean_total<<" data/constrain: "<<data_set_pdf_integral/(double)constraint_osc_mean_total<<std::endl;
+  
+  /*ObsSet  obsSet(0);
+  if (apply_energy_resolution_convolution) {
+      Convolution* conv = new Convolution("conv");
+      GaussianERes* gaus_energy_resolution = new GaussianERes(e_resolution_estimate,"gaus"); 
+      gaus_energy_resolution->RenameParameter("eres_0","eres_");
+      conv->SetEResolution(gaus_energy_resolution);
+      conv->SetAxes(axes);
+      conv->SetTransformationObs(obsSet);
+      conv->SetDistributionObs(obsSet);
+      conv->Construct();
+  
+      minima["eres_"] = 0;
+      maxima["eres_"] = 0.1; 
+      initial_val["eres_"] = e_resolution_estimate;
+      initial_err["eres_"] = e_resolution_estimate_sigma;
+      
+      lh_function.AddSystematic(conv);
+      //lh_function.SetConstraint("eres_", e_resolution_estimate, e_resolution_estimate_sigma);
+  }
+  */
   // fit
   printf("Built LH function, fitting...\n");
   Minuit min;
@@ -221,76 +259,93 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
   fit_result.Print();
   fit_validity = fit_result.GetValid();
 
+  /*Convolution* fitconv = new Convolution("fitconv");
+    if (apply_energy_resolution_convolution) {
+    GaussianERes* fitgaus = new GaussianERes(best_fit.at("eres_"),"fitgaus"); 
+    fitconv->SetEResolution(fitgaus);
+    fitconv->SetAxes(axes);
+    fitconv->SetTransformationObs(obsSet);
+    fitconv->SetDistributionObs(obsSet);
+    fitconv->Construct();
+    }*/
+  
   for (ULong64_t j = 0; j < n_pdf; j++){
-    sprintf(name, "%s_norm", reactor_names[j].c_str());
-    reactor_osc_pdf[j]->Normalise();
-    reactor_osc_pdf[j]->Scale(best_fit.at(name));
-    reactor_osc_pdf_fitosc_sum.Add(*reactor_osc_pdf[j]);
+      sprintf(name, "%s_norm", reactor_names[j].c_str());
+      reactor_osc_pdf[j]->Normalise();
+      if (apply_energy_resolution_convolution) {
+	BinnedED pdf = eres_convolution->operator()(*reactor_osc_pdf[j]);
+	pdf.Normalise();
+	pdf.Scale(best_fit.at(name));
+	reactor_osc_pdf_fitosc_sum.Add(pdf);
+      }else{
+	reactor_osc_pdf[j]->Scale(best_fit.at(name));
+	reactor_osc_pdf_fitosc_sum.Add(*reactor_osc_pdf[j]);
+      }
   }
-
+  
   if (geos_included)
     fit_geo_uth_norm = best_fit.at("uraniumthorium_norm");
   else
     fit_geo_uth_norm = 0.;
-
+    
   Double_t lh_val = 99999; // positive non-sensical value to return if fit is not valid
   if (fit_validity == true)
-    lh_val = (-1.)*lh_function.Evaluate();
+    lh_val = (-1.)*lh_function.Evaluate(); //lh_function.Evaluate();
 
   // write plots to file (only 'good' plots - those with the best fit values)
   if (param_d21>=param_d21_plot_min && param_d21<=param_d21_plot_max && param_s12>=param_s12_plot_min && param_s12<=param_s12_plot_max){
-    file_out->cd();
-    TCanvas* c_data_fit = new TCanvas("c_data_fit");
-    c_data_fit->cd();
+      file_out->cd();
+      TCanvas* c_data_fit = new TCanvas("c_data_fit");
+      c_data_fit->cd();
 
-    // and their sum
-    TH1D reactor_hist_fitosc_sum = DistTools::ToTH1D(reactor_osc_pdf_fitosc_sum);
-    sprintf(name, "reactor_hist_fitosc_sum_d21%.9f_s12%.7f_s13%.7f", param_d21, param_s12, param_s13);
-    reactor_hist_fitosc_sum.SetName(name);
-    reactor_hist_fitosc_sum.GetXaxis()->SetTitle("Energy (MeV)");
-    reactor_hist_fitosc_sum.GetYaxis()->SetTitle("Counts");
-    reactor_hist_fitosc_sum.SetLineColor(kRed);
-    reactor_hist_fitosc_sum.Write();
-    reactor_hist_fitosc_sum.Draw("same");
+      // and their sum
+      TH1D reactor_hist_fitosc_sum = DistTools::ToTH1D(reactor_osc_pdf_fitosc_sum);
+      sprintf(name, "reactor_hist_fitosc_sum_d21%.9f_s12%.7f_s13%.7f", param_d21, param_s12, param_s13);
+      reactor_hist_fitosc_sum.SetName(name);
+      reactor_hist_fitosc_sum.GetXaxis()->SetTitle("Energy (MeV)");
+      reactor_hist_fitosc_sum.GetYaxis()->SetTitle("Counts");
+      reactor_hist_fitosc_sum.SetLineColor(kRed);
+      reactor_hist_fitosc_sum.Write();
+      reactor_hist_fitosc_sum.Draw("same");
 
-    // data set
-    TH1D data_set_hist = DistTools::ToTH1D(data_set_pdf);
-    // data_hist.Sumw2();
-    sprintf(name, "data_set_hist");
-    data_set_hist.SetName(name);
-    data_set_hist.GetYaxis()->SetTitle("Counts");
-    data_set_hist.GetXaxis()->SetTitle("Energy (MeV)");
-    data_set_hist.SetLineColor(kBlue);
-    data_set_hist.Write();
-    data_set_hist.Draw("same");
-
-    file_out->cd();
-    c_data_fit->Write();
-
-    // reactor pdfs
-    TH1D reactor_osc_hist;
-    for (ULong64_t j = 0; j < n_pdf; j++){
-      reactor_osc_hist = DistTools::ToTH1D(*reactor_osc_pdf[j]);
+      // data set
+      TH1D data_set_hist = DistTools::ToTH1D(data_set_pdf);
       // data_hist.Sumw2();
-      sprintf(name, "reactor_osc_pdf_%s_d21%.9f_s12%.7f_s13%.7f", reactor_names[j].c_str(), param_d21, param_s12, param_s13);
-      reactor_osc_hist.SetName(name);
-      reactor_osc_hist.GetYaxis()->SetTitle("Counts");
-      reactor_osc_hist.GetXaxis()->SetTitle("Energy (MeV)");
-      reactor_osc_hist.Write();
-    }
+      sprintf(name, "data_set_hist");
+      data_set_hist.SetName(name);
+      data_set_hist.GetYaxis()->SetTitle("Counts");
+      data_set_hist.GetXaxis()->SetTitle("Energy (MeV)");
+      data_set_hist.SetLineColor(kBlue);
+      data_set_hist.Write();
+      data_set_hist.Draw("same");
 
-    // pdfs of spectra
-    TH1D reactor_unosc_hist;
-    for (ULong64_t j = 0; j < n_pdf; j++){
-      reactor_unosc_hist = DistTools::ToTH1D(*reactor_unosc_pdf[j]);
-      // reactor_unosc_hist.Sumw2();
-      sprintf(name, "reactor_unosc_pdf_%s_d21%.9f_s12%.7f_s13%.7f", reactor_names[j].c_str(), param_d21, param_s12, param_s13);
-      reactor_unosc_hist.SetName(name);
-      reactor_unosc_hist.GetYaxis()->SetTitle("Counts");
-      reactor_unosc_hist.GetXaxis()->SetTitle("Energy (MeV)");
-      reactor_unosc_hist.Write();
+      file_out->cd();
+      c_data_fit->Write();
+
+      // reactor pdfs
+      TH1D reactor_osc_hist;
+      for (ULong64_t j = 0; j < n_pdf; j++){
+        reactor_osc_hist = DistTools::ToTH1D(*reactor_osc_pdf[j]);
+        // data_hist.Sumw2();
+        sprintf(name, "reactor_osc_pdf_%s_d21%.9f_s12%.7f_s13%.7f", reactor_names[j].c_str(), param_d21, param_s12, param_s13);
+        reactor_osc_hist.SetName(name);
+        reactor_osc_hist.GetYaxis()->SetTitle("Counts");
+        reactor_osc_hist.GetXaxis()->SetTitle("Energy (MeV)");
+        reactor_osc_hist.Write();
+      }
+
+      // pdfs of spectra
+      TH1D reactor_unosc_hist;
+      for (ULong64_t j = 0; j < n_pdf; j++){
+        reactor_unosc_hist = DistTools::ToTH1D(*reactor_unosc_pdf[j]);
+        // reactor_unosc_hist.Sumw2();
+        sprintf(name, "reactor_unosc_pdf_%s_d21%.9f_s12%.7f_s13%.7f", reactor_names[j].c_str(), param_d21, param_s12, param_s13);
+        reactor_unosc_hist.SetName(name);
+        reactor_unosc_hist.GetYaxis()->SetTitle("Counts");
+        reactor_unosc_hist.GetXaxis()->SetTitle("Energy (MeV)");
+        reactor_unosc_hist.Write();
+      }
     }
-  }
 
   printf("fit valid: %d, lh_value:%.9f\n", fit_validity, lh_val);
   printf("End fit--------------------------------------\n");
@@ -330,6 +385,25 @@ int main(int argc, char *argv[]) {
     const bool constrained_data = atoi(argv[24]);
     printf("Begin--------------------------------------\n");
 
+    // for energy resolution gaussian smearing
+    const bool apply_energy_resolution_convolution = true;
+    const Double_t e_resolution_estimate = 0.075;
+    const Double_t e_resolution_estimate_sigma = -9999;
+    const Double_t del_energy = -0.784;  // energy added to antinu MC KE truth to convert to Eprompt truth
+
+    AxisCollection axes;
+    axes.AddAxis(BinAxis("ev_prompt_fit", e_min, e_max, n_bins));
+    BinnedED data_set_pdf("data_set_pdf", axes);
+
+    ObsSet obsSet(0);
+    Convolution* eres_convolution = new Convolution("eres_convolution");
+    GaussianERes* eres_gaus = new GaussianERes(e_resolution_estimate,"eres_gaus"); 
+    eres_convolution->SetEResolution(eres_gaus);
+    eres_convolution->SetAxes(axes);
+    eres_convolution->SetTransformationObs(obsSet);
+    eres_convolution->SetDistributionObs(obsSet);
+    eres_convolution->Construct();
+
     // read in reactor information
     std::vector<std::string> reactor_names;
     std::vector<Double_t> distances;
@@ -359,10 +433,6 @@ int main(int argc, char *argv[]) {
       printf("i:%llu, reactor_name:%s, fit_mean: %.3f, fit_sigma: %.3f\n", i, reactor_names[i].c_str(), constraint_means[i], constraint_sigmas[i]);
 
     const ULong64_t n_pdf = reactor_names.size();
-
-    AxisCollection axes;
-    axes.AddAxis(BinAxis("ev_prompt_fit", e_min, e_max, n_bins));
-    BinnedED data_set_pdf("data_set_pdf", axes);
 
     // initialise data
     LHFit_initialise_kamland(data_set_pdf, e_min, e_max, n_bins);
@@ -406,7 +476,11 @@ int main(int argc, char *argv[]) {
               flux_data, mc_scale_factor,
 	      fit_geo_uth_norm,
               param_d21_plot_min, param_d21_plot_max,
-              param_s12_plot_min, param_s12_plot_max);
+	      param_s12_plot_min, param_s12_plot_max,
+	      apply_energy_resolution_convolution,
+	      del_energy, e_resolution_estimate,
+	      e_resolution_estimate_sigma,
+	      eres_convolution);
 
       if (fit_validity==0)
         printf("Fit invalid... retrying (attempt no: %llu)\n", fit_try);

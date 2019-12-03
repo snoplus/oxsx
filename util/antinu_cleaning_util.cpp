@@ -17,11 +17,13 @@
 #include <TChain.h>
 #include <TSystemDirectory.h>
 
-/*double correction(double x){
-  double correc = 8.83411e-02 + (9.02287e-03)*x;
+//needed for KL P1
+double correction(double x){
+  //double correc = 8.83411e-02 + (9.02287e-03)*x;
+  double correc = 0.;
   return correc;
 }
-*/
+
 
 //AVERAGE
 double Average(std::vector<double> v){      double sum=0;
@@ -238,6 +240,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 	      ev_next_index = ev_index;
 	      ev_next_energy = ev_energy;
 	      TVector3 ev_next_vecR = TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
+	      Double_t ev_next_rho = sqrt(pow(ev_pos_x,2) + pow(ev_pos_y,2));
 
 	      tree_input->GetEntry(i-EVcount+j);// potential positron event
 	      bool goodpair = false;
@@ -247,22 +250,15 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 		ev_time_ns = ev_time_nanoseconds + (ev_time_seconds * pow(10, 9)) + (ev_time_days * 24 * 3600 * pow(10, 9));
 		deltaT = std::fabs(ev_next_time_ns - ev_time_ns);
 		Double_t deltaR = (ev_vecR - ev_next_vecR).Mag();
-		//std::cout<<"\n MCentry: "<<mc_entry<<" EVindex: "<<ev_index<<" E: "<<ev_energy<<" R: "<<ev_vecR.Mag()<<std::endl;
-		//std::cout<<"MCentry: "<<mc_entry<<" EVindex2: "<<ev_next_index<<" E: "<<ev_next_energy<<" R: "<<ev_next_vecR.Mag()<<std::endl;
-		//std::cout<<"delatR: "<<deltaR<<" deltaT: "<<deltaT<<"\n"<<std::endl;
 		if(deltaT > deltaTmin && deltaT < deltaTmax){
 		  if (ev_vecR.Mag() < promptRmax){
 		    if (ev_next_vecR.Mag() < lateRmax){
 		      if (deltaR < deltaRmax){
-			// if want to apply nhit cuts
-			//if (nhit1Min <= nhit  && nhit <= nhit1Max){
-			//if (nhit2Min <= nextnhit && nextnhit <= nhit2Max){
-			
+			// for KamLAND Paper1:
+			//if (ev_next_rho > 1200){
 			//if want to correc energies
-			//double corrected_ev_energy = ev_energy + correction(ev_energy);
-			//if (energy_ep_min <= corrected_ev_energy && corrected_ev_energy <= energy_ep_max){
-			//double corrected_ev_next_energy = nextEnergy + correction(nextEnergy);
-			//if (energy_n_min <= corrected_ev_next_energy && corrected_ev_next_energy <= energy_n_max){
+			ev_energy += correction(ev_energy);
+			ev_next_energy += correction(ev_next_energy);
 			if (energy_ep_min <= ev_energy && ev_energy <= energy_ep_max){
 			  if (energy_n_min <= ev_next_energy && ev_next_energy <= energy_n_max){ //|| (4. <= nextEnergycorrec && nextEnergycorrec <= 5.8)){ //if want to allow for carbon capture?
 			    
@@ -335,6 +331,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 			    k += 100; // cancel sub search
 	
 			  }
+			    //}
 			}
 		      }
 		    }
@@ -384,6 +381,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 	  ev_next_index = ev_index;
 	  ev_next_energy = ev_energy;
 	  TVector3 ev_next_vecR = TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
+	  Double_t ev_next_rho = sqrt(pow(ev_pos_x,2) + pow(ev_pos_y,2));
 
 	  tree_input->GetEntry(lastentry+1-EVcount+j);// potential positron event
 	  bool goodpair = false;
@@ -397,15 +395,10 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 	      if (ev_vecR.Mag() < promptRmax){
 		if (ev_next_vecR.Mag() < lateRmax){
 		  if (deltaR < deltaRmax){
-		    // if want to apply nhit cuts
-		    //if (nhit1Min <= nhit  && nhit <= nhit1Max){
-		    //if (nhit2Min <= nextnhit && nextnhit <= nhit2Max){
-
+		    //if (ev_next_rho > 1200){
 		    //if want to correc energies
-		    //double corrected_ev_energy = ev_energy + correction(ev_energy);
-		    //if (energy_ep_min <= corrected_ev_energy && corrected_ev_energy <= energy_ep_max){
-		    //double corrected_ev_next_energy = nextEnergy + correction(nextEnergy);
-		    //if (energy_n_min <= corrected_ev_next_energy && corrected_ev_next_energy <= energy_n_max){
+		    ev_energy += correction(ev_energy);
+		    ev_next_energy += correction(ev_next_energy);
 		    if (energy_ep_min <= ev_energy && ev_energy <= energy_ep_max){
 		      if (energy_n_min <= ev_next_energy && ev_next_energy <= energy_n_max){ //|| (4. <= nextEnergycorrec && nextEnergycorrec <= 5.8)){ //if want to allow for carbon capture?
 
@@ -470,6 +463,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 			k += 100; // cancel sub search
 		      }
 		    }
+		    //}
 		  }
 		}
 	      }
