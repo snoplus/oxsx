@@ -171,8 +171,9 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 
       Double_t constraint_osc_mean = constraint_means[i]*osc_loss*mc_scale_factor;
       constraint_osc_mean_total += constraint_osc_mean;
-      Double_t constraint_osc_sigma = (constraint_sigmas[i]/constraint_means[i])*constraint_osc_mean;
+      //Double_t constraint_osc_sigma = (constraint_sigmas[i]/constraint_means[i])*constraint_osc_mean;
       //Double_t constraint_osc_sigma = sqrt(constraint_osc_mean);
+      Double_t constraint_osc_sigma = 0.07*constraint_osc_mean;
 
       sprintf(name, "%s_unosc", reactor_names[i].c_str());
       BinnedED reactor_unosc_pdf_smear(name, axes);

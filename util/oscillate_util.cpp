@@ -112,8 +112,11 @@ void ntOscillate(TTree *in_tree, TTree *out_tree, Double_t del_m_sqr_21, Double_
     for (ULong64_t i = 0; i < n_entries; i++){
         in_tree->GetEntry(i);
 
-	surv_prob = NuSurvProb(mc_energy_nu, distance, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);  
-        //const Double_t random = CLHEP::HepUniformRand();
+	if (distance > 0)
+	  surv_prob = NuSurvProb(mc_energy_nu, distance, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
+	else
+	  surv_prob = NuSurvProb_geo(sin_sqr_theta_12);
+	//const Double_t random = CLHEP::HepUniformRand();
         Double_t random = random_generator->Uniform();
 
         if (surv_prob > random)
