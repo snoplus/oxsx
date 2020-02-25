@@ -370,7 +370,7 @@ int main(int argc, char *argv[]) {
     const bool apply_energy_resolution_convolution = atoi(argv[24]);
     printf("Begin--------------------------------------\n");
 
-    double e_resolution_estimate = 0.045;
+    double e_resolution_estimate = 0.04;
     double e_resolution_estimate_sigma = 0.005;
     const Double_t del_energy = -0.784;  // energy added to antinu MC KE truth to convert to Eprompt truth
     

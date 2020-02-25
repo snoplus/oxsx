@@ -16,7 +16,6 @@ Convolution::SetFunction(PDF* function_){
 void 
 Convolution::SetEResolution(PDF* function_){
     // wrap this up if position independent kernel of the form P(x | x2) = P(x - x2)
-    std::cout<<"setting EResolution"<<std::endl;
     delete fDist;
     fDist = static_cast<ConditionalPDF*>(new JumpPDF("kernel", function_));
     fIsEResolution = true;
@@ -36,7 +35,7 @@ void
 Convolution::Construct(){
     if (!fDist || !fAxes.GetNBins())
         throw LogicError("Convolution::Construct() : Tried to construct convolution without axes or function/distribution, or both!!");
-    
+
     if(!fCachedCompatibleBins)
         CacheCompatibleBins();
 

@@ -11,7 +11,7 @@ SystematicManager::Construct(){
     // Don't do anything if there are no systematics
     if(!fGroups.size())
         return;
-
+    
     //Construct the response matrices.
     for (std::map<std::string,std::vector<Systematic*> >::const_iterator group=fGroups.begin(); group!= fGroups.end(); ++group ) {
         //If "" is empty get on with it.

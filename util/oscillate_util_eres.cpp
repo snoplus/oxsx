@@ -16,7 +16,8 @@ Double_t correction_to_EPrompt (Double_t x){
 
 Double_t correction_to_truth (Double_t x){
   //double correc = (-1.)*(7.63260e-02 + (1.19968e-02)*x);   //vs antinuKE - 0.784
-  double correc = 0.;
+  double correc = (-1.)*(0.0638836 + (-0.0200583)*x);   //vs positronKE - 1.022 //v6.17.6
+  //double correc = 0.;
   return correc;
 }
 
@@ -36,14 +37,15 @@ Double_t NuSurvProb_geo(Double_t sin_sqr_theta_12){
     return f_osc_prob;
 }
 
-void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13, Double_t fixed_distance, const bool apply_energy_resolution_convolution, const Double_t del_energy) {
+void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13, Double_t fixed_distance, const bool apply_energy_resolution_convolution, const Double_t annihilation_energy) {
 
     //
     // takes a TTree with multiple branches, oscillates using KE branch, fills two TNtuples each with a single branch
     //
     ULong64_t n_entries = in_tree->GetEntries();
-    Double_t surv_prob, mc_energy_nu, ev_energy_p1, distance;
+    Double_t surv_prob, mc_energy_nu, mc_energy_positron, ev_energy_p1, distance;
     in_tree->SetBranchAddress("mc_neutrino_energy", &mc_energy_nu);
+    in_tree->SetBranchAddress("mc_positron_energy", &mc_energy_positron);
     in_tree->SetBranchAddress("ev_fit_energy_p1", &ev_energy_p1);
 
     if (fixed_distance>0)
@@ -60,33 +62,36 @@ void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, Double_t del_m
 
         //const Double_t random = CLHEP::HepUniformRand();
         Double_t random = random_generator->Uniform();
-
+	
         if (surv_prob > random){
             //printf("ke:%0.5f ev:%0.5f diff:%0.5f\n", (Float_t)mc_energy_nu, (Float_t)ev_energy_p1, (Float_t)mc_energy_nu-(Float_t)ev_energy_p1);
             //out_tree_ke->Fill((Float_t)mc_energy_nu);
 	    if (apply_energy_resolution_convolution){
-	        Double_t mc_energy_p1 = mc_energy_nu + del_energy;
-	        out_tree_prompt->Fill((Float_t)(mc_energy_p1 + correction_to_truth(mc_energy_p1)));
+	        //Double_t mc_energy_p1 = mc_energy_nu + annihilation_energy;
+	        Double_t mc_energy_p1 = mc_energy_positron + annihilation_energy;
+		//std::cout<<"oscillate: "<<(mc_energy_p1 + correction_to_truth(mc_energy_p1))<<" <->"<<ev_energy_p1<<std::endl;
+out_tree_prompt->Fill((Float_t)(mc_energy_p1 + correction_to_truth(mc_energy_positron)));
 	    }else{
-	        out_tree_prompt->Fill((Float_t)ev_energy_p1 + correction_to_EPrompt(ev_energy_p1));
+	        out_tree_prompt->Fill((Float_t)ev_energy_p1);
 	    }
         }
     }
 }
 
 void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13, Double_t fixed_distance) {
-    ntOscillate_pruned(in_tree, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, fixed_distance, false, -0.784);
+    ntOscillate_pruned(in_tree, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, fixed_distance, false, 1.022);
 }
 
 void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
-    ntOscillate_pruned(in_tree, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, -9000, false, -0.784);
+    ntOscillate_pruned(in_tree, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, -9000, false, 1.022);
 }
 
-void ntOscillate_pruned_geo(TTree *in_tree, TNtuple *out_tree_prompt, Double_t sin_sqr_theta_12, const bool apply_energy_resolution_convolution, const Double_t del_energy) {
+void ntOscillate_pruned_geo(TTree *in_tree, TNtuple *out_tree_prompt, Double_t sin_sqr_theta_12, const bool apply_energy_resolution_convolution, const Double_t annihilation_energy) {
 
     ULong64_t n_entries = in_tree->GetEntries();
-    Double_t surv_prob, mc_energy_nu, ev_energy_p1;
+    Double_t surv_prob, mc_energy_nu, mc_energy_positron, ev_energy_p1;
     in_tree->SetBranchAddress("mc_neutrino_energy", &mc_energy_nu);
+    in_tree->SetBranchAddress("mc_positron_energy", &mc_energy_positron);
     in_tree->SetBranchAddress("ev_fit_energy_p1", &ev_energy_p1);
     
     TRandom3 *random_generator = new TRandom3();
@@ -100,41 +105,42 @@ void ntOscillate_pruned_geo(TTree *in_tree, TNtuple *out_tree_prompt, Double_t s
 
         if (surv_prob > random){
 	    if (apply_energy_resolution_convolution){
-	        Double_t mc_energy_p1 = mc_energy_nu + del_energy;
-	        out_tree_prompt->Fill((Float_t)(mc_energy_p1 + correction_to_truth(mc_energy_p1)));
+	        Double_t mc_energy_p1 = mc_energy_positron + annihilation_energy;
+	        out_tree_prompt->Fill((Float_t)(mc_energy_p1 + correction_to_truth(mc_energy_positron)));
 	    }else{
-	        out_tree_prompt->Fill((Float_t)ev_energy_p1 + correction_to_EPrompt(ev_energy_p1));
+	        out_tree_prompt->Fill((Float_t)ev_energy_p1);
 	    }
 	}
     }
 }
 
 void ntOscillate_pruned_geo(TTree *in_tree, TNtuple *out_tree_prompt, Double_t sin_sqr_theta_12) {
-    ntOscillate_pruned_geo(in_tree, out_tree_prompt, sin_sqr_theta_12, false, -0.784);
+    ntOscillate_pruned_geo(in_tree, out_tree_prompt, sin_sqr_theta_12, false, 1.022);
 }
 
-void ntNoOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, const bool apply_energy_resolution_convolution, const Double_t del_energy) {
+void ntNoOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, const bool apply_energy_resolution_convolution, const Double_t annihilation_energy) {
     //
     // takes a TTree with multiple branches, doesn't apply any oscillation, to made osc_pdf == unosc_pdf, keep things tidy in MultiOscillation.cpp
     //
     ULong64_t n_entries = in_tree->GetEntries();
-    Double_t mc_energy_nu, ev_energy_p1;
+    Double_t surv_prob, mc_energy_nu, mc_energy_positron, ev_energy_p1;
     in_tree->SetBranchAddress("mc_neutrino_energy", &mc_energy_nu);
+    in_tree->SetBranchAddress("mc_positron_energy", &mc_energy_positron);
     in_tree->SetBranchAddress("ev_fit_energy_p1", &ev_energy_p1);
     
     for (ULong64_t i = 0; i < n_entries; i++){
         in_tree->GetEntry(i);
 	if (apply_energy_resolution_convolution){
-	    Double_t mc_energy_p1 = mc_energy_nu + del_energy;
-	    out_tree_prompt->Fill((Float_t)(mc_energy_p1 + correction_to_truth(mc_energy_p1)));
+	    Double_t mc_energy_p1 = mc_energy_nu + annihilation_energy;
+	    out_tree_prompt->Fill((Float_t)(mc_energy_p1 + correction_to_truth(mc_energy_positron)));
 	}else{
-	    out_tree_prompt->Fill((Float_t)ev_energy_p1 + correction_to_EPrompt(ev_energy_p1));
+	    out_tree_prompt->Fill((Float_t)ev_energy_p1);
 	}
     }
 }
 
 void ntNoOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt) {
-    ntNoOscillate_pruned(in_tree, out_tree_prompt, false, -0.784);
+    ntNoOscillate_pruned(in_tree, out_tree_prompt, false, 1.022);
 }
 
 void ntOscillate(TTree *in_tree, TTree *out_tree, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13, Double_t fixed_distance) {
@@ -295,7 +301,7 @@ void write_file_pruned(const char* nt_in, const char* nt_prompt_out, Double_t de
     if (distance<0)
         ntOscillate_pruned(in_tree, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
     else
-        ntOscillate_pruned(in_tree, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, distance, false, -0.784);
+        ntOscillate_pruned(in_tree, out_tree_prompt, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, distance, false, 1.022);
 
     //f_ke_out->cd();
     //out_tree_ke->Write();
