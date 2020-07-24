@@ -166,8 +166,8 @@ Minuit::Optimise(TestStatistic* testStat_){
 
     if(testStat_->GetParameterNames() != fParameterNames)
         throw LogicError(Formatter() << "Minuit config parameters don't match the test statistic!\n" 
-                         << "TestStatistic:\n" << ToString(testStat_->GetParameterNames()) 
-                         << "Minuit:\n" << ToString(fParameterNames)
+                         << "TestStatistic: " << ToString(testStat_->GetParameterNames()) << "\n"
+                         << "Minuit: " << ToString(fParameterNames)
                          );
 
     // fix the requested parameters

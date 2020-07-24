@@ -5,7 +5,7 @@
 #include <Exceptions.h>
 #include <sstream>
 
-unsigned 
+unsigned
 BinnedEDManager::GetNPdfs() const{
     return fOriginalPdfs.size();
 }
@@ -15,7 +15,7 @@ BinnedEDManager::GetNDims() const{
     return fNDims;
 }
 
-double 
+double
 BinnedEDManager::Probability(const Event& data_) const{
     double sum = 0;
 
@@ -32,7 +32,6 @@ BinnedEDManager::BinProbability(size_t bin_) const{
     try{
         for(size_t i = 0; i < fWorkingPdfs.size(); i++){
             sum += fNormalisations.at(i) * fWorkingPdfs.at(i).GetBinContent(bin_);
-    
         }
     }
     catch(const std::out_of_range&){
@@ -41,6 +40,19 @@ BinnedEDManager::BinProbability(size_t bin_) const{
     return sum;
 }
 
+double
+BinnedEDManager::BinProbability(size_t bin_, std::vector<double> osc_loss) const{
+    double sum = 0;
+    try{
+        for(size_t i = 0; i < fWorkingPdfs.size(); i++){
+            sum += fNormalisations.at(i) * osc_loss[i] * fWorkingPdfs.at(i).GetBinContent(bin_);
+        }
+    }
+    catch(const std::out_of_range&){
+        throw LogicError("BinnedEDManager:: Normalisation vector doesn't match pdf vector - are the normalisations set?");
+    }
+    return sum;
+}
 
 void
 BinnedEDManager::SetNormalisations(const std::vector<double>& normalisations_){
@@ -53,19 +65,21 @@ void
 BinnedEDManager::ApplySystematics(const SystematicManager& sysMan_){
     // If there are no systematics dont do anything
     //  ( working pdfs = original pdfs from initialisation)
-    
-    if(!sysMan_.GetSystematics().size())
+
+    if(!sysMan_.GetSystematicsGroup().size())
         return;
 
-    for(size_t j = 0; j < fOriginalPdfs.size(); j++){
-        fWorkingPdfs[j] = fOriginalPdfs.at(j);
-        fWorkingPdfs[j].SetBinContents(sysMan_.GetTotalResponse().operator()(fOriginalPdfs.at(j).GetBinContents()));
-    }
+    sysMan_.DistortEDs(fOriginalPdfs,fWorkingPdfs);
 }
 
 const BinnedED&
 BinnedEDManager::GetOriginalPdf(size_t index_) const{
     return fOriginalPdfs.at(index_);
+}
+
+const BinnedED&
+BinnedEDManager::GetWorkingPdf(size_t index_) const{
+    return fWorkingPdfs.at(index_);
 }
 
 void
@@ -77,7 +91,7 @@ BinnedEDManager::AddPdf(const BinnedED& pdf_){
     RegisterParameters();
 }
 
-void 
+void
 BinnedEDManager::AddPdfs(const std::vector<BinnedED>& pdfs_){
     for(size_t i = 0; i < pdfs_.size(); i++){
         AddPdf(pdfs_.at(i));
@@ -94,7 +108,7 @@ void
 BinnedEDManager::ApplyShrink(const BinnedEDShrinker& shrinker_){
     if (!shrinker_.GetBuffers().size())
         return;
-        
+
     // only shrink if not already shrunk! FIXME: more obvious behaviour
     if (!fWorkingPdfs.size() || fWorkingPdfs.at(0).GetNBins() != fOriginalPdfs.at(0).GetNBins())
         return;
@@ -103,7 +117,7 @@ BinnedEDManager::ApplyShrink(const BinnedEDShrinker& shrinker_){
         fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
         fWorkingPdfs[i].Normalise();
     }
-    
+
 }
 
 ////////////////////////////////
@@ -162,4 +176,4 @@ BinnedEDManager::RegisterParameters(){
     for(size_t i = 0; i < fOriginalPdfs.size(); i++)
         parameterNames.push_back(fOriginalPdfs.at(i).GetName() + "_norm");
     fParameterManager.AddContainer(fNormalisations, parameterNames);
-}    
+}

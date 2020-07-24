@@ -22,6 +22,10 @@ class JumpPDF : public ConditionalPDF{
   virtual double Integral(const std::vector<double>& mins_,
                           const std::vector<double>& maxs_,
                           const std::vector<double>& x2_) const;
+  virtual double Integral(const std::vector<double>& mins_,
+                          const std::vector<double>& maxs_,
+                          const std::vector<double>& x2_,
+			  const double& bincentre) const;
   
   std::vector<double> Sample(const std::vector<double>& x2_) const;
 

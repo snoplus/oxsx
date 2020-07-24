@@ -9,6 +9,7 @@
 #ifndef __OXSX_SPARSE_MATRIX__
 #define __OXSX_SPARSE_MATRIX__
 #include <AxisCollection.h>
+#include <iostream>
 #define ARMA_DONT_USE_CXX11
 #include <armadillo>
 class BinnedPhysDist;
@@ -27,10 +28,17 @@ class SparseMatrix{
                        const std::vector<double>& values_);
 
     SparseMatrix operator*=(const SparseMatrix& other_);
+    SparseMatrix operator*(const SparseMatrix& other_);
     size_t GetNRows() const {return fNRows;}
     size_t GetNCols() const {return fNCols;}
     void   SetZeros();
     void   SetToIdentity();
+    void PrintMat(){
+      std::cout << fArmaMat << std::endl;
+    }
+
+    void   Print(const std::string&);
+    void   PrintDense(const std::string&);
 
  private:
     arma::sp_mat fArmaMat;

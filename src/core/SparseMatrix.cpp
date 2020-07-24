@@ -11,6 +11,18 @@ SparseMatrix::SparseMatrix(int rows_, int cols_){
 }
 
 void 
+SparseMatrix::PrintDense(const std::string& prefix_=""){
+    fArmaMat.print(prefix_);
+}
+
+void 
+SparseMatrix::Print(const std::string& prefix_=""){
+    arma::mat B(fArmaMat);
+    B.print(prefix_);
+
+}
+
+void 
 SparseMatrix::SetComponent(size_t row_, size_t col_, double val_){
     if (col_ >= fNCols || row_ >= fNRows)
         throw NotFoundError(Formatter() 
@@ -58,6 +70,12 @@ ector ("
 
 SparseMatrix
 SparseMatrix::operator*=(const SparseMatrix& other_){
+  fArmaMat = fArmaMat * other_.fArmaMat;
+  return *this;
+}
+
+SparseMatrix
+SparseMatrix::operator*(const SparseMatrix& other_){
   fArmaMat = fArmaMat * other_.fArmaMat;
   return *this;
 }
