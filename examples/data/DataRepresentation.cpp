@@ -46,7 +46,7 @@ int main(){
     BinnedPdf pdf(axes);
     pdf.SetDataRep(dataRep1);
 
-    EventData event(std::vector<double> (20, 1));
+    Event event(std::vector<double> (20, 1));
     std::cout << "A " << dataRep1.GetNObservables() << "D representation\n"
               << "allows a " << pdf.GetNDims() << "D pdf\n"
               << "to act on an event with " 

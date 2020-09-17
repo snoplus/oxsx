@@ -27,7 +27,7 @@ int main(){
     gausPdf.SetDataRep(DataRepresentation(relevantIndices));
 
     // fake event with ten observables in it, our pdf knows where to look
-    EventData event(std::vector<double>(10, 0));
+    Event event(std::vector<double>(10, 0));
     std::cout << "Probability = "
               << gausPdf.Probability(event) << std::endl;
 

@@ -47,7 +47,7 @@ int main(){
 
     std::cout << "Like any other pdf it can be normalised " << std::endl;
     
-    EventData fakeEvent(std::vector<double>(10, 2));
+    Event fakeEvent(std::vector<double>(10, 2));
 
     std::cout << "Calling probability on the composite pdf "
               << "gives you " 

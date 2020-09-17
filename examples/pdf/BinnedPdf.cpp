@@ -61,7 +61,7 @@ int main(){
     // Now its ready for use on events, make a fake one here with 10 obs
     // the call to Probability automatically selects the right indices,
     // this allows different pdfs to operate on different observables
-    EventData fakeEvent(std::vector<double>(10,1));
+    Event fakeEvent(std::vector<double>(10,1));
     binnedPdf.Fill(fakeEvent);
     std::cout << binnedPdf.Probability(fakeEvent) << std::endl;
     

@@ -4,7 +4,7 @@
 /* data to get the relevant indicies ordered correctly.                                        */
 /* For example, the data may come as (energy, radius, time). But the pdf is only interested in */
 /* (radius, energy) pairs so it has the representation (1, 0).                                 */
-/* EventData(4, 2, 1).ToRepresentation(pdfRep) = {2, 4}                                        */
+/* Event(4, 2, 1).ToRepresentation(pdfRep) = {2, 4}                                        */
 /***********************************************************************************************/
 
 #ifndef __OXSX_EVENT__

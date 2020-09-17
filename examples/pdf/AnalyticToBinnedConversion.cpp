@@ -24,6 +24,6 @@ int main(){
     // to calculate event probabilities
     pdf.SetDataRep(DataRepresentation(0));
 
-    std::cout << pdf.Probability(EventData(std::vector<double>(1, 2))) 
+    std::cout << pdf.Probability(Event(std::vector<double>(1, 2))) 
               << std::endl;   
 }
