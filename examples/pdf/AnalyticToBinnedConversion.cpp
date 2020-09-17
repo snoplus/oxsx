@@ -1,12 +1,12 @@
 /*
   Demonstrates how to produce a binned pdf from a function, and a defined 
-  binning The pdf converter simply integrates the function over the 
+  binning The pdf converter  stored in DistTools simply integrates the function over the 
   bin boundaries, so the function passed in has to implement 
   the IntegrableFunction interface.
 */
 #include <Gaussian.h>
-#include <PdfConverter.h>
-#include <BinnedPdf.h>
+#include <DistTools.h>
+#include <BinnedED.h>
 
 int main(){
     // Here the example is in 1D, for ND just use an ND function and 
@@ -17,12 +17,12 @@ int main(){
 
     // 2. Define the binning
     AxisCollection axes;
-    axes.AddAxis(PdfAxis("fake", 0, 10, 100, "")); // min, max, nbins
-    BinnedPdf pdf = PdfConverter::ToBinnedPdf(gaus, axes);
+    axes.AddAxis(BinAxis("fake", 0, 10, 100, "")); // min, max, nbins
+    BinnedED pdf("binnedPDF", DistTools::ToHist(gaus, axes));
 
     // 3. Dont forget to set the data representation if you want to use it
     // to calculate event probabilities
-    pdf.SetDataRep(DataRepresentation(0));
+    pdf.SetObservables(ObsSet(0));
 
     std::cout << pdf.Probability(Event(std::vector<double>(1, 2))) 
               << std::endl;   
