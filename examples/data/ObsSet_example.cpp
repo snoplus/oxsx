@@ -40,7 +40,7 @@ int main(){
     interestingObservablesForMyObject.push_back("ob1");
     interestingObservablesForMyObject.push_back("ob2");
 
-    // ObsSet dataRepForMyObject = nt.MakeObsSet(interestingObservablesForMyObject);
+    // ObsSet dataRepForMyObject = nt.MakeDataRep(interestingObservablesForMyObject);
    
     // Now test it out on some other fake objects
     AxisCollection axes;
