@@ -15,7 +15,7 @@ int main(){
     std::cout << "Pdf is " << gausPdf.GetNDims() << std::endl;
 
     // now we can call it directly
-    std::cout << " gausPdf(2, 0) = "
+    std::cout << " gausPdf.Probability(2, 0) = "
               << gausPdf.Probability(std::vector<double>(2, 0)) << std::endl;
 
     // or use a data representation to query an event
