@@ -40,7 +40,7 @@ class IOError : public OXSXException{
  IOError(const std::string& errorStr_) : OXSXException(errorStr_) {}
 };
 
-// failure in DataRepresentation system
+// failure in ObsSet system
 class RepresentationError : public OXSXException{
  public:
  RepresentationError(const std::string& errorStr_) : OXSXException(errorStr_) {}
