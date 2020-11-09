@@ -32,7 +32,8 @@
 #include <SurvProb.h>
 #include "AntinuUtils.cpp"
 //#include "../util/oscillate_util.cpp"
-#include "../util/oscillate_util_eres.cpp"
+//#include "../util/oscillate_util_eres.cpp"
+#include "../util/oscillate_util_eres_old.cpp"
 
 void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unosc_filepath,
     const std::string &spectrum_pwr_unosc_filepath,
@@ -314,7 +315,7 @@ int main(int argc, char *argv[]) {
 	double e_scaling_estimate_sigma = 0.02;
 
 	//// EResolution ////
-	const bool apply_energy_resolution_convolution = true;
+	const bool apply_energy_resolution_convolution = false;
 	double e_resolution_estimate = 0.04;
 	double e_resolution_estimate_sigma = 0.005;
 	const Double_t annihilation_energy = 1.022;  // energy added to antinu MC KE truth to convert to Eprompt truth

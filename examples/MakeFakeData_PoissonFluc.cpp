@@ -50,6 +50,8 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
 
     char name[1000];
     TRandom3 *random_generator = new TRandom3();
+    random_generator->SetSeed(0);
+
     const ULong64_t n_pdf = reactor_names.size();
 
     // set up binning
@@ -74,44 +76,42 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
         reactor_osc_pdf[i] = new BinnedED(reactor_names[i], axes);
         reactor_osc_pdf[i]->SetObservables(0);
 
-        bool apply_oscillation = false;
-        bool apply_geo_oscillation = false;
-        bool is_further_reactors = false;
-        if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR")){
-          sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
-          apply_oscillation = true;
-        }else if (reactor_types[i]=="PHWR"){
-          sprintf(name, "%s", spectrum_phwr_unosc_filepath.c_str());
-          apply_oscillation = true;
-        }else if (reactor_types[i]=="further_reactors"){
-          sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
-          is_further_reactors = true;
-        }else if (reactor_names[i]=="uraniumthorium"){
-          sprintf(name, "%s", spectrum_geo_uraniumthorium_unosc_filepath.c_str());
-          geos_included = true;
-          apply_geo_oscillation = true;
-        }else if (reactor_names[i]=="alphan"){
-          sprintf(name, "%s", spectrum_bkg_alphan_unosc_filepath.c_str());
-          alphans_included = true;
-        }else{
-          printf("Throw: Reactor doesn't match any loaded type...\n");
-          exit(0); // throw std::exception(); //continue;
+	bool apply_oscillation = false;
+	bool is_further_reactors = false;
+	if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR")){
+            sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
+	    apply_oscillation = true;
+	}else if (reactor_types[i]=="PHWR"){
+            sprintf(name, "%s", spectrum_phwr_unosc_filepath.c_str());
+	    apply_oscillation = true;
+	}else if (reactor_types[i]=="further_reactors"){
+	    sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
+	    is_further_reactors = true;
+	}else if (reactor_names[i]=="uraniumthorium"){
+            sprintf(name, "%s", spectrum_geo_uraniumthorium_unosc_filepath.c_str());
+	    geos_included = true;
+	}else if (reactor_names[i]=="alphan"){
+	    sprintf(name, "%s", spectrum_bkg_alphan_unosc_filepath.c_str());
+	    alphans_included = true;
+	}else{
+            printf("Throw: Reactor doesn't match any loaded type...\n");
+            exit(0); // throw std::exception(); //continue;
         }
 
         // load unoscillated reactor file (to oscillate, and to plot)
         //ROOTNtuple reactor_unosc_ntp(spectrum_unosc_filepath.c_str(), "nt"); // this would be made easier if this worked for specific branches!!
         TFile *f_in = new TFile(name);
         file_out->cd();
-        TTree *reactor_unosc_ntp = (TTree*)f_in->Get("nt");
+	TTree *reactor_unosc_ntp = (TTree*)f_in->Get("nt");
         TNtuple *reactor_osc_ntp = new TNtuple("nt", "Oscillated Prompt Energy", "ev_fit_energy_p1");
 
         // oscillate tree
         if (apply_oscillation)
-          ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13, distances[i]);
-        else if (is_further_reactors || apply_geo_oscillation)
-          ntOscillate_pruned_geo(reactor_unosc_ntp, reactor_osc_ntp, param_s12);
+	    ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13, distances[i]);
+	else if (is_further_reactors)
+	    ntOscillate_pruned_geo(reactor_unosc_ntp, reactor_osc_ntp, param_s12);
         else
-          ntNoOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp);
+	    ntNoOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp);
 
 	// reset branch addresses after oscillating in function (otherwise crash before setting again below..)
         reactor_unosc_ntp->SetBranchStatus("*", 0);
@@ -136,55 +136,62 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
         // close unoscillated reactor file
         f_in->Close();
 
-        if (apply_oscillation || is_further_reactors){
-          // work out total oscillated integral of constraints
-          Double_t normalisation_unosc = reactor_unosc_pdf[i]->Integral();
-          Double_t normalisation_reactor = reactor_osc_pdf[i]->Integral();
-          Double_t osc_loss = normalisation_reactor/normalisation_unosc;
+	if (apply_oscillation || is_further_reactors){
+	  // work out total oscillated integral of constraints
+	  Double_t normalisation_unosc = reactor_unosc_pdf[i]->Integral();
+	  Double_t normalisation_reactor = reactor_osc_pdf[i]->Integral();
+	  Double_t osc_loss = normalisation_reactor/normalisation_unosc;
 
-          Double_t constraint_osc_mean = constraint_means[i]*osc_loss*mc_scale_factor;
-          Double_t constraint_osc_sigma = (constraint_sigmas[i]/constraint_means[i])*constraint_osc_mean;
-          reactor_osc_pdf[i]->Normalise(); 
-          reactor_osc_pdf[i]->Scale(constraint_osc_mean);
+	  Double_t constraint_osc_mean = constraint_means[i]*osc_loss*mc_scale_factor;
+	  Double_t constraint_osc_sigma = (constraint_sigmas[i]/constraint_means[i])*constraint_osc_mean;
+	  reactor_osc_pdf[i]->Normalise(); 
+	  reactor_osc_pdf[i]->Scale(constraint_osc_mean);
 	  
-          data_set_pdf.Add(*reactor_osc_pdf[i]);
+	  data_set_pdf.Add(*reactor_osc_pdf[i]);
 
-          printf("  added reactor %d/%d: %s, osc_survival: %.3f, norm_constraint: %.3f err: %.3f data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), osc_loss,constraint_osc_mean, constraint_osc_sigma, data_set_pdf.Integral());
+	  printf("  added reactor %d/%d: %s, osc_survival: %.3f, norm_constraint: %.3f err: %.3f data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), osc_loss,constraint_osc_mean, constraint_osc_sigma, data_set_pdf.Integral());
 	  
 	
-        }else if (apply_geo_oscillation){
-          Double_t normalisation_unosc = reactor_unosc_pdf[i]->Integral();
-          Double_t normalisation_reactor = reactor_osc_pdf[i]->Integral();
-          Double_t osc_loss = normalisation_reactor/normalisation_unosc;
+	}else if (geos_included){
+	  Double_t normalisation_unosc = reactor_unosc_pdf[i]->Integral();
+	  Double_t normalisation_reactor = reactor_osc_pdf[i]->Integral();
+	  Double_t osc_loss = normalisation_reactor/normalisation_unosc;
 
-          double scale = 0.;
+	  double scale = 0.;
 	  
-          // geo custom flux = coefficient times 1 years predicted geos
-          reactor_osc_pdf[i]->Scale(geo_uth_custom_flux/(double)flux_data);
+	  // geo custom flux = coefficient times 1 years predicted geos
+	  reactor_osc_pdf[i]->Scale(geo_uth_custom_flux/(double)flux_data);
 
-          data_set_pdf.Add(*reactor_osc_pdf[i]);
+	  data_set_pdf.Add(*reactor_osc_pdf[i]);
 
-          printf("  added geo %d/%d: %s, osc_survival: %.3f, data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), osc_loss, data_set_pdf.Integral());
+	  printf("  added geo %d/%d: %s, osc_survival: %.3f, data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), osc_loss, data_set_pdf.Integral());
 	
-        }else if (alphans_included){
-          Double_t normalisation_unosc = reactor_unosc_pdf[i]->Integral();
-          Double_t normalisation_reactor = reactor_osc_pdf[i]->Integral();
-          Double_t osc_loss = normalisation_reactor/normalisation_unosc;
+	}else if (alphans_included){
+	  Double_t normalisation_unosc = reactor_unosc_pdf[i]->Integral();
+	  Double_t normalisation_reactor = reactor_osc_pdf[i]->Integral();
+	  Double_t osc_loss = normalisation_reactor/normalisation_unosc;
 
-          double scale = 0.;
+	  double scale = 0.;
 	  
-          reactor_osc_pdf[i]->Normalise(); // currently custom flux number = total events in livetime
-          reactor_osc_pdf[i]->Scale(bkg_alphan_custom_flux);///(double)flux_data);
+	  reactor_osc_pdf[i]->Normalise(); // currently custom flux number = total events in livetime
+	  reactor_osc_pdf[i]->Scale(bkg_alphan_custom_flux);///(double)flux_data);
 
-          data_set_pdf.Add(*reactor_osc_pdf[i]);
+	  data_set_pdf.Add(*reactor_osc_pdf[i]);
 
-          printf("  added alpha-n %d/%d: %s, osc_survival: %.3f, data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), osc_loss, data_set_pdf.Integral());
-          
-        }
+	  printf("  added alpha-n %d/%d: %s, osc_survival: %.3f, data_int:%.0f\n", i+1, n_pdf, reactor_names[i].c_str(), osc_loss, data_set_pdf.Integral());
+	
+	}
 	
     }
 
     //databincontents = data_set_pdf.GetBinContents();
+
+    //Poisson Fluctuate:
+    for (size_t i = 0; i < n_bins; i++){
+      Double_t old_content = data_set_pdf.GetBinContent(i);
+      Double_t new_content = random_generator->Poisson(old_content);
+      data_set_pdf.SetBinContent(i, new_content);
+    }
     
     printf("End data prep-------------------------------------\n");
 }
@@ -202,10 +209,10 @@ int main(int argc, char *argv[]) {
         const std::string &spectrum_pwr_unosc_filepath = argv[4];
         const std::string &spectrum_geo_uraniumthorium_unosc_filepath = argv[5];
         const std::string &spectrum_bkg_alphan_unosc_filepath = argv[6];
-        const std::string &constraints_info_file = argv[7];
+	const std::string &constraints_info_file = argv[7];
         const double s12 = atof(argv[8]);
-        const double d21 = atof(argv[9]);
-        const double s13 = atof(argv[10]);
+	const double d21 = atof(argv[9]);
+	const double s13 = atof(argv[10]);
         const double flux_data = atof(argv[11]);
         const double mc_scale_factor = atof(argv[12]);
         const double geo_uth_custom_flux = atof(argv[13]);
@@ -269,6 +276,7 @@ int main(int argc, char *argv[]) {
 		       e_min, e_max, n_bins,
 		       flux_data, mc_scale_factor, geo_uth_custom_flux,
 		       bkg_alphan_custom_flux);
+
 
 	databincontents = data_set_pdf.GetBinContents();
 

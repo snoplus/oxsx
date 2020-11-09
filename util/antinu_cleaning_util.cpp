@@ -51,8 +51,6 @@ void process_cuts(const std::string filename_input, const std::string filename_o
   // load input file
   char *name = new char[1000];
   sprintf(name, "%s/output",filename_input.c_str());
-  //TFile *file_input = TFile::Open(filename_input.c_str()); // for loading ntuples directly (old way)
-  //TNtuple *tree_input = (TNtuple*)file_input->Get("output"); // for loading ntuples directly (old way)
   TChain *tree_input = new TChain("output");
   tree_input->Add(name);
   // setup output file
