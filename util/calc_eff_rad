@@ -6,6 +6,7 @@
 
 R0 = 6005
 
+from __future__ import print_function
 import argparse
 import os
 import sys
@@ -13,7 +14,7 @@ from array import array
 try:
     from ROOT import TFile, TTree, TNtuple
 except ImportError:
-    print "Cant find root lib is it in $PYTHONPATH?"
+    print("Cant find root lib is it in $PYTHONPATH?")
     sys.exit()
 
 def eff_r(x, y, z):
@@ -26,29 +27,29 @@ def to_eff_r(file_name, tree_name, coord_names, outfile, r_name, coords_to_keep)
     in_file = TFile(file_name)
     tree    = in_file.Get(tree_name)
     if not tree:
-        print "Error: No tree named %s in %s" %(tree_name, file_name)
+        print("Error: No tree named %s in %s" %(tree_name, file_name))
         sys.exit()
         
     # Check branches
     branches = [x.GetName() for x in tree.GetListOfBranches()]
     for b in coord_names:
         if not b in branches:
-            print "Error branch '%s' not a branch in input tree" %(b)
-            print "Branches available are: \n"
-            print "\t".join(branches)
+            print("Error branch '%s' not a branch in input tree" %(b))
+            print("Branches available are: \n")
+            print("\t".join(branches))
             sys.exit()
     
     other_branches = list(set(branches) - set(coord_names)) + coords_to_keep
 
     out_file = TFile(outfile, "RECREATE")
     new_branches = list(other_branches) + [r_name]
-    print new_branches
+    print(new_branches)
     nt       = TNtuple("output", "", ":".join(new_branches))
 
     n_events = tree.GetEntries()
     for i, entry in enumerate(tree):
         if not i % 1000000:
-            print "%i/%i"%(i, n_events)
+            print("%i/%i"%(i, n_events))
         x = entry.__getattr__(coord_names[0])
         y = entry.__getattr__(coord_names[1])
         z = entry.__getattr__(coord_names[2])
@@ -60,9 +61,9 @@ def to_eff_r(file_name, tree_name, coord_names, outfile, r_name, coords_to_keep)
     nt.Write()
     out_file.Close()
 
-    print "Written %i entries of branch(es) '%s' \nto tree %s  \nin file %s" %(n_events,
+    print("Written %i entries of branch(es) '%s' \nto tree %s  \nin file %s" %(n_events,
                                                                                ":".join(new_branches),
-                                                                               "output", outfile)
+                                                                               "output", outfile))
 
 
 if __name__ == "__main__":
