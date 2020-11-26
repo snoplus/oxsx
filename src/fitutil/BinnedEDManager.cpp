@@ -53,7 +53,7 @@ BinnedEDManager::ApplySystematics(const SystematicManager& sysMan_){
     // If there are no systematics dont do anything
     //  ( working pdfs = original pdfs from initialisation)
 
-    if(!sysMan_.GetSystematicsGroup().size())
+    if(!sysMan_.GetNSystematics())
         return;
 
     sysMan_.DistortEDs(fOriginalPdfs,fWorkingPdfs);

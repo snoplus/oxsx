@@ -1,3 +1,16 @@
+//////////////////////////////////////////////////////////////////////////////
+// Systematics can be applied either to all distributions in a likelihood   //
+// or only to a group of scpecific distributions, e.g. alpha energy         //
+// resolution. For the former, there is a global ("") group that is always  //
+// present and gets applied before any group systematics. In order to add   //
+// a systematic to this "" group, one can do                                //
+//         lh.AddSystematic(conv,"") or just lh.AddSystematic(conv)         //
+// To add asystematic to a specific group instead use:                      //
+//                     lh.AddSystematic(conv,"groupName")                   //
+//                                                                          //
+// This example demonstartes the use of systematic groups as well as global //
+// systematics and their combination, giving usage examples in each case.   //
+//////////////////////////////////////////////////////////////////////////////
 #include <string>        
 #include <vector>        
 #include <math.h>	
@@ -31,22 +44,22 @@
 TH1D* diffHist(TH1D * h1,TH1D * h2);
 void padPDFs(std::vector<BinnedED>& binnedEDList);
 
-void function1();
-void function2();
-void function3();
+void fitWithSystematicsGroups();
+void fitWithGlobalSystematics();
+void fitWithCombinedSystematics();
 
 int main(int argc, char *argv[]){
     // Using groups of systematics.
-    function1();
+    fitWithSystematicsGroups();
     // Using global of systematics.
-    function2();
+    fitWithGlobalSystematics();
     // Using both global systematics with groups of systematics.
-    function3();
+    fitWithCombinedSystematics();
     return 0;
 }
 
 void
-function1(){
+fitWithSystematicsGroups(){
 
     Rand::SetSeed(0);
     Gaussian gaus1(10, 0.65);
@@ -177,8 +190,8 @@ function1(){
 
     // Associate EDs with a vector of groups. The order of the vector of groups
     // is the same as the order in which they are applied.
-    lh.AddDist(mcPdfs.at(0),std::vector<std::string>(1,"aGroup"));
-    lh.AddDist(mcPdfs.at(1),std::vector<std::string>(1,"bGroup"));
+    lh.AddPdf(mcPdfs.at(0),std::vector<std::string>(1,"aGroup"));
+    lh.AddPdf(mcPdfs.at(1),std::vector<std::string>(1,"bGroup"));
 
     Minuit min;
     min.SetMethod("Simplex");
@@ -188,7 +201,7 @@ function1(){
     min.SetInitialValues(initialval);
     min.SetInitialErrors(initialerr);
 
-    std::cout << "function1 : About to Fit" << std::endl;
+    std::cout << "fitWithSystematicsGroups : About to Fit" << std::endl;
     FitResult result = min.Optimise(&lh);
     result.SetPrintPrecision(4);
     result.Print();
@@ -324,7 +337,7 @@ function1(){
 }
 
 void
-function2(){
+fitWithGlobalSystematics(){
 
     Rand::SetSeed(0);
     AxisCollection axes;
@@ -420,8 +433,8 @@ function2(){
     lh.AddSystematic(scale);
 
     // Add EDs to lh, by default any global systematic are applied.
-    lh.AddDist(mcPdfs.at(0));
-    lh.AddDist(mcPdfs.at(1));
+    lh.AddPdf(mcPdfs.at(0));
+    lh.AddPdf(mcPdfs.at(1));
 
     Minuit min;
     min.SetMethod("Simplex");
@@ -431,7 +444,7 @@ function2(){
     min.SetInitialValues(initialval);
     min.SetInitialErrors(initialerr);
 
-    std::cout << "function2 : About to Fit" << std::endl;
+    std::cout << "fitWithGlobalSystematics : About to Fit" << std::endl;
     FitResult result = min.Optimise(&lh);
     result.SetPrintPrecision(4);
     result.Print();
@@ -557,7 +570,7 @@ function2(){
 }
 
 void
-function3(){
+fitWithCombinedSystematics(){
 
     Rand::SetSeed(0);
     AxisCollection axes;
@@ -705,8 +718,8 @@ function3(){
 
     // Associate EDs with a vector of groups. The order of the vector dictates
     // the order in which (multiple) groups are applied. 
-    lh.AddDist(mcPdfs.at(0),std::vector<std::string>(1,"aGroup"));
-    lh.AddDist(mcPdfs.at(1),std::vector<std::string>(1,"bGroup"));
+    lh.AddPdf(mcPdfs.at(0),std::vector<std::string>(1,"aGroup"));
+    lh.AddPdf(mcPdfs.at(1),std::vector<std::string>(1,"bGroup"));
 
     Minuit min;
     min.SetMethod("Simplex");
@@ -716,7 +729,7 @@ function3(){
     min.SetInitialValues(initialval);
     min.SetInitialErrors(initialerr);
 
-    std::cout << "function3 : About to Fit" << std::endl;
+    std::cout << "fitWithCombinedSystematics : About to Fit" << std::endl;
     FitResult result = min.Optimise(&lh);
     result.SetPrintPrecision(4);
     result.Print();
@@ -889,14 +902,6 @@ void
 padPDFs(std::vector<BinnedED>& binnedEDList){
     std::cout<<"Padding Now"<<std::endl;
     for(int i=0;i<binnedEDList.size();i++){
-        std::vector<double> bincontent =binnedEDList.at(i).GetBinContents();
-        std::vector<double> new_bincontent;
-        for(int j =0; j<bincontent.size();j++){
-            if(bincontent.at(j)==0)
-                new_bincontent.push_back(std::numeric_limits< double >::min());
-            else
-                new_bincontent.push_back(bincontent[j]);
-        }
-        binnedEDList[i].SetBinContents(new_bincontent);
+      binnedEDList.at(i).AddPadding();
     }
 }

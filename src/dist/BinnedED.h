@@ -12,6 +12,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <limits>
 
 class Event;
 class BinnedED : public EventDistribution{
@@ -69,6 +70,8 @@ class BinnedED : public EventDistribution{
 
     std::string GetName() const;
     void SetName(const std::string&);
+
+    void AddPadding(double padding_ = std::numeric_limits<double>::min());
     
  protected:
     ObsSet      fObservables;

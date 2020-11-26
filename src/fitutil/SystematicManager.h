@@ -2,6 +2,11 @@
 /* Manages a set of pdfs, recieves a list of parameters and passes them out to each of the systematics*/
 /* and triggeres their reconstruction. Systematics inside are passed to a set of pdfs to change       */
 /* them                                                                                               */
+/*                                                                                                    */
+/* A group logic is employed, where systematics can be associated with a group of pdfs. A global      */
+/* group ("") is created upon initialisation, which gets applied first to all distributions added.    */
+/* If no group is specified when adding a systematics, it is automatically assigned to this global    */
+/* group.                                                                                             */
 /******************************************************************************************************/
 
 #ifndef __SYSTEMATIC_MANAGER__
@@ -37,6 +42,8 @@ class SystematicManager{
     const std::vector<std::string> GetSystematicsNamesInGroup(const std::string& name) const;
 
     const std::vector<std::string> GetGroup(const std::string& name) const;
+
+    const std::vector<Systematic*>& GetGlobalSystematics() const;
 
     void AddDist(const BinnedED& pdf, const std::vector<std::string>& syss_);
     void AddDist(const BinnedED& pdf, const std::string& syss_);

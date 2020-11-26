@@ -21,6 +21,7 @@ BinnedNLLH::Evaluate(){
         fAlreadyShrunk = true;
     }
 
+
     // Construct systematics 
     fSystematicManager.Construct(); 
     // Apply systematics
@@ -62,28 +63,31 @@ BinnedNLLH::BinData(){
 }
 
 void
-BinnedNLLH::AddDist(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& sys_){
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& sys_){
     if (pdfs.size() != sys_.size())
        throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
     for (int i = 0; i < pdfs.size(); ++i)
-        AddDist( pdfs.at(i), sys_.at(i) );
+        AddPdf( pdfs.at(i), sys_.at(i) );
 }
 
 void
-BinnedNLLH::AddDist(const BinnedED& pdf_, const std::vector<std::string>& syss_){
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs){
+    for (int i = 0; i < pdfs.size(); ++i)
+        AddPdf(pdfs.at(i));
+}
+
+void
+BinnedNLLH::AddPdf(const BinnedED& pdf_, const std::vector<std::string>& syss_){
     fPdfManager.AddPdf(pdf_);
     fSystematicManager.AddDist(pdf_,syss_);
 }
 
 void
-BinnedNLLH::AddDist(const BinnedED& pdf_){
+BinnedNLLH::AddPdf(const BinnedED& pdf_){
     fPdfManager.AddPdf(pdf_);
     fSystematicManager.AddDist(pdf_,"");
 }
-void
-BinnedNLLH::AddPdf(const BinnedED& pdf_){
-    AddDist(pdf_);
-}
+
 
 void
 BinnedNLLH::SetPdfManager(const BinnedEDManager& man_){
