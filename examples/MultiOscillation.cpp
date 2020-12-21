@@ -111,7 +111,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
     }else if (reactor_names[i]=="uraniumthorium"){
       sprintf(name, "%s", spectrum_geo_uraniumthorium_unosc_filepath.c_str());
       geos_included = true;	
-    }else if (reactor_names[i]=="alphan"){
+    }else if (reactor_names[i]=="alphan_13c"){
       sprintf(name, "%s", spectrum_bkg_alphan_unosc_filepath.c_str());
     }else{
       printf("Throw: Reactor doesn't match any loaded type...\n");

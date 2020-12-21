@@ -14,7 +14,7 @@
 #include <TRandom3.h>
 #include <TStyle.h>
 #include <TNtuple.h>
-#include "new_2020_antinu_cleaning_util.cpp"
+#include "antinu_cleaning_util.cpp"
 
 Int_t main(Int_t argc, char *argv[]) {
 
@@ -42,10 +42,10 @@ Int_t main(Int_t argc, char *argv[]) {
         sprintf(name, "%s.csv",filename_output.c_str());
         std::cout<<name<<std::endl;
         FILE *fOut = fopen(name,"w");
-        fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,Rmax,Zmin,Zmax,deltaTmin,deltaTmax,deltaRmax,initial_entries,final_entries,finished\n");
-        fprintf(fOut,"%s,%s,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i\n", filename_input.c_str(), filename_output.c_str(), -9000, -9000, -9000, -9000, -9000, -9000, -9000 -9000, -9000, -9000, -9000, -9000,0);
+        fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaTmin,deltaTmax,promptRmax,lateRmax,deltaRmax,initial_entries,final_entries,finished\n");
+        fprintf(fOut,"%s,%s,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i\n", filename_input.c_str(), filename_output.c_str(), -9000, -9000, -9000, -9000, -9000, -9000, -9000 -9000, -9000, -9000, -9000, -9000,0);
         fclose(fOut);
-        process_cuts(filename_input, filename_output, Rmax, Zmax, Zmin, energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaTmin, deltaTmax, deltaRmax, alphan_low_high);
+        process_cuts(filename_input, filename_output, energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaTmin, deltaTmax, Rmax, Rmax, deltaRmax);
 
         return 0; // completed successfully
     }

@@ -48,7 +48,7 @@ double myline (double *x, double *par){
 }
 
 //Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max,Double_t deltaTmin, Double_t deltaTmax, Double_t promptRmax, Double_t lateRmax, Double_t deltaRmax
-void process_cuts(const std::string filename_input, const std::string filename_output, double FV, double z_cut1, double z_cut2, size_t energy1_lower, size_t energy1_upper, size_t energy2_lower, size_t energy2_upper, size_t delTcut_lower, size_t delTcut, double delRcut){
+void process_cuts(const std::string filename_input, const std::string filename_output, double FV, double z_cut1, double z_cut2, size_t energy1_lower, size_t energy1_upper, size_t energy2_lower, size_t energy2_upper, size_t delTcut_lower, size_t delTcut, double delRcut, int alphan_low_high){
 
   /////////////
   const bool isMC = true;
@@ -136,8 +136,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
   Int_t ev_index, ev_next_index, ev_index_p1, ev_index_p2;*/
   TString *reactor_core_name = 0;
   
-  Double_t mc_edep_quench, mc_energy_nu, mc_energy_n, mc_energy_ep;
-  Int_t mc_entry;
+  Double_t mc_edep_quench, mc_energy_parent1, mc_energy_parent2, mc_energy_2, mc_energy_1;
+  Int_t mc_entry, mc_pdg1, mc_pdg2;
   //Double_t mc_pos_r_nu, mc_pos_x_nu, mc_pos_y_nu, mc_pos_z_nu;
   //Double_t mc_pos_n_r, mc_pos_x_n, mc_pos_y_n, mc_pos_z_n;
   //Double_t mc_pos_r_ep, mc_pos_x_ep, mc_pos_y_ep, mc_pos_z_ep;
@@ -203,10 +203,13 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
   /*tree_input->SetBranchAddress("mcIndex", &mc_entry);
     tree_input->SetBranchAddress("mcEdepQuenched", &mc_quench_i);*/
-  tree_input->SetBranchAddress("parentKE1", &mc_energy_nu);
-  tree_input->SetBranchAddress("mcke1", &mc_energy_ep);
-  tree_input->SetBranchAddress("mcke2", &mc_energy_n);
   tree_input->SetBranchAddress("parentMeta1", &reactor_core_name);
+  tree_input->SetBranchAddress("parentKE1", &mc_energy_parent1);
+  tree_input->SetBranchAddress("parentKE2", &mc_energy_parent2);
+  tree_input->SetBranchAddress("mcke1", &mc_energy_1);
+  tree_input->SetBranchAddress("mcke2", &mc_energy_2);
+  tree_input->SetBranchAddress("pdg1", &mc_pdg1);
+  tree_input->SetBranchAddress("pdg2", &mc_pdg2);
   //tree_input->SetBranchAddress("mcPosr", &mc_pos_r);
   //tree_input->SetBranchAddress("mcPosx", &mc_pos_x);
   //tree_input->SetBranchAddress("mcPosy", &mc_pos_y);
@@ -226,9 +229,9 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
   // set branches output pruned ntuple
 
-  tree_output->Branch("mc_neutrino_energy", &mc_energy_nu);
-  tree_output->Branch("mc_positron_energy", &mc_energy_ep);
-  tree_output->Branch("mc_neutron_energy", &mc_energy_n);
+  tree_output->Branch("mc_neutrino_energy", &mc_energy_parent1);
+  tree_output->Branch("mc_positron_energy", &mc_energy_1);
+  tree_output->Branch("mc_neutron_energy", &mc_energy_2);
   tree_output->Branch("reactor_core_name", &reactor_core_name);
   tree_output->Branch("entry", &mc_entry);
   // values to modify
@@ -307,12 +310,14 @@ void process_cuts(const std::string filename_input, const std::string filename_o
   ULong64_t nsimmed = 1;
   std::vector<int> tagged214;
 
+  int late_candidates = 0;
+
   std::cout<<"n_entries: "<<tree_input->GetEntries()<<std::endl;
   for (int i = 0; i < tree_input->GetEntries(); i++) {
     if (i == 0) continue;
 
     tree_input->GetEntry(i);
-
+    reactor_core_name = 0;
     double x1, y1, z1, r1, rho1, sky1, edep1, edepquench1;
     long long time1;
     int energy1, date1, sec1, nsec1, id1, owl1,triggerWord1, ev_index1;
@@ -393,7 +398,12 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     */
 
     //  for MC events, neutron will have evindex >= 1
-    if (isMC && (ev_index1 <= 0)) nsimmed += 1;
+    if (isMC && (ev_index1 <= 0))//{
+      nsimmed += 1;
+    /*std::cout<<"\ni: "<<i<<" evindex: "<<ev_index1<<" energy: "<<energy1<<" ("<<energy1_lower<<","<<energy1_upper<<") "<<" r1: "<<r1<<" z1: "<<z1<<" ("<<z_cut2<<","<<z_cut1<<") "<<" sky: "<<sky1<<" "<<std::endl;
+    }else{
+      std::cout<<"i: "<<i<<" evindex: "<<ev_index1<<" energy: "<<energy1<<" ("<<energy2_lower<<","<<energy2_upper<<") "<<" r1: "<<r1<<" z1: "<<z1<<" ("<<z_cut2<<","<<z_cut1<<") "<<" sky: "<<sky1<<" "<<std::endl;
+    }*/
 
     if (isMC && (ev_index1 == 0)) continue;
 
@@ -426,9 +436,10 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     }*/
 
     if (energy1 > energy2_upper || energy1 < energy2_lower) continue;
-      
+    
     // counting prompt event candidates
-    //late_candidates += 1;
+    late_candidates += 1;
+    //std::cout<<" -----------> late candidate"<<std::endl;
 
     bool pair = false;
 
@@ -496,9 +507,33 @@ void process_cuts(const std::string filename_input, const std::string filename_o
       ////////////////////////////
       //if (delT > 1000000) break;
       ///////////////////////////
-
-      ntagged += 1;
       
+      //////////
+      // remove gamma events from mc:
+      //std::cout<<"energy1: "<<energy2<<" ke1: "<<mc_energy_1<<" ke2: "<<mc_energy_2<<" pdg1: "<<mc_pdg1<<" pdg2: "<<mc_pdg2<<std::endl;
+      bool high_low_continue = false;
+      if (alphan_low_high == 1){
+        if ((6.1 < mc_energy_1 < 6.2 and mc_pdg1 == 22) or\
+            ((mc_energy_1+mc_energy_2 > 5) and mc_pdg1 == -11 and mc_pdg2 == 11)){
+          high_low_continue = true;
+          //std::cout<<"skipping 6.1MeV gammas (pair)"<<std::endl;
+        }
+      }else if (alphan_low_high == 2){
+        high_low_continue = true;
+        if ((6.1 < mc_energy_1 < 6.2 and mc_pdg1 == 22) or\
+            ((mc_energy_1+mc_energy_2 > 5) and mc_pdg1 == -11 and mc_pdg2 == 11)){
+          high_low_continue = false;
+          //std::cout<<"keeping 6.1MeV gammas (pair)"<<std::endl;
+        }
+      }
+      
+      if (high_low_continue) continue;
+      ////////
+      
+      ntagged += 1;
+      //std::cout<<"-------------------------------------------------------------\n"<< \
+          //"Tagged pair "<<" prompt_i = "<<(i-ii)<<" nhit: "<<energy2<<"  late_i = "<<i<<"nhit: "<<energy1<<"\n-------------------------------------------------------------"<<std::endl;
+
       /*tag_prompt_pos.push_back(TVector3(x2,y2,z2));
       tag_late_pos.push_back(TVector3(x1,y1,z1));
 
@@ -529,8 +564,8 @@ void process_cuts(const std::string filename_input, const std::string filename_o
       std::stringstream tag_time_1_strm;
       tag_time_1_strm<<date_1<<" "<<sec_1<<"."<<nsec_1;
 
-      std::cout<<"\n-------------------------------------------------------------\n"<<\
-	"Tagged pair, event time =  "<<event_time<<" prompt_i = "<<(i-ii)<<" late_i = "<<i<<"  gtid1 = "<<id2<<" gtid2 = "<<id1<<" (clock50)day_sec_1 = "<<tag_time_2_strm.str()<<" (clock50)day_sec_2 = "<<tag_time_1_strm.str()<<" trigword1 = "<<triggerWord2<<" trigword2 = "<<triggerWord1 \
+      std::cout<<"\n-------------------------------------------------------------\n"<< \
+      "Tagged pair, event time =  "<<event_time<<" prompt_i = "<<(i-ii)<<" late_i = "<<i<<"  gtid1 = "<<id2<<" gtid2 = "<<id1<<" (clock50)day_sec_1 = "<<tag_time_2_strm.str()<<" (clock50)day_sec_2 = "<<tag_time_1_strm.str()<<" trigword1 = "<<triggerWord2<<" trigword2 = "<<triggerWord1 \
 	       <<"\n-------------------------------------------------------------"<<std::endl;
       
 
@@ -548,7 +583,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
       h_nhit_late->Fill(energy1);
       h_delT->Fill(delT);
       h_delR->Fill(delR);
-      h2_delT_vs_delR->Fill(delR, delT);
+      h2_delT_vs_delR->Fill(delT,delR);
       h_RvsNhit_prompt->Fill(energy2, r2);
       h_ZvsNhit_prompt->Fill(energy2, z2);
       h_ZvsRho_prompt->Fill(rho2, z2);
@@ -792,7 +827,7 @@ void process_cuts(const std::string filename_input, const std::string filename_o
     fOut<<filename_input<<", "<<filename_output<<", "<<FV<<", "<<z_cut1<<", "<<z_cut2<<", "<<energy1_lower<<", "<<energy1_upper<<", "<<energy2_lower<<", "<<energy2_upper<<", "<<delTcut_lower<<", "<<delTcut<<", "<<delRcut<<", "<<nsimmed<<", "<<ntagged<<", 1\n";
     fOut.close();
 
-    std::cout<<"fin: "<<filename_input<<" \n fout: "<<filename_output<<"\n Rmax "<<FV<<"\n Zmin "<<z_cut2<<"\n Zmax "<<z_cut1<<"\n e1min "<<energy1_lower<<"\n e1max "<<energy1_upper<<"\n e2min "<<energy2_lower<<"\n e2max "<<energy2_upper<<"\n delT "<<delTcut_lower<<"\n delTmax "<<delTcut<<"\n delR "<<delRcut<<"\n nsimmed: "<<nsimmed<<"\n ntagged: "<<ntagged<<std::endl;
+    std::cout<<"fin: "<<filename_input<<" \n fout: "<<filename_output<<"\n Rmax "<<FV<<"\n Zmin "<<z_cut2<<"\n Zmax "<<z_cut1<<"\n e1min "<<energy1_lower<<"\n e1max "<<energy1_upper<<"\n e2min "<<energy2_lower<<"\n e2max "<<energy2_upper<<"\n delT "<<delTcut_lower<<"\n delTmax "<<delTcut<<"\n delR "<<delRcut<<"\n nsimmed: "<<nsimmed<<"\n ntagged: "<<ntagged<<"\n nlatecandidates: "<<late_candidates<<std::endl;
 
     tree_output->AutoSave();
     file_output->Close();
