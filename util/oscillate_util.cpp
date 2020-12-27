@@ -7,6 +7,12 @@
 #include <TObject.h>
 //#include <CLHEP/Random/Randomize.h>
 #include <TRandom3.h>
+// for Ploy Func:
+#include <VaryingCDF.h>
+#include <ContainerParameter.h>
+#include <Formatter.hpp>
+#include <Function.h>
+#include <Gaussian.h>
 
 Double_t NuSurvProb(Double_t nuE, Double_t baseline, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13){
     Double_t f_s_sqr2_theta_12 = pow(sin(2.0 * TMath::ASin(sqrt(sin_sqr_theta_12))), 2.0);
@@ -276,6 +282,90 @@ void write_file_pruned(const char* nt_in, const char* nt_prompt_out, Double_t de
 void write_file_pruned(const char* nt_in, const char* nt_prompt_out, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {
     write_file_pruned(nt_in, nt_prompt_out, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13, -9000);
 }
+
+//Quick function ploy(x) = a*sqrt(abs(x)) + b
+class Ploy : public Function{
+public:
+  // Constructory things
+  Ploy(const std::string& name_,const double grad/*, const double offset*/){
+    fName=name_;
+    parameters["grad"]=grad;
+    //parameters["offset"]=offset;
+  }
+
+  Ploy(const Ploy& copy_){
+    fName=copy_.fName;
+    parameters=copy_.parameters;
+  }
+
+
+  Ploy& operator=(const Ploy& copy_){
+    fName=copy_.fName;
+    parameters=copy_.parameters;
+    return *this;
+  }
+
+  // Probability
+  double operator()(const std::vector<double>& vals_) const{
+    return parameters.at("grad")*sqrt(abs(vals_[0]));//+parameters.at("offset");
+  }
+
+  int GetNDims() const{
+    return 1;
+  }
+
+  Function* Clone() const{
+    return static_cast<Function*> (new Ploy(*this));
+  }
+
+  void SetParameter(const std::string& name_, double value_){
+    parameters[name_]=value_;
+  }
+
+  double GetParameter(const std::string& name_) const{
+    return parameters.at(name_);
+  }
+
+  void SetParameters(const ParameterDict& paraDict_){
+    for (ParameterDict::const_iterator function =paraDict_.begin(); function != paraDict_.end(); ++function) {
+      std::set<std::string> holder=GetKeys(parameters);
+
+      if(holder.find(function->first)!=holder.end())
+        SetParameter(function->first,function->second);
+    }
+  }
+
+  ParameterDict GetParameters() const{
+    return parameters;
+  }
+
+  size_t GetParameterCount() const{
+    return 2;
+  }
+
+  std::set<std::string> GetParameterNames() const {
+    std::set<std::string> names_;
+    names_.insert("grad");
+    //names_.insert("offset");
+    return names_;
+  }
+
+  void RenameParameter(const std::string& old_, const std::string& new_){
+    parameters[new_]=parameters[old_];
+    parameters.erase(old_);
+  }
+
+  std::string GetName() const{
+    return fName;   
+  }
+
+  void SetName(const std::string& name_){
+    fName= name_;
+  }
+private:
+  std::string fName;
+  ParameterDict parameters;
+};
 
 // alternate way of doing this:
 // void write_file_pruned(const char* nt_in, const char* nt_ke_out, const char* nt_prompt_out, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13) {

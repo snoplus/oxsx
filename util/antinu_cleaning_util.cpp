@@ -1,3 +1,4 @@
+#include <fstream>
 #include <TFile.h>
 #include <TF1.h>
 #include <TH1D.h>
@@ -669,10 +670,15 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
     //write csv output file with event numbers
     sprintf(name, "%s.csv",filename_output.c_str());
-    FILE *fOut = fopen(name,"w");
-    fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaTmin,deltaTmax,deltaRmax,initial_entries,final_entries,finished\n");
-    fprintf(fOut,"%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaTmin, deltaTmax, promptRmax, lateRmax, deltaRmax, numsimmed, numtagged,1);
-    fclose(fOut);
+    //FILE *fOut = fopen(name,"w");
+    //fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaTmin,deltaTmax,deltaRmax,initial_entries,final_entries,finished\n");
+    //fprintf(fOut,"%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaTmin, deltaTmax, promptRmax, lateRmax, deltaRmax, numsimmed, numtagged,1);
+    //fclose(fOut);
+    std::ofstream fOut(name);
+    fOut<<"filename_input,filename_output,Rmax,Zmin,Zmax,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaTmin,deltaTmax,deltaRmax,initial_entries,final_entries,finished\n";
+    fOut<<filename_input<<", "<<filename_output<<", "<<promptRmax<<", "<<(-6000)<<", "<<6000<<", "<<energy_ep_min<<", "<<energy_ep_max<<", "<<energy_n_min<<", "<<energy_n_max<<", "<<deltaTmin<<", "<<deltaTmax<<", "<<deltaRmax<<", "<<numsimmed<<", "<<numtagged<<", 1\n";
+    fOut.close();
+
 
     std::cout<<"fin: "<<filename_input<<" \n fout: "<<filename_output<<"\n e1min "<<energy_ep_min<<"\n e1max "<<energy_ep_max<<"\n e2min "<<energy_n_min<<"\n e2max "<<energy_n_max<<"\n delT "<<deltaTmin<<"\n delTmax "<<deltaTmax<<"\n R1 "<<promptRmax<<"\n R2 "<<lateRmax<<"\n delR "<<deltaRmax<<std::endl;
   }

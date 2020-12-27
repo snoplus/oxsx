@@ -50,8 +50,10 @@ BinnedNLLH::Evaluate(){
     double nLogLH = 0;
     for(size_t i = 0; i < fDataDist.GetNBins(); i++){
       double prob = fPdfManager.BinProbability(i, fWorkingNormalisations);
-        if(!prob)
-            throw std::runtime_error("BinnedNLLH::Encountered zero probability bin!");
+        if(!prob){
+          std::cout<<"bin: "<<i<<std::endl;
+          throw std::runtime_error("BinnedNLLH::Encountered zero probability bin");
+        }
         nLogLH -= fDataDist.GetBinContent(i) *  log(prob);
     }
 

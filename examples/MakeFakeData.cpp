@@ -200,17 +200,17 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
           Double_t osc_loss = normalisation_reactor/normalisation_unosc;
 
           reactor_osc_pdf[i]->Normalise(); // currently custom flux number = total events in livetime
-
           /////// split alphan pdfs
-          /*double split_norm_modification = 1.;
+          /*
+          double split_norm_modification = 1.;
           if (split_alpha_n_pdf_1st || split_alpha_n_pdf_2nd){
             TFile *f_split_info = new TFile(split_pdf_params_file.c_str(),"READ");
             file_out->cd(); // switch to output file (for ntuple to use)
             TTree *split_info_tree = (TTree*)f_split_info->Get("alphan_split_pdf_params");
             //std::cout<<reactor_names[i]<<"  split_norm_modification: "<<split_norm_modification<<std::endl;
             split_norm_modification = CalculateSplitPdfTails(split_info_tree, reactor_osc_pdf[i], split_alpha_n_pdf_1st, split_alpha_n_pdf_2nd,e_min,e_max);
-            }*/
-          
+          }
+          */
           Double_t constraint_osc_mean = constraint_means[i]*osc_loss*mc_scale_factor*bkg_alphan_custom_flux;//*split_norm_modification;
           
           reactor_osc_pdf[i]->Scale(constraint_osc_mean);
@@ -380,14 +380,6 @@ int main(int argc, char *argv[]) {
         if (GeosDataDist.Integral() > 0)
           GeosDataDist.Draw("same");
 
-        TH1D AlphanDataDist = DistTools::ToTH1D(alpha_n_data_set_pdf);
-        AlphanDataDist.SetName("h_data_alphan");
-        AlphanDataDist.SetStats(0);
-        AlphanDataDist.SetLineColor(6);
-        AlphanDataDist.GetXaxis()->SetTitle("Reconstructed Energy");
-        if (AlphanDataDist.Integral() > 0)
-          AlphanDataDist.Draw("same");
-
         TH1D Alphan1stDataDist = DistTools::ToTH1D(alpha_n_1st_data_set_pdf);
         Alphan1stDataDist.SetName("h_data_alphan1st");
         Alphan1stDataDist.SetStats(0);
@@ -403,6 +395,16 @@ int main(int argc, char *argv[]) {
         Alphan2ndDataDist.GetXaxis()->SetTitle("Reconstructed Energy");
         if (Alphan2ndDataDist.Integral() > 0)
           Alphan2ndDataDist.Draw("same");
+
+        TH1D AlphanDataDist = DistTools::ToTH1D(alpha_n_data_set_pdf);
+        AlphanDataDist.SetName("h_data_alphan");
+        AlphanDataDist.SetStats(0);
+        AlphanDataDist.SetLineColor(6);
+        AlphanDataDist.GetXaxis()->SetTitle("Reconstructed Energy");
+        if (Alphan1stDataDist.Integral() == 0 &&\
+            Alphan2ndDataDist.Integral() == 0 &&\
+            AlphanDataDist.Integral() > 0)
+          AlphanDataDist.Draw("same");
 
         TLegend* leg = new TLegend(0.55,0.55,0.9,0.9);
         leg->AddEntry(&DataDist,"Total Signal+BG","l");

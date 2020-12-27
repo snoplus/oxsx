@@ -14,6 +14,7 @@
 #include <TNtuple.h>
 
 #include <BinnedED.h>
+#include <Histogram.h>
 #include <BinnedEDGenerator.h>
 #include <SystematicManager.h>
 #include <BinnedNLLH.h>
@@ -306,37 +307,52 @@ void LHFit_load_fake_data(BinnedED &data_set_pdf, const std::string &data_path, 
     printf("End init--------------------------------------\n");
 }
 
-/*double CalculateSplitPdfTails(TTree *split_info_tree, BinnedED *reactor_osc_pdf, bool split_alpha_n_pdf_1st, bool split_alpha_n_pdf_2nd, double e_min, double e_max){
+double CalculateSplitPdfTails(TTree *split_info_tree, BinnedED *reactor_osc_pdf, bool split_alpha_n_pdf_1st, bool split_alpha_n_pdf_2nd, double e_min, double e_max){
 
-    Double_t split_point, A_fit, mu_fit, sigma_fit, split_hist_int, split_func_int;
-    split_info_tree->SetBranchAddress("split_point", &split_point);
+    Double_t end_point, A_fit, mu_fit, sigma_fit, split_hist_int, split_func_int;
+    split_info_tree->SetBranchAddress("end_point", &end_point);
     split_info_tree->SetBranchAddress("A_fit", &A_fit);
     split_info_tree->SetBranchAddress("mu_fit", &mu_fit);
     split_info_tree->SetBranchAddress("sigma_fit", &sigma_fit);
     split_info_tree->SetBranchAddress("split_hist_int", &split_hist_int);
     split_info_tree->SetBranchAddress("split_func_int", &split_func_int);
-    
     double split_norm_modification = 1.;
     if (split_alpha_n_pdf_1st){
         split_info_tree->GetEntry(0);
-        TF1 * f_gaus = new TF1("f_gaus","gaus",split_point,e_max);
+        TF1 * f_gaus = new TF1("f_gaus","gaus",end_point,e_max);
         f_gaus->SetParameters(A_fit,mu_fit,sigma_fit);
-        size_t split_point_bin = reactor_osc_pdf->GetAxes().GetAxis(0).FindBin(split_point);
-        for (size_t bin = split_point_bin ; bin < reactor_osc_pdf->GetNBins()+1 ; bin++){
-            reactor_osc_pdf->SetBinContent(bin,f_gaus->Eval(reactor_osc_pdf->GetAxes().GetAxis(0).GetBinCentre(bin)));
+        //std::cout<<end_point<<"  "<<A_fit<<"  "<<mu_fit<<"  "<<sigma_fit<<"  "<<split_hist_int<<"  "<<split_func_int<<std::endl;
+        std::vector<Double_t> end_point_vec;
+        end_point_vec.push_back(end_point);
+        const Histogram hist_temp = reactor_osc_pdf->GetHistogram();
+        size_t end_point_bin = hist_temp.FindBin(end_point_vec);
+        //std::cout<<" end_bin: "<<end_point_bin<<" end:point: "<<end_point_vec[0]<<std::endl;
+        for (size_t bin = end_point_bin/*0*/ ; bin < reactor_osc_pdf->GetNBins() ; bin++){
+          //std::cout<<bin<<"  "<<hist_temp.GetBinCentre(bin,0)<<"  content: "<<reactor_osc_pdf->GetBinContent(bin);
+          //if (bin >= end_point_bin){
+          reactor_osc_pdf->SetBinContent(bin,f_gaus->Eval(hist_temp.GetBinCentre(bin,0)));
+          //std::cout<<"  ->  "<<reactor_osc_pdf->GetBinContent(bin)<<std::endl;
+          //}else
+          //std::cout<<""<<std::endl;
         }
         split_norm_modification = split_hist_int + split_func_int;
+        std::cout<<"int scale factor: "<<split_norm_modification<<std::endl;
     }else if (split_alpha_n_pdf_2nd){
         split_info_tree->GetEntry(1);
-        TF1 * f_gaus = new TF1("f_gaus","gaus",e_min,split_point);
+        TF1 * f_gaus = new TF1("f_gaus","gaus",e_min,end_point);
         f_gaus->SetParameters(A_fit,mu_fit,sigma_fit);
-        std::cout<<split_point<<"  "<<A_fit<<"  "<<mu_fit<<"  "<<sigma_fit<<"  "<<split_hist_int<<"  "<<split_func_int<<std::endl;
-        size_t split_point_bin = reactor_osc_pdf->GetAxes().GetAxis(0).FindBin(split_point);
-        for (size_t bin = 1 ; bin < split_point_bin+1 ; bin++){
-          reactor_osc_pdf->SetBinContent(bin,f_gaus->Eval(reactor_osc_pdf->GetAxes().GetAxis(0).GetBinCentre(bin)));
+        //std::cout<<end_point<<"  "<<A_fit<<"  "<<mu_fit<<"  "<<sigma_fit<<"  "<<split_hist_int<<"  "<<split_func_int<<std::endl;
+        std::vector<Double_t> end_point_vec;
+        end_point_vec.push_back(end_point);
+        const Histogram hist_temp = reactor_osc_pdf->GetHistogram();
+        size_t end_point_bin = hist_temp.FindBin(end_point_vec);
+        for (size_t bin = 0 ; bin < end_point_bin ; bin++){
+          reactor_osc_pdf->SetBinContent(bin,f_gaus->Eval(hist_temp.GetBinCentre(bin,0)));
+          //reactor_osc_pdf->GetAxes().GetAxis(0).GetBinCentre(bin)));
         }
         split_norm_modification = split_hist_int + split_func_int;
+        std::cout<<"int scale factor: "<<split_norm_modification<<std::endl;
     }
     return split_norm_modification;
 }
-*/
+
