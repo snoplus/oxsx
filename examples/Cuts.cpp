@@ -8,7 +8,7 @@ The CutCollection object is used to FillPdfs or generate data sets, only taking 
 #include <BoolCut.h>
 #include <LineCut.h>
 #include <CutCollection.h>
-#include <EventData.h>
+#include <Event.h>
 #include <iostream>
 
 int main(){
@@ -33,7 +33,7 @@ int main(){
     observations.push_back(6);
     observations.push_back(1);
 
-    EventData fakeEvent(observations);
+    Event fakeEvent(observations);
 
     // test it
     std::cout << "Event passes line cut " 

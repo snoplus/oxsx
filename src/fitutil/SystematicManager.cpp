@@ -9,7 +9,7 @@ using ContainerTools::GetValues;
 void
 SystematicManager::Construct(){
     // Don't do anything if there are no systematics
-    if(!fGroups.size())
+    if(!CountNSystematics())
         return;
     
     //Construct the response matrices.
@@ -239,6 +239,13 @@ SystematicManager::GetSystematicsInGroup(const std::string& name) const{
                 " not known to the SystematicManager.");
     }
 }
+
+
+const std::vector<Systematic*>&
+SystematicManager::GetGlobalSystematics() const{
+  return fGroups.at("");
+}
+
 
 const std::vector<std::string>
 SystematicManager::GetGroup(const std::string& name) const{

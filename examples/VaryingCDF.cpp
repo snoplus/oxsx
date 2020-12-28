@@ -1,3 +1,19 @@
+/************************************************************************
+ * In this example we use the VaryingCDF class to apply a smear which depends
+ * on the spectrum itself. We set up a VaryingCDF which takes a gaussian as its
+ * kernel and a function plot which governs the width of that kernel at that
+ * point in the spectrum. 
+ *
+ * Physics case here is that in perfect detector the energy resolutions depends
+ * on the nhit of the event. The width of this resolutions goes like
+ * sqrt(nhit), therefore it may be desirable to have an energy resolution which
+ * mirrors this dependence.  In the following the ploy function defines the
+ * functional dependence of the width of the gaussian kernel used to smear the
+ * spectrum.
+ * 
+ ************************************************************************/
+
+
 #include <string>        
 #include <vector>        
 #include <math.h>	
@@ -131,7 +147,7 @@ int main(int argc, char *argv[])
 
     gaus_a->RenameParameter("means_0","mean");
     gaus_a->RenameParameter("stddevs_0","std");
-    //Set the kernal.
+    // Set the kernal.
     smear.SetKernel(gaus_a);
 
     //Parameter std now runs like ploy.
@@ -152,7 +168,6 @@ int main(int argc, char *argv[])
     pdf.SetObservables(0);
 
     pdf.Scale(40000);
-
 
     TH1D Pdf = DistTools::ToTH1D(pdf);
     TH1D PdfAfterSmear = DistTools::ToTH1D(conv_a->operator()(pdf));

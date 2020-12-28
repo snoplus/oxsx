@@ -88,10 +88,10 @@ VaryingCDF::SetKernel(ConditionalPDF* PDF_){
 
 void 
 VaryingCDF::SetKernel(PDF* PDF_){
-  // BL : If we are passed a PDF we transform to a JumpPDF in order to preserve
-  // the structure of shifting a function to a bin center and integrating over
-  // over bins relative to that shift.
-  fCdf=static_cast<ConditionalPDF*>(new JumpPDF("kernel",PDF_));
+    // BL : If we are passed a PDF we transform to a JumpPDF in order to preserve
+    // the structure of shifting a function to a bin center and integrating over
+    // over bins relative to that shift.
+    fCdf=static_cast<ConditionalPDF*>(new JumpPDF("kernel",PDF_));
 }
 
 std::vector<double>
@@ -111,6 +111,7 @@ VaryingCDF::SetParameter(const std::string& name_, double value_){
 
 double 
 VaryingCDF::GetParameter(const std::string& name_) const{
+<<<<<<< HEAD
   //This returns parameters of the parameter functions that have been defined.
   size_t changed = 0;
   double holder=0;
@@ -120,6 +121,19 @@ VaryingCDF::GetParameter(const std::string& name_) const{
       changed = 1;
     }catch(const NotFoundError& e_) {
       ;
+=======
+    //This returns parameters of the parameter functions that have been defined.
+    size_t changed = 0;
+    double holder=0;
+    for (std::map<std::string,Function*>::const_iterator function = fFunctions.begin(); function != fFunctions.end(); ++function) {
+        try {
+            holder = function->second->GetParameter(name_);
+            changed = 1;
+        }catch(const NotFoundError& e_) {
+            ;
+        }
+        return holder;
+>>>>>>> 829fe122e9e3ccf66d5dc1feb1491f0bad99a2dd
     }
     return holder;
   }

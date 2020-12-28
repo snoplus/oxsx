@@ -22,8 +22,8 @@ BinnedNLLH::Evaluate(){
         fAlreadyShrunk = true;
     }
 
-    // Construct systematics
-    fSystematicManager.Construct();
+    // Construct systematics 
+    fSystematicManager.Construct(); 
     // Apply systematics
     fPdfManager.ApplySystematics(fSystematicManager);
 
@@ -81,9 +81,10 @@ BinnedNLLH::BinData(){
 }
 
 void
-BinnedNLLH::AddDist(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& sys_){
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& sys_){
     if (pdfs.size() != sys_.size())
        throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
+<<<<<<< HEAD
     for (int i = 0; i < pdfs.size(); ++i){
         AddDist( pdfs.at(i), sys_.at(i) );
     }
@@ -98,15 +99,20 @@ BinnedNLLH::AddDist(const std::vector<BinnedED>& pdfs, const std::vector<std::ve
 	    if (ifosc.at(i))
 	        fOscPdfs.push_back(pdfs.at(i).GetName());
     }
+=======
+    for (int i = 0; i < pdfs.size(); ++i)
+        AddPdf( pdfs.at(i), sys_.at(i) );
+>>>>>>> 829fe122e9e3ccf66d5dc1feb1491f0bad99a2dd
 }
 
 void
-BinnedNLLH::AddDist(const BinnedED& pdf_, const std::vector<std::string>& syss_){
-    fPdfManager.AddPdf(pdf_);
-    fSystematicManager.AddDist(pdf_,syss_);
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs){
+    for (int i = 0; i < pdfs.size(); ++i)
+        AddPdf(pdfs.at(i));
 }
 
 void
+<<<<<<< HEAD
 BinnedNLLH::AddDist(const BinnedED& pdf_, const std::vector<std::string>& syss_, const bool ifosc){
     fPdfManager.AddPdf(pdf_);
     fSystematicManager.AddDist(pdf_,syss_);
@@ -116,10 +122,14 @@ BinnedNLLH::AddDist(const BinnedED& pdf_, const std::vector<std::string>& syss_,
 
 void
 BinnedNLLH::AddDist(const BinnedED& pdf_){
+=======
+BinnedNLLH::AddPdf(const BinnedED& pdf_, const std::vector<std::string>& syss_){
+>>>>>>> 829fe122e9e3ccf66d5dc1feb1491f0bad99a2dd
     fPdfManager.AddPdf(pdf_);
-    fSystematicManager.AddDist(pdf_,"");
+    fSystematicManager.AddDist(pdf_,syss_);
 }
 
+<<<<<<< HEAD
 void
 BinnedNLLH::AddDist(const BinnedED& pdf_, const bool ifosc){
     fPdfManager.AddPdf(pdf_);
@@ -128,10 +138,14 @@ BinnedNLLH::AddDist(const BinnedED& pdf_, const bool ifosc){
       fOscPdfs.push_back(pdf_.GetName());
 }
 
+=======
+>>>>>>> 829fe122e9e3ccf66d5dc1feb1491f0bad99a2dd
 void
 BinnedNLLH::AddPdf(const BinnedED& pdf_){
-    AddDist(pdf_);
+    fPdfManager.AddPdf(pdf_);
+    fSystematicManager.AddDist(pdf_,"");
 }
+
 
 void
 BinnedNLLH::SetPdfManager(const BinnedEDManager& man_){

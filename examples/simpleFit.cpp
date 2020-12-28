@@ -61,32 +61,9 @@ int main(){
     ROOTNtuple dataNt(dataFile, dataTreeName);
     BinnedNLLH lhFunction;
     lhFunction.SetDataSet(&dataNt); // initialise withe the data set
-    lhFunction.AddDist(bgPdf);        
-    lhFunction.AddDist(signalPdf);        
-        
-    std::cout << "Built LH function " << std::endl;        
-         
-    // Set up the optimisation        
-    GridSearch gSearch;        
-             
-    std::vector<double> minima;
-    minima.push_back(0);
-    minima.push_back(0);
-    std::vector<double> maxima;
-    maxima.push_back(1000);
-    maxima.push_back(1000);
-    std::vector<double> stepsizes(2, 1);
-         
-    gSearch.SetMaxima(maxima);        
-    gSearch.SetMinima(minima);        
-    gSearch.SetStepSizes(stepsizes);        
-             
-    ////////////        
-    // 4. Fit //        
-    ////////////        
-    lhFunction.AddPdf(bgPdf);
-    lhFunction.AddPdf(signalPdf);
-
+    lhFunction.AddPdf(bgPdf);        
+    lhFunction.AddPdf(signalPdf);        
+  
     std::cout << "Built LH function " << std::endl;
 
     // Set up the optimisation

@@ -254,3 +254,17 @@ std::vector<std::string>
 Histogram::GetAxisNames() const{
     return fAxes.GetAxisNames();
 }
+
+
+void
+Histogram::AddPadding(double padding_){
+  std::vector<double> newBinContents;
+  for(int i =0; i<fBinContents.size();i++){
+    if(fBinContents.at(i)==0)
+      newBinContents.push_back(padding_);
+    else
+      newBinContents.push_back(fBinContents[i]);
+  }  
+  fBinContents = newBinContents;
+
+}
