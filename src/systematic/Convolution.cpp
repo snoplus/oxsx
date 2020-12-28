@@ -4,6 +4,7 @@
 #include <DenseMatrix.h>
 #include <Exceptions.h>
 #include <string>
+
 void 
 Convolution::SetFunction(PDF* function_){
   // wrap this up if position independent kernel of the form P(x | x2) = P(x - x2)
@@ -42,39 +43,39 @@ Convolution::Construct(){
   DenseMatrix subMap(fSubMapAxes.GetNBins(), fSubMapAxes.GetNBins());
 
   for (size_t origBin = 0; origBin < fSubMapAxes.GetNBins(); origBin++){
-  // get the centre of the bin. Need to offset by this for a convolution
-  fSubMapAxes.GetBinCentres(origBin, binCentres);
+    // get the centre of the bin. Need to offset by this for a convolution
+    fSubMapAxes.GetBinCentres(origBin, binCentres);
 
-  // loop over the bins it can be smeared into 
-  for(size_t destBin = 0; destBin < fSubMapAxes.GetNBins(); destBin++){
-  fSubMapAxes.GetBinLowEdges(destBin, lowEdges);
-  fSubMapAxes.GetBinHighEdges(destBin, highEdges);
+    // loop over the bins it can be smeared into 
+    for(size_t destBin = 0; destBin < fSubMapAxes.GetNBins(); destBin++){
+      fSubMapAxes.GetBinLowEdges(destBin, lowEdges);
+      fSubMapAxes.GetBinHighEdges(destBin, highEdges);
             
-  subMap.SetComponent(destBin, origBin, fDist -> Integral(lowEdges, highEdges, binCentres));
-}        
+      subMap.SetComponent(destBin, origBin, fDist -> Integral(lowEdges, highEdges, binCentres));
+    }        
   }
 
-// Now expand to the full size matrix. Elements are zero by default
-// compatible bins are cached, values must match the smaller matrix above
-size_t destBin = -1;
-std::vector<unsigned> nonZeroRowIndices;
-std::vector<unsigned> nonZeroColIndices;
-std::vector<double> values;
-nonZeroRowIndices.reserve(fCompatibleBins.at(0).size());
-nonZeroColIndices.reserve(fCompatibleBins.at(0).size());
+  // Now expand to the full size matrix. Elements are zero by default
+  // compatible bins are cached, values must match the smaller matrix above
+  size_t destBin = -1;
+  std::vector<unsigned> nonZeroRowIndices;
+  std::vector<unsigned> nonZeroColIndices;
+  std::vector<double> values;
+  nonZeroRowIndices.reserve(fCompatibleBins.at(0).size());
+  nonZeroColIndices.reserve(fCompatibleBins.at(0).size());
     
 
-for(size_t origBin = 0; origBin < axes.GetNBins(); origBin++){
-for(size_t i = 0; i < fCompatibleBins.at(origBin).size(); i++){
-destBin = fCompatibleBins.at(origBin).at(i);
-nonZeroRowIndices.push_back(origBin);
-nonZeroColIndices.push_back(destBin);
-values.push_back( subMap.GetComponent(fSysBins.at(origBin),
-                                        fSysBins.at(destBin)));
-}
-}
+  for(size_t origBin = 0; origBin < axes.GetNBins(); origBin++){
+    for(size_t i = 0; i < fCompatibleBins.at(origBin).size(); i++){
+      destBin = fCompatibleBins.at(origBin).at(i);
+      nonZeroRowIndices.push_back(origBin);
+      nonZeroColIndices.push_back(destBin);
+      values.push_back( subMap.GetComponent(fSysBins.at(origBin),
+                                            fSysBins.at(destBin)));
+    }
+  }
         
-fResponse.SetComponents(nonZeroRowIndices, nonZeroColIndices, values);
+  fResponse.SetComponents(nonZeroRowIndices, nonZeroColIndices, values);
 }
 
 
@@ -104,65 +105,65 @@ Convolution::CacheCompatibleBins(){
   fSysBins.resize(fAxes.GetNBins());
   std::vector<size_t> sysIndices(relativeIndices.size(), 0);
   for(size_t i = 0; i < axes.GetNBins(); i++){
-  for(size_t dim = 0; dim < relativeIndices.size(); dim++)
-    sysIndices[dim] = axes.UnflattenIndex(i, relativeIndices.at(dim));
+    for(size_t dim = 0; dim < relativeIndices.size(); dim++)
+      sysIndices[dim] = axes.UnflattenIndex(i, relativeIndices.at(dim));
 
-  fSysBins[i] = fSubMapAxes.FlattenIndices(sysIndices);
-}
+    fSysBins[i] = fSubMapAxes.FlattenIndices(sysIndices);
+  }
   fCachedCompatibleBins = true;
 }
 
-  ///////////////////////////////
-  // Make this object fittable //
-  ///////////////////////////////
+///////////////////////////////
+// Make this object fittable //
+///////////////////////////////
 
-  // Fitting this dist to data means adjusting the underlying function
+// Fitting this dist to data means adjusting the underlying function
 
 void
-  Convolution::RenameParameter(const std::string& old_, const std::string& new_){
+Convolution::RenameParameter(const std::string& old_, const std::string& new_){
   fDist->RenameParameter(old_, new_);
 }
 
 void
-  Convolution::SetParameter(const std::string& name_, double value_){
+Convolution::SetParameter(const std::string& name_, double value_){
   fDist->SetParameter(name_, value_);
 }
 
 double
-  Convolution::GetParameter(const std::string& name_) const{
+Convolution::GetParameter(const std::string& name_) const{
   return fDist->GetParameter(name_);
 }
 
 void
-  Convolution::SetParameters(const ParameterDict& ps_){
+Convolution::SetParameters(const ParameterDict& ps_){
   try{
-  fDist->SetParameters(ps_);
-}
+    fDist->SetParameters(ps_);
+  }
   catch(const ParameterError& e_){
-  throw ParameterError("Convolution internal function: " + std::string(e_.what()));
-}
+    throw ParameterError("Convolution internal function: " + std::string(e_.what()));
+  }
 }
 
 ParameterDict
-  Convolution::GetParameters() const{
+Convolution::GetParameters() const{
   return fDist->GetParameters();
 }
 
 size_t
-  Convolution::GetParameterCount() const{
+Convolution::GetParameterCount() const{
   return fDist->GetParameterCount();
 }
 
- std::set<std::string>
-   Convolution::GetParameterNames() const{
+std::set<std::string>
+Convolution::GetParameterNames() const{
   return fDist->GetParameterNames();
 }
 
- std::string
-   Convolution::GetName() const{
+std::string
+Convolution::GetName() const{
   return fName;
 }
 void
-  Convolution::SetName(const std::string& n_){
+Convolution::SetName(const std::string& n_){
   fName = n_;
 }

@@ -14,6 +14,10 @@
 #include <Function.h>
 #include <Gaussian.h>
 
+using ContainerTools::ToString;
+using ContainerTools::GetKeys;
+using ContainerTools::GetValues;
+
 Double_t NuSurvProb(Double_t nuE, Double_t baseline, Double_t del_m_sqr_21, Double_t sin_sqr_theta_12, Double_t sin_sqr_theta_13){
     Double_t f_s_sqr2_theta_12 = pow(sin(2.0 * TMath::ASin(sqrt(sin_sqr_theta_12))), 2.0);
     Double_t f_s4 = pow(sin_sqr_theta_13, 2.0);
@@ -52,12 +56,9 @@ void ntOscillate_pruned(TTree *in_tree, TNtuple *out_tree_prompt, Double_t del_m
         in_tree->GetEntry(i);
         surv_prob = NuSurvProb(mc_energy_nu, distance, del_m_sqr_21, sin_sqr_theta_12, sin_sqr_theta_13);
 
-        //const Double_t random = CLHEP::HepUniformRand();
         Double_t random = random_generator->Uniform();
 
         if (surv_prob > random){
-            //printf("ke:%0.5f ev:%0.5f diff:%0.5f\n", (Float_t)mc_energy_nu, (Float_t)ev_energy_p1, (Float_t)mc_energy_nu-(Float_t)ev_energy_p1);
-            //out_tree_ke->Fill((Float_t)mc_energy_nu);
             out_tree_prompt->Fill((Float_t)ev_energy_p1);
         }
     }
@@ -287,9 +288,10 @@ void write_file_pruned(const char* nt_in, const char* nt_prompt_out, Double_t de
 class Ploy : public Function{
 public:
   // Constructory things
-  Ploy(const std::string& name_,const double grad/*, const double offset*/){
+  Ploy(const std::string& name_,const double eres_val/*const double grad, const double offset*/){
     fName=name_;
-    parameters["grad"]=grad;
+    parameters["eres_val"]=eres_val;
+    //parameters["grad"]=grad;
     //parameters["offset"]=offset;
   }
 
@@ -307,7 +309,8 @@ public:
 
   // Probability
   double operator()(const std::vector<double>& vals_) const{
-    return parameters.at("grad")*sqrt(abs(vals_[0]));//+parameters.at("offset");
+    return sqrt(abs(vals_[0]))*sqrt(pow(1+parameters.at("eres_val"),2) - 1);
+    //parameters.at("grad")*sqrt(abs(vals_[0]));//+parameters.at("offset");
   }
 
   int GetNDims() const{
@@ -345,7 +348,8 @@ public:
 
   std::set<std::string> GetParameterNames() const {
     std::set<std::string> names_;
-    names_.insert("grad");
+    names_.insert("eres_val");
+    //names_.insert("grad");
     //names_.insert("offset");
     return names_;
   }
