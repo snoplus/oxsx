@@ -123,7 +123,7 @@ GaussianERes::operator() (const std::vector<double>& vals_) const{
     double stdDev;
     double nDevs;
     for(size_t i = 0; i < GetNDims(); i++){
-        stdDev = fERess.at(i)*sqrt(vals_.at(i));
+        stdDev = sqrt(abs(vals_.at(i)))*sqrt(pow(1+fERess.at(i),2) - 1); //fERess.at(i)*sqrt(vals_.at(i));
 
         nDevs = (vals_.at(i))/stdDev;
         exponent += nDevs * nDevs;
@@ -131,8 +131,8 @@ GaussianERes::operator() (const std::vector<double>& vals_) const{
 
     double norm = 1;
     for(size_t i = 0; i < GetNDims(); i++)
-        norm *= sqrt(2*M_PI) * (fERess.at(i)*sqrt(vals_.at(i)));
-
+        norm *= sqrt(2*M_PI) * (sqrt(abs(vals_.at(i)))*sqrt(pow(1+fERess.at(i),2) - 1)); //fERess.at(i)*sqrt(vals_.at(i));
+    
     return exp(- 0.5 * exponent) / norm; 
 }
 
@@ -149,16 +149,15 @@ GaussianERes::Cdf(size_t dim_, double val_) const{
 
 double 
 GaussianERes::Cdf(size_t dim_, double val_, const double bincentre) const{
-    double nDevs = (val_)/(GetERes(dim_)*sqrt(bincentre));
+    double stdDev = sqrt(bincentre)*sqrt(pow(1+GetERes(dim_),2) - 1);
+    double nDevs = (val_ - bincentre)/stdDev;
     if (nDevs > fCdfCutOff)
         return 1;
     if(nDevs < -1 * fCdfCutOff)
         return 0;
 
-    //std::cout<<"ERes% "<<GetERes(dim_)<<" bincentre: "<<bincentre<<" E: "<<val_<<" sigma: "<<GetERes(dim_)*sqrt(bincentre)<<"sigma/E % "<<100.*GetERes(dim_)/sqrt(bincentre)<<std::endl;
-    
-    return gsl_cdf_gaussian_P(val_, (GetERes(dim_)*sqrt(bincentre)));
-
+    //std::cout<<"val "<<val_<<" centre "<<bincentre<<" eres "<<GetERes(dim_)<<" stddev "<<stdDev<<" ndevs "<<nDevs<<" = "<<gsl_cdf_gaussian_P(val_ - bincentre, stdDev)<<std::endl;
+    return gsl_cdf_gaussian_P(val_ - bincentre, stdDev);
 }
 
 double 
@@ -169,7 +168,7 @@ GaussianERes::Integral(const std::vector<double>& mins_, const std::vector<doubl
     double integral = 1;
     for(size_t i = 0; i < mins_.size(); i++)
         integral *= ( Cdf(i, maxs_[i]) - Cdf(i, mins_[i]));
-  
+
     return integral;  
 }
 
@@ -181,8 +180,7 @@ GaussianERes::Integral(const std::vector<double>& mins_, const std::vector<doubl
     double integral = 1;
     for(size_t i = 0; i < mins_.size(); i++)
       integral *= ( Cdf(i, maxs_[i], bincentre) - Cdf(i, mins_[i], bincentre));
-    //if (integral > 0.)
-    //std::cout<<"integral "<<integral<<"\n"<<std::endl;
+    
     return integral;  
 }
 

@@ -17,6 +17,7 @@ class Convolution : public Systematic{
  Convolution(const std::string& name_): fDist(NULL), fCachedCompatibleBins(false), fName(name_) {}
   ~Convolution();
   void SetFunction(PDF* function_);
+  void SetFunctionalParamDependence(PDF* function_);/////////////
   void SetConditionalPDF(ConditionalPDF* function_);
   void Construct();    
 
@@ -38,6 +39,7 @@ class Convolution : public Systematic{
   void                     Reset();
   ConditionalPDF*          fDist;
   bool                     fCachedCompatibleBins;
+  bool                     fFunctionalParamDependence;//////////
 
   AxisCollection  fSubMapAxes;
   void  CacheCompatibleBins();

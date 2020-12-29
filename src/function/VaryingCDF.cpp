@@ -81,6 +81,17 @@ VaryingCDF::Integral(const std::vector<double>& mins_,
   return fCdf->Integral(mins_,maxs_,x2_);
 }
 
+double
+VaryingCDF::Integral(const std::vector<double>& mins_, 
+                     const std::vector<double>& maxs_,
+                     const std::vector<double>& x2_,
+                     const double& bincentre) const{
+  if (!fCdf)
+    throw NULLPointerAccessError(Formatter()<<"VaryingCDF:: fCdf is not pointing to a ConditionalPDF.");
+  fCdf->SetParameters(SetupParameters(x2_));
+  return fCdf->Integral(mins_,maxs_,x2_,bincentre);
+}
+
 void 
 VaryingCDF::SetKernel(ConditionalPDF* PDF_){
   fCdf=PDF_->Clone();
@@ -111,17 +122,6 @@ VaryingCDF::SetParameter(const std::string& name_, double value_){
 
 double 
 VaryingCDF::GetParameter(const std::string& name_) const{
-<<<<<<< HEAD
-  //This returns parameters of the parameter functions that have been defined.
-  size_t changed = 0;
-  double holder=0;
-  for (std::map<std::string,Function*>::const_iterator function = fFunctions.begin(); function != fFunctions.end(); ++function) {
-    try {
-      holder = function->second->GetParameter(name_);
-      changed = 1;
-    }catch(const NotFoundError& e_) {
-      ;
-=======
     //This returns parameters of the parameter functions that have been defined.
     size_t changed = 0;
     double holder=0;
@@ -133,17 +133,14 @@ VaryingCDF::GetParameter(const std::string& name_) const{
             ;
         }
         return holder;
->>>>>>> 829fe122e9e3ccf66d5dc1feb1491f0bad99a2dd
     }
-    return holder;
-  }
-  if (changed !=1){
-    std::vector<std::string> functionNames;
-    for (std::map<std::string,Function*>::const_iterator function = fFunctions.begin(); function != fFunctions.end(); ++function) {
-      functionNames.push_back(function->second->GetName());
-    }
-    throw NotFoundError(Formatter() << "VaryingCDF:: Parameter : " << name_ <<" not found in fFunctions available. Functions available: "
-                        << ToString(functionNames)<<" Parameters available : "<<ToString(GetParameterNames()) ); 
+    if (changed !=1){
+      std::vector<std::string> functionNames;
+      for (std::map<std::string,Function*>::const_iterator function = fFunctions.begin(); function != fFunctions.end(); ++function) {
+        functionNames.push_back(function->second->GetName());
+      }
+      throw NotFoundError(Formatter() << "VaryingCDF:: Parameter : " << name_ <<" not found in fFunctions available. Functions available: "
+                          << ToString(functionNames)<<" Parameters available : "<<ToString(GetParameterNames()) ); 
   }
 }
 

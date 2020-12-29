@@ -27,7 +27,7 @@ class GaussianERes : public PDF{
                     const std::vector<double>& maxs_) const;
     double Integral(const std::vector<double>& mins_, 
                     const std::vector<double>& maxs_,
-		    const double& bincentre) const;
+                    const double& bincentre) const;
     double Integral() const {return 1;} // normalised by definition
     std::vector<double> Sample() const;
 

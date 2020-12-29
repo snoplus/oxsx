@@ -8,11 +8,16 @@ class ConditionalPDF : public FitComponent{
   virtual ~ConditionalPDF() {};
   virtual ConditionalPDF* Clone() const = 0;
   virtual double ConditionalProbability(const std::vector<double>& x_, 
-    const std::vector<double>& x2_) = 0;
+                                        const std::vector<double>& x2_) = 0;
   
   virtual double Integral(const std::vector<double>& mins_,
-    const std::vector<double>& maxs_,
-    const std::vector<double>& x2_) const = 0;
+                          const std::vector<double>& maxs_,
+                          const std::vector<double>& x2_) const = 0;
+
+  virtual double Integral(const std::vector<double>& mins_,
+                          const std::vector<double>& maxs_,
+                          const std::vector<double>& x2_,
+                          const double& bincentre) const = 0;
 
   virtual std::vector<double> Sample(const std::vector<double>& x2_) const = 0;
 };

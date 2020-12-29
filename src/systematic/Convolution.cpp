@@ -5,13 +5,25 @@
 #include <Exceptions.h>
 #include <string>
 
+#include <fstream>
 void 
 Convolution::SetFunction(PDF* function_){
   // wrap this up if position independent kernel of the form P(x | x2) = P(x - x2)
   delete fDist;
+  ////////////////
+  fFunctionalParamDependence = false;
+  ///////////////
   fDist = static_cast<ConditionalPDF*>(new JumpPDF("kernel", function_));
 }
-
+////////////
+void 
+Convolution::SetFunctionalParamDependence(PDF* function_){
+  // wrap this up if position independent kernel of the form P(x | x2) = P(x - x2)
+  delete fDist;
+  fDist = static_cast<ConditionalPDF*>(new JumpPDF("kernel", function_));
+  fFunctionalParamDependence = true;
+}
+////////////
 void
 Convolution::SetConditionalPDF(ConditionalPDF* c_){
   delete fDist;
@@ -43,17 +55,27 @@ Convolution::Construct(){
   DenseMatrix subMap(fSubMapAxes.GetNBins(), fSubMapAxes.GetNBins());
 
   for (size_t origBin = 0; origBin < fSubMapAxes.GetNBins(); origBin++){
-    // get the centre of the bin. Need to offset by this for a convolution
     fSubMapAxes.GetBinCentres(origBin, binCentres);
-
+    ////////
+    const double bincentre = binCentres[0];
+    ////////
     // loop over the bins it can be smeared into 
     for(size_t destBin = 0; destBin < fSubMapAxes.GetNBins(); destBin++){
       fSubMapAxes.GetBinLowEdges(destBin, lowEdges);
       fSubMapAxes.GetBinHighEdges(destBin, highEdges);
-            
-      subMap.SetComponent(destBin, origBin, fDist -> Integral(lowEdges, highEdges, binCentres));
+      
+      /////////
+      if (!fFunctionalParamDependence){
+        subMap.SetComponent(destBin, origBin, fDist -> Integral(lowEdges, highEdges, binCentres));
+        //std::cout<<"1 "<<destBin<<" "<<origBin<<" "<<(fDist -> Integral(lowEdges, highEdges, binCentres))<<std::endl;
+      }else{
+        subMap.SetComponent(destBin, origBin, fDist -> Integral(lowEdges, highEdges, binCentres, bincentre));
+        //std::cout<<bincentre<<" -> "<<lowEdges[0]<<","<<highEdges[0]<<" = "<<(fDist -> Integral(lowEdges, highEdges, binCentres, bincentre))<<std::endl;
+      }
+      ////////
     }        
   }
+
 
   // Now expand to the full size matrix. Elements are zero by default
   // compatible bins are cached, values must match the smaller matrix above

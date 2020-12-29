@@ -13,6 +13,8 @@
 #include <TRandom3.h>
 #include <TH1D.h>
 
+#include <GaussianERes.h>
+
 #include <BinnedED.h>
 #include <BinnedEDGenerator.h>
 #include <SystematicManager.h>
@@ -85,25 +87,23 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
     Convolution* dataconv = new Convolution("dataconv");
     if (apply_energy_resolution_convolution) {
       std::cout<<"\nApplying Energy Smearing = "<<e_resolution_estimate<<std::endl;
-      VaryingCDF smear("smear");
+      
+      /*VaryingCDF smear("smear");
       Gaussian* gaus = new Gaussian(0,e_resolution_estimate,"gaus");
       Ploy* ploy = new Ploy("sqrt",e_resolution_estimate);
       // Set the kernal.
       smear.SetKernel(gaus);
       //Parameter std now runs like ploy.
       smear.SetDependance("eres",ploy);
-      dataconv->SetConditionalPDF(&smear);
+      dataconv->SetConditionalPDF(&smear);*/
+      
+      GaussianERes* datagaus = new GaussianERes(e_resolution_estimate,"datagaus"); 
+      dataconv->SetFunctionalParamDependence(datagaus);
+
       dataconv->SetAxes(axes);
       dataconv->SetTransformationObs(obsSet);
       dataconv->SetDistributionObs(obsSet);
       dataconv->Construct();
-
-      /*GaussianERes* datagaus = new GaussianERes(e_resolution_estimate,"datagaus"); 
-      dataconv->SetEResolution(datagaus);
-      dataconv->SetAxes(axes);
-      dataconv->SetTransformationObs(obsSet);
-      dataconv->SetDistributionObs(obsSet);
-      dataconv->Construct();*/
     }
     Scale* datascale = new Scale("datascale");
     if (apply_energy_scaling) {
@@ -370,12 +370,12 @@ int main(int argc, char *argv[]) {
 
 
         ///// EScale /////
-        const bool apply_energy_scaling = false;
-        double e_scaling_estimate = 1.; //0.985;//1.015;
+        const bool apply_energy_scaling = false;//true;
+        double e_scaling_estimate = 1.015; //0.985;//1.015;
 
         //// EResolution ////
         const bool apply_energy_resolution_convolution = true;//false;
-        double e_resolution_estimate = 0.015;//0.04;
+        double e_resolution_estimate = 0.001; //0.015;//0.04;
 	
         printf("Begin--------------------------------------\n");
 

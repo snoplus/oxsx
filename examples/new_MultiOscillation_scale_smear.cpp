@@ -12,6 +12,8 @@
 #include <TRandom3.h>
 #include <TH1D.h>
 
+#include <GaussianERes.h>
+
 #include <BinnedED.h>
 #include <BinnedEDGenerator.h>
 #include <SystematicManager.h>
@@ -62,7 +64,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
   const ULong64_t n_pdf = reactor_names.size();
 
   // set up binning
-  ObsSet data_rep(0);
+  //ObsSet data_rep(0);
   AxisCollection axes;
   axes.AddAxis(BinAxis("ev_prompt_fit", e_min, e_max, n_bins));
 
@@ -82,7 +84,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
   TH1D *reactor_hist = new TH1D[n_pdf];
 
   BinnedED reactor_osc_pdf_fitosc_sum("reactor_osc_pdf_fitosc_sum",axes);
-  reactor_osc_pdf_fitosc_sum.SetObservables(data_rep);
+  reactor_osc_pdf_fitosc_sum.SetObservables(0);//data_rep);
 
   BinnedED **reactor_unosc_pdf = new BinnedED*[n_pdf];
   BinnedED **reactor_osc_pdf = new BinnedED*[n_pdf];
@@ -201,7 +203,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
       initial_val[name] = constraint_osc_mean*random;
       initial_err[name] = constraint_osc_sigma;
 
-      lh_function.AddDist(*reactor_osc_pdf[i]);
+      lh_function.AddPdf(*reactor_osc_pdf[i]);
       if (constrain_on_vec[i])
         lh_function.SetConstraint(name, constraint_osc_mean, constraint_osc_sigma);
     }
@@ -244,7 +246,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
       initial_val[name] = min + (max-min)*random;
       initial_err[name] = min + (max-min)*random;
 
-      lh_function.AddDist(*reactor_osc_pdf[i]);
+      lh_function.AddPdf(*reactor_osc_pdf[i]);
       if (constrain_on_vec[i])
         lh_function.SetConstraint(name, constraint_osc_mean, constraint_osc_sigma);
     }
@@ -278,22 +280,29 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
   if (apply_energy_resolution_convolution) {
       std::cout<<"Adding Energy Smearing Systematic!!"<<std::endl;
       Convolution* conv = new Convolution("conv");
-      VaryingCDF smear("smear");
+      
+      /*VaryingCDF smear("smear");
       Gaussian* gaus = new Gaussian(0,e_resolution_estimate,"gaus");
-      Ploy* ploy = new Ploy("sqrt",e_resolution_estimate);
+      Ploy* ploy = new Ploy("ployy",e_resolution_estimate);
       
       gaus->RenameParameter("means_0","mean");
       gaus->RenameParameter("stddevs_0","eres");
 
       // Set the kernal.
       smear.SetKernel(gaus);
-
       //Parameter std now runs like ploy.
       smear.SetDependance("eres",ploy);
-
+      
       conv->SetConditionalPDF(&smear);
+      */
+
+      GaussianERes* gaus_energy_resolution = new GaussianERes(e_resolution_estimate,"gaus"); 
+      gaus_energy_resolution->RenameParameter("eres_0","eres");
+      conv->SetFunctionalParamDependence(gaus_energy_resolution);
+      
+
       conv->SetAxes(axes);
-      conv->SetTransformationObs(obsSet);
+      conv->SetTransformationObs(obsSetToTransform);
       conv->SetDistributionObs(obsSet);
       conv->Construct();
   
@@ -302,24 +311,11 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
       initial_val["eres"] = e_resolution_estimate;
       initial_err["eres"] = e_resolution_estimate_sigma;
       
-      minima["mean"] = -0.00001;
-      maxima["mean"] = 0.00001;
-      initial_val["mean"] = 0;
-      initial_err["mean"] = 0.000001;
+      /*minima["mean"] = -1;
+      maxima["mean"] = 1;
+      initial_val["mean"] = 0.;
+      initial_err["mean"] = 0.1;*/
       
-      /*GaussianERes* gaus_energy_resolution = new GaussianERes(e_resolution_estimate,"gaus"); 
-      gaus_energy_resolution->RenameParameter("eres_0","eres_");
-      conv->SetEResolution(gaus_energy_resolution);
-      conv->SetAxes(axes);
-      conv->SetTransformationObs(obsSet);
-      conv->SetDistributionObs(obsSet);
-      conv->Construct();
-  
-      minima["eres_"] = e_resolution_estimate - 2.*e_resolution_estimate_sigma;
-      maxima["eres_"] = e_resolution_estimate + 2.*e_resolution_estimate_sigma;
-      initial_val["eres_"] = e_resolution_estimate;
-      initial_err["eres_"] = e_resolution_estimate_sigma;
-      */
       lh_function.AddSystematic(conv);
       if (constrain_energy_resolution_convolution) 
         lh_function.SetConstraint("eres", e_resolution_estimate, e_resolution_estimate_sigma);

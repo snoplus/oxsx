@@ -101,13 +101,14 @@ JumpPDF::Integral(const std::vector<double>& mins_,
 double
 JumpPDF::Integral(const std::vector<double>& mins_,
                   const std::vector<double>& maxs_,
-		  const std::vector<double>& x2_,
-		  const double& bincentre) const{
+                  const std::vector<double>& x2_,
+                  const double& bincentre) const{
   if(!fPDF)
     throw NULLPointerAccessError("JumpPDF::IntegralERes",
                                  "Have you set the function?");
   
-  return fPDF->Integral( Diff(mins_, x2_) , Diff(maxs_, x2_), bincentre );
+  //return fPDF->Integral( Diff(mins_, x2_) , Diff(maxs_, x2_) );
+  return fPDF->Integral( mins_ , maxs_, bincentre );
 }
 
 /////////////////////////////

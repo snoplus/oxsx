@@ -8,11 +8,19 @@
 //#include <CLHEP/Random/Randomize.h>
 #include <TRandom3.h>
 // for Ploy Func:
+#include <Rand.h>
+#include <Exceptions.h>
+#include <Convolution.h>
+#include <Gaussian.h>
+#include <ParameterDict.h>
+#include <ContainerTools.hpp>
+#include <SparseMatrix.h>
+#include <DistTools.h>
+
 #include <VaryingCDF.h>
 #include <ContainerParameter.h>
 #include <Formatter.hpp>
 #include <Function.h>
-#include <Gaussian.h>
 
 using ContainerTools::ToString;
 using ContainerTools::GetKeys;
@@ -288,7 +296,7 @@ void write_file_pruned(const char* nt_in, const char* nt_prompt_out, Double_t de
 class Ploy : public Function{
 public:
   // Constructory things
-  Ploy(const std::string& name_,const double eres_val/*const double grad, const double offset*/){
+  Ploy(const std::string& name_,const double eres_val){
     fName=name_;
     parameters["eres_val"]=eres_val;
     //parameters["grad"]=grad;
@@ -339,11 +347,12 @@ public:
   }
 
   ParameterDict GetParameters() const{
+    std::cout<<"\n\n Getting in oscillate_util.cpp\n\n"<<std::endl;
     return parameters;
   }
 
   size_t GetParameterCount() const{
-    return 2;
+    return 1;
   }
 
   std::set<std::string> GetParameterNames() const {
