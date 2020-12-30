@@ -13,6 +13,7 @@
 #include <TH1D.h>
 
 #include <GaussianERes.h>
+#include <ScaleNonLinear.h>
 
 #include <BinnedED.h>
 #include <BinnedEDGenerator.h>

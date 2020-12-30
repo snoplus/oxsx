@@ -14,6 +14,7 @@
 #include <TH1D.h>
 
 #include <GaussianERes.h>
+#include <ScaleNonLinear.h>
 
 #include <BinnedED.h>
 #include <BinnedEDGenerator.h>
@@ -106,9 +107,13 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
       dataconv->Construct();
     }
     Scale* datascale = new Scale("datascale");
+    //ScaleNonLinear* datascale = new Scale("datascale");
     if (apply_energy_scaling) {
       std::cout<<"\nApplying Energy Scaling = "<<e_scaling_estimate<<std::endl;
-      datascale->SetScaleFactor(e_scaling_estimate);
+      //datascale->SetScaleFactor(e_scaling_estimate);
+      datascale->SetScaleFactor1(0.);
+      datascale->SetScaleFactor2(e_scaling_estimate);
+      
       datascale->SetAxes(axes);
       datascale->SetTransformationObs(obsSetToTransform);
       datascale->SetDistributionObs(obsSet);
