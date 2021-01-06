@@ -52,9 +52,9 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
   const double param_d21_plot_min, const double param_d21_plot_max, const double param_s12_plot_min,
   const double param_s12_plot_max, const std::string &split_pdf_params_file,
   const bool output_all_fit_results, std::vector<Double_t> &best_fits,
-  const bool apply_energy_scaling, const Double_t e_scaling_estimate,
+  bool apply_energy_scaling, const Double_t e_scaling_estimate,
   const bool constrain_energy_scaling, const Double_t e_scaling_estimate_sigma,
-  const bool apply_energy_resolution_convolution, const Double_t e_resolution_estimate,
+  bool apply_energy_resolution_convolution, const Double_t e_resolution_estimate,
   const bool constrain_energy_resolution_convolution, const Double_t e_resolution_estimate_sigma){
 
   printf("Begin fit--------------------------------------\n");
@@ -260,8 +260,12 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
   if (apply_energy_scaling) {
       std::cout<<"Adding Energy Scaling Systematic!!"<<std::endl;
       Scale* scale = new Scale("scale");
+      //ScaleNonLinear* datascale = new Scale("datascale");
       scale->RenameParameter("scaleFactor","escale_");
       scale->SetScaleFactor(e_scaling_estimate);
+      //datascale->SetScaleFactor1(0.);
+      //datascale->SetScaleFactor2(e_scaling_estimate);
+
       scale->SetAxes(axes);
       scale->SetTransformationObs(obsSetToTransform);
       scale->SetDistributionObs(obsSet);
@@ -421,8 +425,8 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
 
 int main(int argc, char *argv[]) {
 
-  if (argc != 30){
-      std::cout<<"Error: 29 arguments expected."<<std::endl;
+  if (argc != 36){
+      std::cout<<"Error: 35 arguments expected."<<std::endl;
       return 1; // return>0 indicates error code
   }
   else{
@@ -455,19 +459,24 @@ int main(int argc, char *argv[]) {
     const std::string &split_pdf_params_file = argv[27];
     const bool output_all_fit_results = atoi(argv[28]);
     const std::string &outfile_all_fit_results = argv[29];
+    const double e_scaling_estimate = atof(argv[30]);
+    const bool constrain_energy_scaling = atoi(argv[31]);
+    const double e_scaling_estimate_sigma = atof(argv[32]);
+    const double e_resolution_estimate = atof(argv[33]);
+    const bool constrain_energy_resolution_convolution = atoi(argv[34]);
+    const double e_resolution_estimate_sigma = atof(argv[35]);
+    
     printf("Begin--------------------------------------\n");
 
     ///// EScale /////
-    const bool apply_energy_scaling = false;//true;
-    double e_scaling_estimate = 1.;//0.985;//1.015;
-    const bool constrain_energy_scaling = false;
-    double e_scaling_estimate_sigma = 0.01;//0.005;
-
+    //double e_scaling_estimate = 1.;//0.985;//1.015;
+    bool apply_energy_scaling = false;
+    if (e_scaling_estimate > 0) apply_energy_scaling = true;
+    
     //// EResolution ////
-    const bool apply_energy_resolution_convolution = true;//false;
-    double e_resolution_estimate = 0.015;
-    const bool constrain_energy_resolution_convolution = false;
-    double e_resolution_estimate_sigma = 0.01;
+    // double e_resolution_estimate = 0.001; //0.015;//0.04;
+    bool apply_energy_resolution_convolution = false;
+    if (e_resolution_estimate > 0) apply_energy_resolution_convolution = true;
     
     // read in reactor information
     std::vector<std::string> reactor_names;

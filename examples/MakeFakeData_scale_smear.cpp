@@ -110,9 +110,9 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
     //ScaleNonLinear* datascale = new Scale("datascale");
     if (apply_energy_scaling) {
       std::cout<<"\nApplying Energy Scaling = "<<e_scaling_estimate<<std::endl;
-      //datascale->SetScaleFactor(e_scaling_estimate);
-      datascale->SetScaleFactor1(0.);
-      datascale->SetScaleFactor2(e_scaling_estimate);
+      datascale->SetScaleFactor(e_scaling_estimate);
+      //datascale->SetScaleFactor1(0.);
+      //datascale->SetScaleFactor2(e_scaling_estimate);
       
       datascale->SetAxes(axes);
       datascale->SetTransformationObs(obsSetToTransform);
@@ -348,8 +348,8 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 20){
-        std::cout<<"Error: 19 arguments expected."<<std::endl;
+    if (argc != 22){
+        std::cout<<"Error: 21 arguments expected."<<std::endl;
         return 1; // return>0 indicates error code
     }
     else{
@@ -372,16 +372,19 @@ int main(int argc, char *argv[]) {
         const double e_max = atof(argv[17]);
         const size_t n_bins = atoi(argv[18]);
         const std::string &split_pdf_params_file = argv[19];
-
+        const double e_scaling_estimate = atof(argv[20]);
+        const double e_resolution_estimate = atof(argv[21]);
 
         ///// EScale /////
-        const bool apply_energy_scaling = false;//true;
-        double e_scaling_estimate = 1.015; //0.985;//1.015;
-
+        //double e_scaling_estimate = 1.;//0.985;//1.015;
+        bool apply_energy_scaling = false;
+        if (e_scaling_estimate > 0) apply_energy_scaling = true;
+    
         //// EResolution ////
-        const bool apply_energy_resolution_convolution = true;//false;
-        double e_resolution_estimate = 0.001; //0.015;//0.04;
-	
+        // double e_resolution_estimate = 0.001; //0.015;//0.04;
+        bool apply_energy_resolution_convolution = false;
+        if (e_resolution_estimate > 0) apply_energy_resolution_convolution = true;
+
         printf("Begin--------------------------------------\n");
 
         // read in reactor information
