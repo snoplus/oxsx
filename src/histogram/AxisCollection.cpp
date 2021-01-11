@@ -80,9 +80,9 @@ AxisCollection::AddAxes(const std::vector<BinAxis>& axes_){
 
 size_t 
 AxisCollection::FlattenIndices(const std::vector<size_t>& indices_) const{
-    if(indices_.size() != fNDimensions)
-        throw DimensionError("AxisCollection::FlattenIndices", 
-                             fNDimensions , indices_.size());
+    // if(indices_.size() != fNDimensions)
+    //     throw DimensionError("AxisCollection::FlattenIndices", 
+    //                          fNDimensions , indices_.size());
                              
 
     if(fNDimensions == 1)

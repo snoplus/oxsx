@@ -222,8 +222,10 @@ Histogram::Marginalise(const std::string& index_) const {
 
 Histogram
 Histogram::GetSlice(const std::map<std::string,size_t>& fixedBins_) const{
+    
+    // all the axis names in the initial (pre sliced) histogram 
     const std::vector<std::string> allAxisNames = fAxes.GetAxisNames();
-
+     
     // check the pdf does contain the axes and bins asked for
     for(std::map<std::string, size_t>::const_iterator it = fixedBins_.begin(); it!=fixedBins_.end(); it++){
         if (std::find(allAxisNames.begin(), allAxisNames.end(), it->first) == allAxisNames.end())
@@ -234,36 +236,69 @@ Histogram::GetSlice(const std::map<std::string,size_t>& fixedBins_) const{
     }
 
     // want a 1d slice, so check the dimensions
-    if (fixedBins_.size() != fNDims-1)
-        throw DimensionError("Histogram::GetSlice", fNDims-1, fixedBins_.size());
+    // if (fixedBins_.size() != fNDims-1)
+    //     throw DimensionError("Histogram::GetSlice", fNDims-1, fixedBins_.size());
+
+    // want to support multidimensional slices 
+    if (fixedBins_.size() >= fNDims)
+        throw DimensionError("Histogram::GetSlice", fNDims -1, fixedBins_.size());
   
     // work out which axis is the slice in (i.e. the not fixed one)
-    std::string newAxisName;
-    size_t newAxisIndex;
-    std::vector<size_t> sliceIndices(fNDims);
+    // std::string newAxisName;
+    // size_t newAxisIndex;
+    // std::vector<size_t> sliceIndices(fNDims);
+
+    // create vectors to hold the slicing idxs 
+    std::vector<std::string> newAxisNames; 
+    std::vector<size_t> newAxisIndexes;
+    std::vector<size_t> sliceIndices(fNDims); 
   
     for(std::vector<std::string>::const_iterator it = allAxisNames.begin(); it!=allAxisNames.end(); it++){
+        
+        // goes through entire fixedBins_ vec and reaches end without finding axis in fixedBins 
         if(fixedBins_.find(*it) == fixedBins_.end()){
 	    //this is the axis we want the slice in
-	    newAxisName = *it;
-	    newAxisIndex = fAxes.GetAxisIndex(*it);
+	    // newAxisName = *it;
+	    // newAxisIndex = fAxes.GetAxisIndex(*it);
+
+        newAxisNames.push_back(*it); 
+        newAxisIndexes.push_back(fAxes.GetAxisIndex(*it));
 	}else{
 	    //record the indices for the fixed bins in other dimensions
 	    sliceIndices[fAxes.GetAxisIndex(*it)] = fixedBins_.at(*it);
 	}
     }
  
-    // new histogram
-    AxisCollection newAxes;
-    newAxes.AddAxis(fAxes.GetAxis(newAxisIndex));
-    Histogram slice(newAxes);
+    // new histogram loop 
+    AxisCollection newAxes; 
+    std::vector<size_t> binAxisBins;  
+    for(int i = 0; i < newAxisNames.size(); i++){
+        newAxes.AddAxis(fAxes.GetAxis(newAxisIndexes[i]));
+        
+        // have to do this (is there a better way?) for next loop to get num bins in each axis
+        BinAxis individualAxis = newAxes.GetAxis(newAxisNames[i]);
+        size_t bins = individualAxis.GetNBins();
+        binAxisBins.push_back(bins);
+    }
+
+    // std::cout << "num bins of axes: " << newAxes.GetNBins() << std::endl;
+    // std::cout << "num Dims of axes: " << newAxes.GetNDimensions() << std::endl;
+    // BinAxis testaxis = newAxes.GetAxis(newAxisNames[1]);
+    // std::cout << "num indi bins " << testaxis.GetNBins() << std::endl;
+    Histogram slice(newAxes); 
+    // AxisCollection newAxes;
+    // newAxes.AddAxis(fAxes.GetAxis(newAxisIndex));
+    // Histogram slice(newAxes);
 
     // loop over bins in the slice histo and fill it
-    for(size_t bin = 0; bin < newAxes.GetNBins(); bin++){
-        sliceIndices[newAxisIndex] = bin;
-	size_t oldGlobalBin = fAxes.FlattenIndices(sliceIndices);
-	slice.AddBinContent(bin, fBinContents.at(oldGlobalBin));
-    }
+    for(int i = 0; i < newAxisIndexes.size(); i++){
+        for(size_t bin = 0; bin < binAxisBins[i]; bin++){
+            sliceIndices[newAxisIndexes[i]] = bin;
+	        size_t oldGlobalBin = fAxes.FlattenIndices(sliceIndices);
+	        slice.AddBinContent(bin, fBinContents.at(oldGlobalBin));
+            }
+        }
+
     return slice;
 }
 
