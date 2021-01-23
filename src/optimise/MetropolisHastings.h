@@ -89,8 +89,7 @@ class MetropolisHastings : public Optimiser{
     double fMaxVal;
     
     // private functions
-    ParameterDict JumpDraw(const ParameterDict& thisStep_) const; 
-    inline double JumpProbRatio() const {return 1;}
+    ParameterDict JumpDraw(const ParameterDict& thisStep_) const;
 
     bool   StepAccepted(const ParameterDict& thisStep_,
                         const ParameterDict& proposedStep_);

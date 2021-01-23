@@ -249,10 +249,10 @@ MetropolisHastings::StepAccepted(const ParameterDict& thisStep_,
     
     double acceptanceParam = 0;
     if(fTestStatLogged)
-        acceptanceParam = JumpProbRatio(thisStep_, proposedStep_) * exp(proposedVal - thisVal);
+        acceptanceParam = exp(proposedVal - thisVal);
 
     else
-        acceptanceParam = JumpProbRatio(thisStep_, proposedStep_) * proposedVal/thisVal;
+        acceptanceParam = proposedVal/thisVal;
     
     if (acceptanceParam > 1)
         return true;
