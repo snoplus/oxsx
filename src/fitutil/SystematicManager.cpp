@@ -68,7 +68,7 @@ void
 SystematicManager::checkAllOtherGroups(const Systematic* syss_){
   std::set<std::string> allname;
   allname.insert(syss_->GetName());
-  for (int j = 0; j <fGroups.at("").size(); ++j) {
+  for (size_t j = 0; j <fGroups.at("").size(); ++j) {
       if(allname.find( fGroups.at("").at(j)->GetName() ) == allname.end())
           allname.insert(fGroups.at("").at(j)->GetName());
       else
@@ -96,7 +96,7 @@ SystematicManager::checkAllOtherGroups(const Systematic* syss_){
 void
 SystematicManager::UniqueSystematics(const std::vector<std::string>& syss_){
     std::set<std::string> allname;
-    for (int i = 0; i <syss_.size(); ++i) {
+    for (size_t i = 0; i <syss_.size(); ++i) {
         if(fGroups.find( syss_.at(i) ) == fGroups.end())
             throw NotFoundError (
                     Formatter()<<"SystematicManager:: Systematic group "<<
@@ -117,7 +117,7 @@ SystematicManager::UniqueSystematics(const std::vector<std::string>& syss_){
     // allnames has been populated.
     if( syss_ != std::vector<std::string>(1,"")){
       std::vector<Systematic*> group = fGroups[""];
-      for (int j = 0; j < group.size(); ++j) {
+      for (size_t j = 0; j < group.size(); ++j) {
         if(allname.find( group.at(j)->GetName() ) == allname.end())
           allname.insert(group.at(j)->GetName());
         else
@@ -149,7 +149,7 @@ SystematicManager::DistortEDs(std::vector<BinnedED>& OrignalEDs_,std::vector<Bin
             continue;
 
         //Apply everything else.
-        for (int i = 0; i < fEDGroups.at(name).size(); ++i) {
+        for (size_t i = 0; i < fEDGroups.at(name).size(); ++i) {
             //Check that the group has systematics in it. 
             std::string groupName = fEDGroups.at(name).at(i);
             //If "" is empty the do nothing.
@@ -214,7 +214,7 @@ SystematicManager::GetSystematicsNamesInGroup(const std::string& name) const{
     try{
         std::vector<Systematic*> sys = fGroups.at(name);
         std::vector<std::string> names;
-        for (int i = 0; i < sys.size(); ++i) {
+        for (size_t i = 0; i < sys.size(); ++i) {
             names.push_back(sys.at(i)->GetName());    
         }
         return names;
