@@ -15,7 +15,7 @@
 class DataSet;
 class BinnedNLLH : public TestStatistic{
  public:
-    BinnedNLLH() : fCalculatedDataDist(false), fAlreadyShrunk(false), fDataSet(NULL), fSignalCutEfficiency(1){}
+    BinnedNLLH() : fDataSet(NULL), fSignalCutEfficiency(1), fCalculatedDataDist(false), fAlreadyShrunk(false) {}
 
     void   SetPdfManager(const BinnedEDManager&);
     void   SetSystematicManager(const SystematicManager&);
