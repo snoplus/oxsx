@@ -91,7 +91,7 @@ DenseMatrix::SetSymmetricMatrix(const std::vector<double>& _input){
                             << ") matrix."
 			    );
 
-    int noVectorEntries = _input.size();
+    size_t noVectorEntries = _input.size();
     double testTriangular = (fNRows * (fNRows + 1)) / 2;
 
     if (testTriangular != noVectorEntries)
