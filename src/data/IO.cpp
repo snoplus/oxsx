@@ -50,7 +50,6 @@ IO::SaveDataSet(const DataSet& dataSet_, const std::string& filename_){
     //  for very large datasets copying to flatten will give std::bad_alloc so use hyperslabs
     hsize_t startSlab[1];
     hsize_t count[1];
-    hsize_t evCount;
     
     hsize_t startEntry;
     hsize_t stopEntry;
