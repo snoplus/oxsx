@@ -90,8 +90,7 @@ class MetropolisHastings : public Optimiser{
     
     // private functions
     ParameterDict JumpDraw(const ParameterDict& thisStep_) const; 
-    inline double JumpProbRatio(const ParameterDict& thisStep_, 
-                                const ParameterDict& proposedStep_) const {return 1;}
+    inline double JumpProbRatio() const {return 1;}
 
     bool   StepAccepted(const ParameterDict& thisStep_,
                         const ParameterDict& proposedStep_);
