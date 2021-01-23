@@ -62,7 +62,7 @@ class BinnedNLLH : public TestStatistic{
     void RegisterFitComponents(); 
     void SetParameters(const ParameterDict&);
     ParameterDict GetParameters() const;
-    int  GetParameterCount() const;
+    size_t GetParameterCount() const;
     std::set<std::string> GetParameterNames() const;
     double Evaluate();
 

@@ -79,7 +79,7 @@ ChiSquare::GetParameters() const{
     return fComponentManager.GetParameters();
 }
 
-int 
+size_t 
 ChiSquare::GetParameterCount() const{
     return fComponentManager.GetTotalParameterCount();
 }

@@ -46,7 +46,7 @@ StatisticSum::AddStat(TestStatistic& st_){
     fStats.push_back(&st_);
 }
 
-int 
+size_t 
 StatisticSum::GetParameterCount() const{
     // the teststastics can share parameters so this isn't a simple sum    
     return GetParameters().size();

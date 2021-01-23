@@ -21,7 +21,7 @@ class ChiSquare : public TestStatistic{
     // Fit Component interface
     double Evaluate();
     void   RegisterFitComponents();
-    int    GetParameterCount() const;
+    size_t GetParameterCount() const;
     void   SetParameters(const ParameterDict& params_);
     ParameterDict GetParameters() const;
     std::set<std::string> GetParameterNames() const;

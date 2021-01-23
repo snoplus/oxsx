@@ -244,7 +244,7 @@ BinnedNLLH::GetParameters() const{
     return fComponentManager.GetParameters();
 }
 
-int
+size_t
 BinnedNLLH::GetParameterCount() const{
     return fComponentManager.GetTotalParameterCount();
 }
