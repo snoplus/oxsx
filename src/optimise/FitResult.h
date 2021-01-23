@@ -15,7 +15,7 @@ typedef std::map<std::string, Histogram> HistMap;
 
 class FitResult{
  public:
-    FitResult() : fStatSpace(NULL), fIsValid(true),  printPrecision(5), fExtremeVal(0) {}
+    FitResult() : fStatSpace(NULL), fExtremeVal(0), printPrecision(5), fIsValid(true) {}
     FitResult(const FitResult&); //deep copy
     FitResult operator=(const FitResult&); //deep copy
     ~FitResult(); // frees stat space
