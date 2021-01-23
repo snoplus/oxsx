@@ -39,7 +39,7 @@ class Gaussian : public PDF{
     std::vector<double> GetStdDevs() const;
     double GetCdfCutOff() const;
     void   SetCdfCutOff(double);
-    int    GetNDims() const;
+    size_t GetNDims() const;
     
     // Make this object fittable
     void   SetParameter(const std::string& name_, double value);
@@ -65,7 +65,7 @@ class Gaussian : public PDF{
     
     double fCdfCutOff; // number of stDevs away from the mean
                        // assumed to be zero or 1 for speed integration
-    int fNDims;
+    size_t fNDims;
     std::string fName;
     
     void   Initialise(const std::vector<double>& means_, 

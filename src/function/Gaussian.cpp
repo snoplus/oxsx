@@ -125,8 +125,8 @@ Gaussian::SetMeansStdDevs(const std::vector<double>& means_,
     if (means_.size() != stdDevs_.size())
         throw DimensionError("Gaussian::Tried to set Gaussian function with #means != #stdDevs!");
 
-    for(size_t i = 0; i < stdDevs_.size(); i++)
-        if(stdDevs_.at(i) <= 0)
+    for(const auto& std_dev: stdDevs_)
+        if(std_dev <= 0)
             throw ValueError("Gaussian::Gaussian standard deviation must be greater than 0!");
 
     fMeans = means_;
@@ -149,7 +149,7 @@ Gaussian::SetCdfCutOff(double cutOff_){
     fCdfCutOff = cutOff_;
 }
 
-int 
+size_t 
 Gaussian::GetNDims() const{
     return fNDims;
 }
