@@ -29,8 +29,6 @@ Convolution::Construct(){
     if(!fCachedCompatibleBins)
         CacheCompatibleBins();
 
-    size_t nBins = fAxes.GetNBins();
-    size_t nDims = fAxes.GetNDimensions();
     const AxisCollection& axes = fAxes;
     std::vector<size_t> relativeIndices = fTransObs.GetRelativeIndices(fDistObs);
 
