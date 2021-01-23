@@ -259,7 +259,7 @@ Histogram::GetAxisNames() const{
 void
 Histogram::AddPadding(double padding_){
   std::vector<double> newBinContents;
-  for(int i =0; i<fBinContents.size();i++){
+  for(size_t i = 0; i<fBinContents.size(); i++){
     if(fBinContents.at(i)==0)
       newBinContents.push_back(padding_);
     else
