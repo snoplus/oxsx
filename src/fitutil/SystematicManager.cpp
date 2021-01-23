@@ -191,7 +191,7 @@ SystematicManager::DistortEDs(std::vector<BinnedED>& OrignalEDs_,std::vector<Bin
 
 //Getters and Setters
 
-const size_t
+size_t
 SystematicManager::GetNSystematicsInGroup(const std::string& name_) const{
     try{        
         return fGroups.find(name_)->second.size();
@@ -264,7 +264,7 @@ SystematicManager::GetSystematicsGroup() const{
     return fGroups;
 }
 
-const size_t
+size_t
 SystematicManager::CountNSystematics() const{
     size_t NSystematics = 0;
     for (std::map<std::string,std::vector<Systematic*> >::const_iterator group =fGroups.begin(); group != fGroups.end(); ++group )
@@ -272,12 +272,12 @@ SystematicManager::CountNSystematics() const{
     return NSystematics;
 }
 
-const size_t
+size_t
 SystematicManager::GetNSystematics() const{
     return CountNSystematics();
 }
 
-const size_t
+size_t
 SystematicManager::GetNGroups() const{
     return fNGroups;
 }
