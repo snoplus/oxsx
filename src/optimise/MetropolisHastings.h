@@ -9,10 +9,13 @@ class TestStatistic;
 class MetropolisHastings : public Optimiser{
  public:
      MetropolisHastings() : fBurnIn(3000), 
-                            fMaxIter(100000), fThinFactor(1), 
-                            fMaxVal(0), fFlipSign(false), 
-                            fTestStatLogged(false), pTestStatistic(NULL),
-                            fSaveFullHistogram(false)
+                            fThinFactor(1),
+                            fMaxIter(100000), 
+                            fTestStatLogged(false),
+                            fFlipSign(false), 
+                            fSaveFullHistogram(false),
+                            pTestStatistic(NULL),
+                            fMaxVal(0)
                             {}               
     
     const FitResult& Optimise(TestStatistic*); 
