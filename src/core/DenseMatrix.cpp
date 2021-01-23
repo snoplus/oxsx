@@ -5,7 +5,7 @@
 #include <math.h> //sqrt
 
 // initalise to zeros
-DenseMatrix::DenseMatrix(int rows_, int cols_){
+DenseMatrix::DenseMatrix(size_t rows_, size_t cols_){
     fNCols = cols_;
     fNRows = rows_;
     fArmaMat = arma::mat(rows_, cols_, arma::fill::zeros);

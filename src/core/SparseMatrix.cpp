@@ -4,7 +4,7 @@
 #include  <Formatter.hpp>
 
 // Initialise to zeros
-SparseMatrix::SparseMatrix(int rows_, int cols_){
+SparseMatrix::SparseMatrix(size_t rows_, size_t cols_){
     fNCols = cols_;
     fNRows  = rows_; 
     fArmaMat = arma::sp_mat(fNRows, fNCols);
