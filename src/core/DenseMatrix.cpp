@@ -103,12 +103,12 @@ DenseMatrix::SetSymmetricMatrix(const std::vector<double>& _input){
 			   << " entries.");
 
 
-    int i = 0;
+    size_t i = 0;
     while(i < noVectorEntries)
       {
-        for(int j = 0; j < fNRows; j++)
+        for(size_t j = 0; j < fNRows; j++)
           {
-            for(int k = 0;  k < (j+1); k++)
+            for(size_t k = 0;  k < (j+1); k++)
               {
                 fArmaMat(k, j) = _input.at(i);
                 fArmaMat(j, k) = _input.at(i);
