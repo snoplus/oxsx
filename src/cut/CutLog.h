@@ -6,7 +6,7 @@
 class CutLog{
  public:
     CutLog() : fNEvents(0) {}
-    CutLog(const std::vector<std::string> cutNames_) : fCutNames(cutNames_), fCutCounts(std::vector<int>(cutNames_.size(), 0)), fNEvents(0) {}    
+    CutLog(const std::vector<std::string> cutNames_) : fCutCounts(std::vector<int>(cutNames_.size(), 0)), fCutNames(cutNames_), fNEvents(0) {}    
        
     void LogCut(size_t cutIndex_);
     void LogPass();
