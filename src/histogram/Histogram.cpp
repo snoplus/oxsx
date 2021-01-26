@@ -260,7 +260,7 @@ Histogram::GetSlice(const std::map<std::string,size_t>& fixedBins_) const{
     // new histogram loop 
     AxisCollection newAxes; 
     std::vector<size_t> binAxisBins;  
-    for(int i = 0; i < newAxisNames.size(); i++){
+    for(size_t i = 0; i < newAxisNames.size(); i++){
         newAxes.AddAxis(fAxes.GetAxis(newAxisIndexes[i]));
         
         // get num bins in each axis
@@ -272,7 +272,7 @@ Histogram::GetSlice(const std::map<std::string,size_t>& fixedBins_) const{
     Histogram slice(newAxes); 
 
     // loop over bins in the slice histo and fill it
-    for(int i = 0; i < newAxisIndexes.size(); i++){
+    for(size_t i = 0; i < newAxisIndexes.size(); i++){
         for(size_t bin = 0; bin < binAxisBins[i]; bin++){
             sliceIndices[newAxisIndexes[i]] = bin;
 	        size_t oldGlobalBin = fAxes.FlattenIndices(sliceIndices);
