@@ -47,7 +47,12 @@ double myline (double *x, double *par){
   return pdf;
 }
 
-void process_cuts(const std::string filename_input, const std::string filename_output, Double_t energy_ep_min, Double_t energy_ep_max, Double_t energy_n_min, Double_t energy_n_max,Double_t deltaTmin, Double_t deltaTmax, Double_t promptRmax, Double_t lateRmax, Double_t deltaRmax){
+void process_cuts(const std::string filename_input, const std::string filename_output, double FV, double z_cut1, double z_cut2, double energy1_lower, double energy1_upper, double energy2_lower, double energy2_upper, size_t delTcut_lower, size_t delTcut, double delRcut, int alphan_low_high){
+
+  /////////////
+  const bool isMC = true;
+  size_t muon_nhitmin = 2000;
+  ////////////
 
   // load input file
   char *name = new char[1000];
@@ -57,434 +62,439 @@ void process_cuts(const std::string filename_input, const std::string filename_o
   // setup output file
   TFile *file_output = new TFile(filename_output.c_str(), "RECREATE");
   TTree *tree_output = new TTree("nt","Tagged positron + neutron events");
-
-  TH1D h_after_cut_emc_nu("h_after_cut_emc_nu", "Parent antinu KE (MeV)", 300, 0, 9);
+  
+  /*TH1D h_after_cut_emc_nu("h_after_cut_emc_nu", "Parent antinu KE (MeV)", 300, 0, 9);
   TH1D h_after_cut_emc_p1("h_after_cut_emc_p1", "Particle 1 KE (MeV)", 300, 0, 9);
   TH1D h_after_cut_emc_p2("h_after_cut_emc_p2", "Particle 2 KE (MeV)", 300, 0, 1);
-  TH2D h2_after_cut_emc_p2_vs_p1("h2_after_cut_emc_p2_vs_p1", "Particle 2 KE vs Particle 1 KE", 10000, 0, 10, 1000, 0, 1);
+  TH2D h2_after_cut_emc_p2_vs_p1("h2_after_cut_emc_p2_vs_p1", "Particle 2 KE vs Particle 1 KE", 10000, 0, 10, 1000, 0, 1);*/
 
-  TH1D h_after_cut_deltaT("h_after_cut_deltaT", "Time diff (ns)", 300, 0, 1500000);
-  TH1D h_after_cut_deltaR("h_after_cut_deltaR", "Inter-particle distance (mm)", 300, 0, 5000);
-  TH2D h2_after_cut_deltaT_vs_deltaR("h2_after_cut_deltaR_deltaT", "deltaR vs deltaT ", 500, 0, 1000000, 300, 0, 10000);
-  TH1D h_after_cut_deltaT_0_1("h_after_cut_deltaT_0_1", "Time diff (ns)   evindex=0,1", 100, 0, 1000000);
-  TH1D h_after_cut_deltaT_0_2("h_after_cut_deltaT_0_2", "Time diff (ns)   evindex=0,2", 100, 0, 1000000);
-  TH1D h_after_cut_deltaR_0_1("h_after_cut_deltaR_0_1", "Inter-particle distance (mm)  evindex=0,1", 300, 0, 10000);
-  TH1D h_after_cut_deltaR_0_2("h_after_cut_deltaR_0_2", "Inter-particle distance (mm)  evindex=0,2", 300, 0, 10000);
+  TH1D *h_energy_full = new TH1D("h_energy_full", "h_energy_full", 1800, 0, 9000);
+  TH1D *h_energy_prompt = new TH1D("h_energy_prompt", "h_energy_prompt", 1000, 0, 5000);
+  TH1D *h_energy_late = new TH1D("h_energy_late", "h_energy_late", 240, 0, 1200);
+  TH1D *h_energy_prompt_like = new TH1D("h_energy_prompt_like", "h_energy_prompt_like", 1000, 0, 5000);
+  TH1D *h_energy_late_like = new TH1D("h_energy_late_like", "h_energy_late_like", 240, 0, 1200);
+  TH1D *h_energy_late_like_delT = new TH1D("h_energy_late_like_delT", "h_energy_late_like", 240, 0, 1200);
+  TH1D *h_delT = new TH1D("h_delT", "h_delT", 250, delTcut_lower, delTcut);
+  TH1D *h_delR = new TH1D("h_delR", "h_delR", 200, 0, 2000);
+  
+  TH2D *h2_delT_vs_delR = new TH2D("h2_delR_delT", "delR vs delT ", 250, delTcut_lower, delTcut, 200, 0, 2000);
+  
+  TH1D *h_Z_prompt = new TH1D("h_Z_prompt", "h_Z_prompt", 1200, -6000, 6000);
+  TH1D *h_Z_late = new TH1D("h_Z_late", "h_Z_late", 1200, -6000, 6000);
+  TH2D *h_RvsEnergy_prompt = new TH2D("h_RvsEnergy_prompt", "Prompt posR vs energys", 1000, 0, 5000, 100, 0, 6000);
+  TH2D *h_RvsEnergy_late = new TH2D("h_RvsEnergy_late", "Late posR vs energys", 240, 0, 1200, 100, 0, 6000);
+  TH2D *h_ZvsEnergy_prompt = new TH2D("h_ZvsEnergy_prompt", "Prompt posZ vs energys", 1000, 0, 5000, 100, 0, 6000);
+  TH2D *h_ZvsEnergy_late = new TH2D("h_ZvsEnergy_late", "Late posZ vs energys", 240, 0, 1200, 100, 0, 6000);
+  TH2D *h_ZvsRho_prompt = new TH2D("h_ZvsRho_prompt", "Prompt posZ vs #rho", 60, 0, 6000, 60, 0, 6000);
+  TH2D *h_ZvsRho_late = new TH2D("h_ZvsRho_late", "Late posZ vs #rho", 60, 0, 6000, 60, 0, 6000);
+  TH2D *h_XY_dis = new TH2D("h_XY_dis", "Tagged Events XY Distribution", 120, -6000, 6000, 120, -6000, 6000);
 
-  TH1D h_after_cut_efit_prompt("h_after_cut_efit_prompt", "Prompt Reconstructed Energy (MeV)", 300, 0, 9);
-  TH1D h_after_cut_efit_delayed("h_after_cut_efit_delayed", "Delayed Reconstructed Energy (MeV)", 300, 0, 9);
-  TH2D h2_after_cut_efit_delayed_vs_prompt("h2_after_cut_efit_delayed_vs_prompt", "Delayed vs Prompt Reconstructed Energy (MeV)", 300, 0, 9, 300, 0, 9);
-
+  TH2D *h_EdepvsZvsEnergy_late = new TH2D("h_EdepvsZvsEnergy_late", "Edep vs Late posZ vs energys", 240, 0, 1200, 100, 0, 6000);
+  TH2D *h_EdepQuenchvsZvsEnergy_late = new TH2D("h_EdepQuenchvsZvsEnergy_late", "Quench Edep vs Late posZ vs energys", 240, 0, 1200, 100, 0, 6000);
+  TH2D *h_EdepvsZvsEnergy_late_count = new TH2D("h_EdepvsZvsEnergy_late_count", "Edep vs Late posZ vs energys", 240, 0, 1200, 100, 0, 6000);
   
   // properties to load from input ntuple into output ttree
 
-  // mc parent and neutron truth positions not in standard ntuples?
-  // don't need long, lat, altitude, distance here - distances for each reactor saved in a separate txt file
-
-  //Double_t mc_pos_r, mc_pos_x, mc_pos_y, mc_pos_z;
-  //input and/or output
-  Int_t mc_entry, mc_entryb4;
-  Double_t ev_pos_x, ev_pos_y, ev_pos_z;
-  Double_t ev_energy, ev_next_energy, ev_energy_p1, ev_energy_p2;
-  Int_t ev_time_seconds, ev_time_days, ev_time_nanoseconds;
-  Double_t ev_time_ns, ev_next_time_ns;
-  Int_t ev_nhit, ev_next_nhit;
-  Bool_t ev_validity,ev_next_validity;
-  Int_t ev_index, ev_next_index, ev_index_p1, ev_index_p2;
-  TString *reactor_core_name = 0;
-
-  //Double_t mc_pos_r_nu, mc_pos_x_nu, mc_pos_y_nu, mc_pos_z_nu;
-  //Double_t mc_pos_n_r, mc_pos_x_n, mc_pos_y_n, mc_pos_z_n;
-  //Double_t mc_pos_r_ep, mc_pos_x_ep, mc_pos_y_ep, mc_pos_z_ep;
-  Double_t mc_quench_i, mc_energy_nu, mc_energy_n, mc_energy_ep;
-  UInt_t mc_time_days, mc_time_seconds;
+  //input 
+  double posX, posY, posZ, SKY , energy, edep, edepquench;
+  int nhits, days, sec, nsec, ID, owl, triggerWord, evinde;
+  ULong64_t clock50, DCapplied, DCflagged;
+  
+  //output
+  Int_t ev_index, ev_index_p1, ev_index_p2;
+  Double_t ev_energy_p1, ev_energy_p2;
+  Double_t ev_delT, ev_delR;
   ULong64_t ev_clock50;
-// Comparing Reconstructed to Truth:
-  int nxbins = 16;
-  double e1min = 0.;
-  double e1max = 8.;
-  int nybins = 500;
-  double delemin = 0.;
-  double delemax = 1.;
-
-  TH2D delE_efit_prompt("delE_efit_prompt","delE_efit_prompt",nxbins,e1min,e1max,nybins,delemin,delemax);
-  TH2D delE_emc_p1("delE_emc_p1","delE_emc_p1",nxbins,e1min,e1max,nybins,delemin,delemax);
-  TH2D delE_emc_p1_0_1("delE_emc_p1_0_1","delE_emc_p1_0_1",nxbins,e1min,e1max,nybins,delemin,delemax);
-  TH2D delE_emc_p1_0_2("delE_emc_p1_0_2","delE_emc_p1_0_2",nxbins,e1min,e1max,nybins,delemin,delemax);
-
-  // Investing in-between event (evindex = 1 when positron is 0th evindec and neutron is 2nd
-  TH1D deltaTimeBadEVindex1("deltaTimeBadEVindex1","deltaTimeBadEVindex1 (ns)",20,0,1000);
-  TH1D deltaRBadEVindex1("deltaRBadEVindex1","deltaRBadEVindex1 (mm)",300,0,10000);
-
+  Bool_t ev_validity;
+  //Double_t ev_pos_x, ev_pos_y, ev_pos_z;
+  
+  TString *reactor_core_name = 0;
+  
+  Double_t mc_edep_quench, mc_energy_parent1, mc_energy_parent2, mc_energy_2, mc_energy_1;
+  Int_t mc_entry, mc_pdg1, mc_pdg2;
 
   Double_t neutron_capture_energy = 2.2;//1.857;
   Double_t e_rem = 0.784;
   Double_t annihilation = 1.022;
 
   //Iwan
-  ULong64_t numsimmed = 1;
+  /*ULong64_t numsimmed = 1;
   ULong64_t numtagged = 0;
   ULong64_t ev01 = 0;
   ULong64_t ev02 = 0;
   ULong64_t ev03 = 0;
   ULong64_t badev1 = 0;
   Double_t totalbadevdeltaT = 0.;
-
-  Double_t mc_time_nanoseconds;
-  //Double_t latitude, longitude, altitude, distance;
-
-  // set branches input ntuple
-  tree_input->SetBranchAddress("mcIndex", &mc_entry);
-  tree_input->SetBranchAddress("mcEdepQuenched", &mc_quench_i);
-  tree_input->SetBranchAddress("parentKE1", &mc_energy_nu);
-  tree_input->SetBranchAddress("mcke1", &mc_energy_ep);
-  tree_input->SetBranchAddress("mcke2", &mc_energy_n);
-  //tree_input->SetBranchAddress("mcPosr", &mc_pos_r);
-  //tree_input->SetBranchAddress("mcPosx", &mc_pos_x);
-  //tree_input->SetBranchAddress("mcPosy", &mc_pos_y);
-  //tree_input->SetBranchAddress("mcPosz", &mc_pos_z);
-  tree_input->SetBranchAddress("evIndex", &ev_index);
-  tree_input->SetBranchAddress("energy", &ev_energy);
-  tree_input->SetBranchAddress("fitValid", &ev_validity);
-  tree_input->SetBranchAddress("posx", &ev_pos_x);
-  tree_input->SetBranchAddress("posy", &ev_pos_y);
-  tree_input->SetBranchAddress("posz", &ev_pos_z);
-  tree_input->SetBranchAddress("nhits", &ev_nhit);
-  tree_input->SetBranchAddress("uTDays", &ev_time_days);
-  tree_input->SetBranchAddress("uTSecs", &ev_time_seconds);
-  tree_input->SetBranchAddress("uTNSecs", &ev_time_nanoseconds);
-  tree_input->SetBranchAddress("parentMeta1", &reactor_core_name);
-  tree_input->SetBranchAddress("clockCount50", &ev_clock50);
   
-  // set branches output pruned ntuple
-  tree_output->Branch("entry", &mc_entry);
-  //tree_output->Branch("mc_time_days", &mc_time_days);
-  //tree_output->Branch("mc_time_seconds", &mc_time_seconds);
-  //tree_output->Branch("mc_time_nanoseconds", &mc_time_nanoseconds);
-  tree_output->Branch("mc_quench", &mc_quench_i);
-  tree_output->Branch("mc_neutrino_energy", &mc_energy_nu);
-  tree_output->Branch("mc_positron_energy", &mc_energy_ep);
-  tree_output->Branch("mc_neutron_energy", &mc_energy_n);
-  //tree_output->Branch("mc_neutrino_position_r", &mc_pos_r_nu);
-  //tree_output->Branch("mc_neutrino_position_x", &mc_pos_x_nu);
-  //tree_output->Branch("mc_neutrino_position_y", &mc_pos_y_nu);
-  //tree_output->Branch("mc_neutrino_position_z", &mc_pos_z_nu);
-  //tree_output->Branch("mc_positron_position_r", &mc_pos_r_ep);
-  //tree_output->Branch("mc_positron_position_x", &mc_pos_x_ep);
-  //tree_output->Branch("mc_positron_position_y", &mc_pos_y_ep);
-  //tree_output->Branch("mc_positron_position_z", &mc_pos_z_ep);
-  //tree_output->Branch("mc_neutron_position_r", &mc_pos_n_r);
-  //tree_output->Branch("mc_neutron_position_x", &mc_pos_x_n);
-  //tree_output->Branch("mc_neutron_position_y", &mc_pos_y_n);
-  //tree_output->Branch("mc_neutron_position_z", &mc_pos_z_n);
-  tree_output->Branch("ev_index", &ev_index);
-  tree_output->Branch("ev_fit_energy", &ev_energy);
-  tree_output->Branch("ev_fit_validity", &ev_validity);
-  tree_output->Branch("ev_fit_position_x", &ev_pos_x);
-  tree_output->Branch("ev_fit_position_y", &ev_pos_y);
-  tree_output->Branch("ev_fit_position_z", &ev_pos_z);
-  tree_output->Branch("ev_nhit", &ev_nhit);
-  tree_output->Branch("ev_time_days", &ev_time_days);
-  tree_output->Branch("ev_time_seconds", &ev_time_seconds);
-  tree_output->Branch("ev_time_nanoseconds", &ev_time_nanoseconds);
-  //tree_output->Branch("reactor_info_latitude", &latitude);
-  //tree_output->Branch("reactor_info_longitude", &longitude);
-  //tree_output->Branch("reactor_info_altitude", &altitude);
-  //tree_output->Branch("reactor_info_distance", &distance);
-  tree_output->Branch("reactor_core_name", &reactor_core_name);
+  Double_t mc_time_nanoseconds;
+  */
+  
+  // set branches input ntuple
+  tree_input->SetBranchAddress("posx", &posX);
+  tree_input->SetBranchAddress("posy", &posY);
+  tree_input->SetBranchAddress("posz", &posZ);
+  tree_input->SetBranchAddress("uTDays", &days);
+  tree_input->SetBranchAddress("uTSecs", &sec);
+  tree_input->SetBranchAddress("uTNSecs", &nsec);
+  tree_input->SetBranchAddress("clockCount50", &clock50);
+  //////////////////////////
+  tree_input->SetBranchAddress("nhitsCleaned", &nhits);
+  tree_input->SetBranchAddress("energy", &energy);
+  //////////////////////////
+  tree_input->SetBranchAddress("fitValid", &ev_validity);
+  tree_input->SetBranchAddress("eventID", &ID);
+  tree_input->SetBranchAddress("owlnhits", &owl);
+  tree_input->SetBranchAddress("skyShine", &SKY);
+  tree_input->SetBranchAddress("dcApplied", &DCapplied);
+  tree_input->SetBranchAddress("dcFlagged", &DCflagged);
+  tree_input->SetBranchAddress("triggerWord", &triggerWord);
+  // mc variables:
+  tree_input->SetBranchAddress("mcIndex", &mc_entry);
+  tree_input->SetBranchAddress("evIndex", &ev_index);
+  tree_input->SetBranchAddress("mcEdep", &edep);
+  tree_input->SetBranchAddress("mcEdepQuenched", &edepquench);
+  tree_input->SetBranchAddress("parentMeta1", &reactor_core_name);
+  tree_input->SetBranchAddress("parentKE1", &mc_energy_parent1);
+  tree_input->SetBranchAddress("parentKE2", &mc_energy_parent2);
+  tree_input->SetBranchAddress("mcke1", &mc_energy_1);
+  tree_input->SetBranchAddress("mcke2", &mc_energy_2);
+  tree_input->SetBranchAddress("pdg1", &mc_pdg1);
+  tree_input->SetBranchAddress("pdg2", &mc_pdg2);
 
+  // set branches output pruned ntuple
+
+  tree_output->Branch("mc_neutrino_energy", &mc_energy_parent1);
+  tree_output->Branch("mc_positron_energy", &mc_energy_1);
+  tree_output->Branch("mc_neutron_energy", &mc_energy_2);
+  tree_output->Branch("reactor_core_name", &reactor_core_name);
+  tree_output->Branch("entry", &mc_entry);
   // values to modify
-  tree_output->Branch("ev_fit_energy_p1", &ev_energy_p1);
-  tree_output->Branch("ev_fit_energy_p2", &ev_energy_p2);
   tree_output->Branch("ev_index_p1", &ev_index_p1);
   tree_output->Branch("ev_index_p2", &ev_index_p2);
-
+  tree_output->Branch("ev_fit_energy_p1", &ev_energy_p1);
+  tree_output->Branch("ev_fit_energy_p2", &ev_energy_p2);
 
   ///////////////////////////////////////////////
   /// Cleaning+Coinc. Tagging (using evindex) ///
   ///////////////////////////////////////////////
 
-  ULong64_t n_entries = tree_input->GetEntries();
+  int ntagged = 0;
+  ULong64_t nsimmed = 1;
+  std::vector<int> tagged214;
 
-  if (n_entries != 0){
-    //get first event and its MCentry number
-    tree_input->GetEntry(0);
-    mc_entryb4 = mc_entry;
+  int late_candidates = 0;
 
-    //go through entries and collect triggered evs which correspond to a single generated antinu MC event.
-    for(ULong64_t i = 1; i < n_entries; i++){
-      if (i % 100 == 0) std::cout <<  "    Processed entries: " << i << " (" << (double)i/n_entries*100. << "%) " << std::endl;
-      tree_input->GetEntry(i);
-      // reset pointers
-      reactor_core_name = 0;
+  std::cout<<"n_entries: "<<tree_input->GetEntries()<<std::endl;
+  for (int i = 0; i < tree_input->GetEntries(); i++) {
+    if (i == 0) continue;
+
+    tree_input->GetEntry(i);
+    reactor_core_name = 0;
+    double x1, y1, z1, r1, rho1, sky1, edep1, edepquench1, energy1;
+    long long time1;
+    int date1, sec1, nsec1, id1, owl1,triggerWord1, ev_index1;
+    ULong64_t clock1;
+
+    x1 = posX;
+    y1 = posY;
+    rho1 = pow(x1*x1 + y1*y1, .5);
+    z1 = posZ - 108;
+    r1 = pow((x1*x1 + y1*y1 + z1*z1), .5);
+    energy1 = energy;
+    time1 = days * 24 * 3600 * pow(10, 9) + sec * pow(10, 9) + nsec;
+    clock1 = clock50;
+    id1 = ID;
+    owl1 = owl;
+    sky1 = SKY;
+    triggerWord1 = triggerWord;
       
-      if(abs(mc_entry - mc_entryb4)>= 1 && ev_index == 0){ //mark when passed group of triggered evs with same mcindex:
-        numsimmed += 1;
-        tree_input->GetEntry(i-1);//Get triggered event count for the antinu MC entry
-	if (ev_index >= 0){
-	  ULong64_t EVcount = ev_index + 1;
-	  ULong64_t j = 0;  // j index for potential positron event
-	  bool pairfound = false;
-	  //move j index within MC index group, move onto next group when j reaches second to last event
-	
-	  while (j < EVcount - 1){
-	    ULong64_t k = 1; // k index for potential neutron event
-	    Double_t time_diff_condition = 0;
-	    //move j index within MC index group, move on to next group if nothing within deltaT or no more events to look at
-	    while((time_diff_condition < deltaTmax) && (k < EVcount - j)){
-	      tree_input->GetEntry(i-EVcount+j+k); // store potential neutron event parameters
-	      ev_next_validity = ev_validity;
-	      ev_next_time_ns = ev_time_nanoseconds + (ev_time_seconds * pow(10, 9)) + (ev_time_days * 24 * 3600 * pow(10, 9));
-	      ev_next_nhit = ev_nhit;
-	      ev_next_index = ev_index;
-	      ev_next_energy = ev_energy;
-	      TVector3 ev_next_vecR = TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
-	      Double_t ev_next_rho = sqrt(pow(ev_pos_x,2) + pow(ev_pos_y,2));
+    date1 = days;
+    sec1 = sec;
+    nsec1 = nsec;
 
-	      tree_input->GetEntry(i-EVcount+j);// potential positron event
-	      bool goodpair = false;
-	      Double_t deltaT = 0.;
-	      if (ev_validity && ev_next_validity){
-		TVector3 ev_vecR= TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
-		ev_time_ns = ev_time_nanoseconds + (ev_time_seconds * pow(10, 9)) + (ev_time_days * 24 * 3600 * pow(10, 9));
-		deltaT = std::fabs(ev_next_time_ns - ev_time_ns);
-		Double_t deltaR = (ev_vecR - ev_next_vecR).Mag();
-		if(deltaT > deltaTmin && deltaT < deltaTmax){
-		  if (ev_vecR.Mag() < promptRmax){
-		    if (ev_next_vecR.Mag() < lateRmax){
-		      if (deltaR < deltaRmax){
-			// for KamLAND Paper1:
-			//if (ev_next_rho > 1200){
-			//if want to correc energies
-			ev_energy += correction(ev_energy);
-			ev_next_energy += correction(ev_next_energy);
-			if (energy_ep_min <= ev_energy && ev_energy <= energy_ep_max){
-			  if (energy_n_min <= ev_next_energy && ev_next_energy <= energy_n_max){ //|| (4. <= nextEnergycorrec && nextEnergycorrec <= 5.8)){ //if want to allow for carbon capture?
-			    
-			    numtagged += 1;
-			    //std::cout<<"tagged \n"<<std::endl;
-			    //std::cout<<"\n MCentry: "<<MCentry<<" EVindex: "<<evindex<<" nhits: "<<nhit<<" day: "<<days<<std::endl;
-			    //std::cout<<"MCentry2: "<<nextMCentry<<" EVindex2: "<<nextevindex<<" nhits2: "<<nextnhit<<" day2: "<<nextdays<<std::endl;
-			    //std::cout<<"timeD: "<<timeD<<std::endl;
-			    //std::cout<<"------------------------------------------------------- "<<timeD<<std::endl;
-			    //std::cout<<" EVindex: "<<evindex<<std::endl;
-			    //std::cout<<" EVindex2: "<<nextevindex<<std::endl;
-			    //std::cout<<"Energy: "<<Energy<<" EDep: "<<EDep<<" QuenchEDep: "<<QuenchEDep<<std::endl;
-			    h_after_cut_emc_nu.Fill(mc_energy_nu);
-			    h_after_cut_emc_p1.Fill(mc_energy_ep);
-			    h_after_cut_emc_p2.Fill(mc_energy_n);
-			    h2_after_cut_emc_p2_vs_p1.Fill(mc_energy_ep, mc_energy_n);
-                          
+    edep1 = edep;
+    edepquench1 = edepquench;
+    ev_index1 = ev_index;
 
-			    h_after_cut_deltaT.Fill(deltaT);
-			    h_after_cut_deltaR.Fill(deltaR);
-			    h2_after_cut_deltaT_vs_deltaR.Fill(deltaR, deltaT);
-			    h_after_cut_efit_prompt.Fill(ev_energy);
-			    h_after_cut_efit_delayed.Fill(ev_next_energy);
-			    h2_after_cut_efit_delayed_vs_prompt.Fill(ev_energy, ev_next_energy);
+    // muon tag
+    bool muon_found = false;
+    /*if (!isMC){
+      if (run_number_int >= 258979 && run_number_int <= 259946){
+        if (nhits1 > muon_nhitmin){
+          muon_found = true;
+          TVector3 position = TVector3(x1,y1,z1);
+          muon_pos.push_back(position);
+          muon_clock50.push_back(clock1);
+          muon_gtid.push_back(id1);
+          muon_nhit.push_back(nhits1);
+	  
+          std::cout<<"\n MUON FOUND (Crates off) "<<std::endl;
 
-			    delE_efit_prompt.Fill(ev_energy,mc_energy_ep + annihilation - ev_energy);
-			    delE_emc_p1.Fill(mc_energy_ep,mc_energy_ep + annihilation - ev_energy);
+          ULong64_t muon_tag_time = clock1 * 20;
+          int date_muon = muon_tag_time / 86400000000000;
+          int sec_muon = (muon_tag_time - date_muon * 86400000000000) / 1000000000;
+          int nsec_muon = muon_tag_time - date_muon * 86400000000000 - sec_muon * 1000000000;
 
-			    ev_energy_p1 = ev_energy;
-			    ev_index_p1 = ev_index;
-			    ev_energy_p2 = ev_next_energy;
-			    ev_index_p2 = ev_next_index;
-			    tree_output->Fill();
+          std::stringstream muon_tag_time_strm;
+          muon_tag_time_strm<<date_muon<<" "<<sec_muon<<"."<<nsec_muon;
+          std::cout<<" pos: ("<<position.X()<<", "<<position.Y()<<", "<<position.Z()<<")  clock50_sec: "<<muon_tag_time_strm.str()<<"  gtid: "<<id1<<"  nhit: "<<nhits1<<"\n"<<std::endl;
+        }
+      }else{
+        if (!(((DCapplied & 0x80) & DCflagged ) == (DCapplied & 0x80))){
+          muon_found = true;
+          TVector3 position = TVector3(x1,y1,z1);
+          muon_pos.push_back(position);
+          muon_clock50.push_back(clock1);
+          muon_gtid.push_back(id1);
+          muon_nhit.push_back(nhits1);
 
-			    if (ev_index == 0 && ev_next_index == 1){
-			      ev01 += 1;
-			      h_after_cut_deltaT_0_1.Fill(deltaT);
-			      h_after_cut_deltaR_0_1.Fill(deltaR);
+          std::cout<<"\n MUON FOUND"<<std::endl;
 
-			      delE_emc_p1_0_1.Fill(mc_energy_ep,mc_energy_ep + annihilation - ev_energy);
-			    }
+          ULong64_t muon_tag_time = clock1 * 20;
+          int date_muon = muon_tag_time / 86400000000000;
+          int sec_muon = (muon_tag_time - date_muon * 86400000000000) / 1000000000;
+          int nsec_muon = muon_tag_time - date_muon * 86400000000000 - sec_muon * 1000000000;
 
-			    if (ev_index == 0 && ev_next_index == 2){
-			      ev02 += 1;
-			      h_after_cut_deltaT_0_2.Fill(deltaT);
-			      h_after_cut_deltaR_0_2.Fill(deltaR);
-
-			      delE_emc_p1_0_2.Fill(mc_energy_ep,mc_energy_ep + annihilation - ev_energy);
-
-			      Double_t ev_time0_ns = ev_time_ns;
-			      TVector3 ev_vecR0 = ev_vecR;
-			      tree_input->GetEntry(i-EVcount+j+k-1);
-			      if (ev_validity){
-				badev1 += 1;
-				Double_t ev_time1_ns = ev_time_nanoseconds + (ev_time_seconds * pow(10, 9)) + (ev_time_days * 24 * 3600 * pow(10, 9));
-				TVector3 ev_vecR1 = TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
-				Double_t deltaR01 = (ev_vecR0 - ev_vecR1).Mag();
-				Double_t deltaT01 = std::fabs(ev_time1_ns - ev_time0_ns);
-
-				deltaTimeBadEVindex1.Fill(deltaT01);
-				deltaRBadEVindex1.Fill(deltaR01);
-				totalbadevdeltaT += deltaT01;
-			      }
-			    }
-			    if (ev_index == 0 && ev_next_index == 3)
-			      ev03 += 1;
-
-			    goodpair = true;  //pair passed quality cuts, if not continue search in group
-			    pairfound = true; // a pair was found
-			    k += 100; // cancel sub search
-	
-			  }
-			    //}
-			}
-		      }
-		    }
-		  }
-		}
-	      } // if pair failed quality cuts, continue sub group search
-		if (!goodpair){
-		  k += 1;
-		  if (!ev_validity){ //if positron/j_index not a valid fit, move onto next sub group
-		    k += 100;
-		  }else{ //else if good, check that it satisfies time diff, if not move onto next sub group
-		    time_diff_condition = deltaT;
-		  }
-		}
-	    }
-	      if (pairfound){
-		j += 100;
-	      }else{
-		j += 1;
-	      }
-	  }
-	}
+          std::stringstream muon_tag_time_strm;
+          muon_tag_time_strm<<date_muon<<" "<<sec_muon<<"."<<nsec_muon;
+          std::cout<<" pos: ("<<position.X()<<", "<<position.Y()<<", "<<position.Z()<<")  clock50_sec: "<<muon_tag_time_strm.str()<<"  gtid: "<<id1<<"  nhit: "<<nhits1<<"\n"<<std::endl;
+        }
       }
-      mc_entryb4 = mc_entry;
+      }*/
+
+    //if (((DCapplied & 0x210000000242) & DCflagged ) != (DCapplied & 0x210000000242)) continue;
+    //if (((DCapplied & 0x210000003FF6) & DCflagged ) != (DCapplied & 0x210000003FF6)) continue;
+
+    /*if (!isMC)
+    if (((DCapplied & 0x21000000FFF6) & DCflagged ) != (DCapplied & 0x21000000FFF6)) continue;   //Matt Mask
+    */
+
+    //  for MC events, neutron will have evindex >= 1
+    if (isMC && (ev_index1 <= 0))//{
+      nsimmed += 1;
+    /*std::cout<<"\ni: "<<i<<" evindex: "<<ev_index1<<" energy: "<<energy1<<" ("<<energy1_lower<<","<<energy1_upper<<") "<<" r1: "<<r1<<" z1: "<<z1<<" ("<<z_cut2<<","<<z_cut1<<") "<<" sky: "<<sky1<<" "<<std::endl;
+    }else{
+      std::cout<<"i: "<<i<<" evindex: "<<ev_index1<<" energy: "<<energy1<<" ("<<energy2_lower<<","<<energy2_upper<<") "<<" r1: "<<r1<<" z1: "<<z1<<" ("<<z_cut2<<","<<z_cut1<<") "<<" sky: "<<sky1<<" "<<std::endl;
+    }*/
+
+    if (isMC && (ev_index1 == 0)) continue;
+
+    if (!ev_validity) continue;
+
+    if (sky1 < 1) continue;
+
+    for (int d = 1; d < 9; d++) {	
+      if (nsec1 % 10 == 0) nsec1 = nsec1 / 10;
     }
 
-    // have to repeat process for very last mc entry
-    ULong64_t lastentry = (n_entries - 1);
-    tree_input->GetEntry(lastentry);
+    //std::cout<<"i: "<<i<<" evindex: "<<ev_index<<", "<<ev_index1<<" energy: "<<energy<<" r1: "<<r1<<" z1: "<<z1<<"  "<<FV<<"  "<<z_cut1<<"  "<<z_cut2<<std::endl;
 
-    if (ev_index >= 0){
-	
-      ULong64_t EVcount = ev_index + 1;
-
-      ULong64_t j = 0;  // j index for potential positron event
-      bool pairfound = false;
-      //move j index within MC index group, move onto next group when j reaches second to last event
-      while (j < EVcount - 1){
-	ULong64_t k = 1; // k index for potential neutron event
-	Double_t time_diff_condition = 0;
-	//move j index within MC index group, move on to next group if nothing within deltaT or no more events to look at
-	while((time_diff_condition < deltaTmax) && (k < EVcount - j)){
-	  tree_input->GetEntry(lastentry-EVcount+j+k+1); // store potential neutron event parameters
-	  ev_next_validity = ev_validity;
-	  ev_next_time_ns = ev_time_nanoseconds + (ev_time_seconds * pow(10, 9)) + (ev_time_days * 24 * 3600 * pow(10, 9));
-	  ev_next_nhit = ev_nhit;
-	  ev_next_index = ev_index;
-	  ev_next_energy = ev_energy;
-	  TVector3 ev_next_vecR = TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
-	  Double_t ev_next_rho = sqrt(pow(ev_pos_x,2) + pow(ev_pos_y,2));
-
-	  tree_input->GetEntry(lastentry+1-EVcount+j);// potential positron event
-	  bool goodpair = false;
-	  Double_t deltaT = 0.;
-	  if (ev_validity && ev_next_validity){
-	    TVector3 ev_vecR= TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
-	    ev_time_ns = ev_time_nanoseconds + (ev_time_seconds * pow(10, 9)) + (ev_time_days * 24 * 3600 * pow(10, 9));
-	    deltaT = std::fabs(ev_next_time_ns - ev_time_ns);
-	    Double_t deltaR = (ev_vecR - ev_next_vecR).Mag();
-	    if(deltaT > deltaTmin && deltaT < deltaTmax){
-	      if (ev_vecR.Mag() < promptRmax){
-		if (ev_next_vecR.Mag() < lateRmax){
-		  if (deltaR < deltaRmax){
-		    //if (ev_next_rho > 1200){
-		    //if want to correc energies
-		    ev_energy += correction(ev_energy);
-		    ev_next_energy += correction(ev_next_energy);
-		    if (energy_ep_min <= ev_energy && ev_energy <= energy_ep_max){
-		      if (energy_n_min <= ev_next_energy && ev_next_energy <= energy_n_max){ //|| (4. <= nextEnergycorrec && nextEnergycorrec <= 5.8)){ //if want to allow for carbon capture?
-
-			numtagged += 1;
-
-			h_after_cut_emc_nu.Fill(mc_energy_nu);
-			h_after_cut_emc_p1.Fill(mc_energy_ep);
-			h_after_cut_emc_p2.Fill(mc_energy_n);
-			h2_after_cut_emc_p2_vs_p1.Fill(mc_energy_ep, mc_energy_n);
-
-			h_after_cut_deltaT.Fill(deltaT);
-			h_after_cut_deltaR.Fill(deltaR);
-			h2_after_cut_deltaT_vs_deltaR.Fill(deltaR, deltaT);
-			h_after_cut_efit_prompt.Fill(ev_energy);
-			h_after_cut_efit_delayed.Fill(ev_next_energy);
-			h2_after_cut_efit_delayed_vs_prompt.Fill(ev_energy, ev_next_energy);
-
-			delE_efit_prompt.Fill(ev_energy,mc_energy_ep + annihilation - ev_energy);
-			delE_emc_p1.Fill(mc_energy_ep,mc_energy_ep + annihilation - ev_energy);
-
-			ev_energy_p1 = ev_energy;
-			ev_index_p1 = ev_index;
-			ev_energy_p2 = ev_next_energy;
-			ev_index_p2 = ev_next_index;
-			tree_output->Fill();
-
-			if (ev_index == 0 && ev_next_index == 1){
-			  ev01 += 1;
-			  h_after_cut_deltaT_0_1.Fill(deltaT);
-			  h_after_cut_deltaR_0_1.Fill(deltaR);
-
-			  delE_emc_p1_0_1.Fill(mc_energy_ep,mc_energy_ep + annihilation - ev_energy);
-
-			}
-			if (ev_index == 0 && ev_next_index == 2){
-			  ev02 += 1;
-			  h_after_cut_deltaT_0_2.Fill(deltaT);
-			  h_after_cut_deltaR_0_2.Fill(deltaR);
-
-			  delE_emc_p1_0_2.Fill(mc_energy_ep,mc_energy_ep + annihilation - ev_energy);
-
-			  Double_t ev_time0_ns = ev_time_ns;
-			  TVector3 ev_vecR0 = ev_vecR;
-			  tree_input->GetEntry(lastentry+1-EVcount+j+k-1);
-			  if (ev_validity){
-			    badev1 += 1;
-			    Double_t ev_time1_ns = ev_time_nanoseconds + (ev_time_seconds * pow(10, 9)) + (ev_time_days * 24 * 3600 * pow(10, 9));
-			    TVector3 ev_vecR1 = TVector3(ev_pos_x,ev_pos_y,ev_pos_z);
-			    Double_t deltaR01 = (ev_vecR0 - ev_vecR1).Mag();
-			    Double_t deltaT01 = std::fabs(ev_time1_ns - ev_time0_ns);
-
-			    deltaTimeBadEVindex1.Fill(deltaT01);
-			    deltaRBadEVindex1.Fill(deltaR01);
-			    totalbadevdeltaT += deltaT01;
-			  }
-			}
-			if (ev_index == 0 && ev_next_index == 3)
-			  ev03 += 1;
-
-			goodpair = true;  //pair passed quality cuts, if not continue search in group
-			pairfound = true; // a pair was found
-			k += 100; // cancel sub search
-		      }
-		    }
-		    //}
-		  }
-		}
-	      }
-	    }
-	  } // if pair failed quality cuts, continue sub group search
-	  if (!goodpair){
-	    k += 1;
-	    if (!ev_validity){ //if positron/j_index not a valid fit, move onto next sub group
-	      k += 100;
-	    }else{ //else if good, check that it satisfies time diff, if not move onto next sub group
-	      time_diff_condition = deltaT;
-	    }
-	  }
-	}
-	if (pairfound){
-	  j += 100;
-	}else{
-	  j += 1;
-	}
+    if (r1 > FV || z1 > z_cut1 || z1 < z_cut2) continue;
+      
+    if (energy1 > energy1_lower)
+      h_energy_full->Fill(energy1);
+      
+    /*// counting prompt event candidates
+    if (z1 > Nhit_Zcut) {
+      if (nhits1 < nhit1_upper && nhits1 > nhit1_lower){
+        prompt_candidates += 1;
+        prompt_candidate_entries.push_back(i);
+        h_nhit_prompt_like->Fill(nhits1);
       }
-      // finished tagging
+    } else {
+      if (nhits1 < nhit1_upper_2nd && nhits1 > nhit1_lower_2nd){
+        prompt_candidates += 1;
+        prompt_candidate_entries.push_back(i);
+        h_nhit_prompt_like->Fill(nhits1);
+      }
+    }*/
+
+    if (energy1 > energy2_upper || energy1 < energy2_lower) continue;
+    
+    // counting prompt event candidates
+    late_candidates += 1;
+    //std::cout<<" -----------> late candidate"<<std::endl;
+
+    bool pair = false;
+
+    for (int ii = 1; ii < (i + 1); ii++) {
+	
+      if (pair) break;
+
+      bool tagged = false;
+	
+      for (int i214 = 0; i214 < tagged214.size(); i214++) {
+        if ((i - ii) == tagged214[i214]) {
+          tagged = true;
+          break;
+        } 
+      }
+	
+      if (tagged == true) continue;
+
+      tree_input->GetEntry(i - ii);
+
+      //if (((DCapplied & 0x210000003FF6) & DCflagged ) != (DCapplied & 0x210000003FF6)) continue;
+      if (!isMC)
+        if (((DCapplied & 0x21000000FFF6) & DCflagged ) != (DCapplied & 0x21000000FFF6)) continue;   //Matt Mask
+      
+      if (!ev_validity) continue;
+
+
+      double x2, y2, z2, r2, rho2, sky2, energy2;
+      long long time2;
+      int id2, owl2, triggerWord2, mc_entry2, ev_index2;
+      ULong64_t clock2;
+      //TString reactor_core_name2;
+
+      x2 = posX;
+      y2 = posY;
+      rho2 = pow(x2*x2 + y2*y2, .5);
+      z2 = posZ - 108;
+      r2 = pow((x2*x2 + y2*y2 + z2*z2), .5);
+      energy2 = energy;
+      time2 = days * 24 * 3600 * pow(10, 9) + sec * pow(10, 9) + nsec;
+      clock2 = clock50;
+      id2 = ID;
+      owl2 = owl;
+      sky2 = SKY;
+      triggerWord2 = triggerWord;
+
+      ev_index2 = ev_index;
+      mc_entry2 = mc_entry;
+
+      //reactor_core_name2 = reactor_core_name;
+      
+      ULong64_t delT = (clock1 - clock2) * 20;
+
+      double delR = pow( ((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2)), 0.5);
+
+      if (delT > delTcut) break;
+
+      if (energy2 < energy1_lower || energy2 > energy1_upper) continue;
+      
+      if (sky2 < 1) continue;
+
+      if (r2 > FV || z2 > z_cut1 || z2 < z_cut2) continue;
+
+      if (delR > delRcut) continue;
+	
+      if (delT < delTcut_lower) continue;
+
+      ////////////////////////////
+      //if (delT > 1000000) break;
+      ///////////////////////////
+      
+      //////////
+      // remove gamma events from mc:
+      //std::cout<<"energy1: "<<energy2<<" ke1: "<<mc_energy_1<<" ke2: "<<mc_energy_2<<" pdg1: "<<mc_pdg1<<" pdg2: "<<mc_pdg2<<std::endl;
+      bool high_low_continue = false;
+      if (alphan_low_high == 1){
+        if ((6.1 < mc_energy_1 < 6.2 and mc_pdg1 == 22) or\
+            ((mc_energy_1+mc_energy_2 > 5) and mc_pdg1 == -11 and mc_pdg2 == 11) or
+            ((mc_energy_1+mc_energy_2 > 2.513) and mc_pdg1 == -11 and mc_pdg2 == 1000020040)){
+          high_low_continue = true;
+          //std::cout<<"----->skipping 6.1MeV gammas (pair)  ev_energy: "<<energy2<<std::endl;
+        }
+      }else if (alphan_low_high == 2){
+        high_low_continue = true;
+        if ((6.1 < mc_energy_1 < 6.2 and mc_pdg1 == 22) or\
+            ((mc_energy_1+mc_energy_2 > 5) and mc_pdg1 == -11 and mc_pdg2 == 11) or
+            ((mc_energy_1+mc_energy_2 > 2.513) and mc_pdg1 == -11 and mc_pdg2 == 1000020040)){
+          high_low_continue = false;
+          //std::cout<<"keeping 6.1MeV gammas (pair)"<<std::endl;
+        }
+      }
+      
+      if (high_low_continue) continue;
+      ////////
+      
+      ntagged += 1;
+      //std::cout<<"-------------------------------------------------------------\n"<< \
+          //"Tagged pair "<<" prompt_i = "<<(i-ii)<<" nhit: "<<energy2<<"  late_i = "<<i<<"nhit: "<<energy1<<"\n-------------------------------------------------------------"<<std::endl;
+
+      /*tag_prompt_pos.push_back(TVector3(x2,y2,z2));
+      tag_late_pos.push_back(TVector3(x1,y1,z1));
+
+      tag_prompt_time.push_back(clock2*20.);
+      tag_late_time.push_back(clock1*20.);
+
+
+      ULong64_t tag_time = clock1 * 20;
+      int date_1 = tag_time / 86400000000000;
+      int sec_1 = (tag_time - date_1 * 86400000000000) / 1000000000;
+      int nsec_1 = tag_time - date_1 * 86400000000000 - sec_1 * 1000000000;
+
+      std::ostringstream BiPo_date_str, BiPo_sec_str, BiPo_nsec_str;
+      BiPo_date_str << date_1;
+      BiPo_sec_str << sec_1;
+      BiPo_nsec_str << nsec_1;
+      std::string event_time = BiPo_date_str.str() + " " + BiPo_sec_str.str() + "." + BiPo_nsec_str.str() + "\n";
+      outfile << event_time.c_str();
+
+      ULong64_t tag_time_2 = clock2 * 20;
+      int date_2 = tag_time_2 / 86400000000000;
+      int sec_2 = (tag_time_2 - date_2 * 86400000000000) / 1000000000;
+      int nsec_2 = tag_time_2 - date_2 * 86400000000000 - sec_2 * 1000000000;
+
+      std::stringstream tag_time_2_strm;
+      tag_time_2_strm<<date_2<<" "<<sec_2<<"."<<nsec_2;
+
+      std::stringstream tag_time_1_strm;
+      tag_time_1_strm<<date_1<<" "<<sec_1<<"."<<nsec_1;
+
+      std::cout<<"\n-------------------------------------------------------------\n"<< \
+      "Tagged pair, event time =  "<<event_time<<" prompt_i = "<<(i-ii)<<" late_i = "<<i<<"  gtid1 = "<<id2<<" gtid2 = "<<id1<<" (clock50)day_sec_1 = "<<tag_time_2_strm.str()<<" (clock50)day_sec_2 = "<<tag_time_1_strm.str()<<" trigword1 = "<<triggerWord2<<" trigword2 = "<<triggerWord1 \
+	       <<"\n-------------------------------------------------------------"<<std::endl;
+      
+
+      std::ostringstream Bi_id_str, Po_id_str;
+      Bi_id_str << id2;
+      Po_id_str << id1;
+      std::string event_UTID = Bi_id_str.str() + " " + Po_id_str.str() + " ";
+      outfile3 << event_UTID.c_str();
+      */
+      pair = true;
+      tagged214.push_back(i);
+      tagged214.push_back(i-ii);
+
+      h_energy_prompt->Fill(energy2);
+      h_energy_late->Fill(energy1);
+      h_delT->Fill(delT);
+      h_delR->Fill(delR);
+      h2_delT_vs_delR->Fill(delT,delR);
+      h_RvsEnergy_prompt->Fill(energy2, r2);
+      h_ZvsEnergy_prompt->Fill(energy2, z2);
+      h_ZvsRho_prompt->Fill(rho2, z2);
+      h_RvsEnergy_late->Fill(energy1, r1);
+      h_ZvsEnergy_late->Fill(energy1, z1);
+      h_ZvsRho_late->Fill(rho1, z1);
+      h_XY_dis->Fill(x1, y1);
+      h_XY_dis->Fill(x2, y2);
+      h_Z_prompt->Fill(z2);
+      h_Z_late->Fill(z1);
+      
+      /*h_after_cut_emc_nu->Fill(mc_energy_nu);
+      h_after_cut_emc_p1->Fill(mc_energy_pe);
+      h_after_cut_emc_p2->Fill(mc_energy_n);*/
+
+      // for output
+      mc_entry = mc_entry2;
+      ev_index_p1 = ev_index2;
+      ev_index_p2 = ev_index1;
+      ev_energy_p1 = energy2;
+      ev_energy_p2 = energy1;
+
+      tree_output->Fill();
+
+      if (isMC){
+        h_EdepvsZvsEnergy_late->Fill(energy1,z1,edep1);
+        h_EdepQuenchvsZvsEnergy_late->Fill(energy1,z1,edep1);
+        h_EdepvsZvsEnergy_late_count->Fill(energy1,z1);
+      }
     }
+  }
+  /*
     // look at how reconstruction compares w/ MC truth
     //  dele = positronKE + 1.022MeV - reconstructedEPrompt
     std::vector<Double_t> dele_e1xvec;
@@ -633,14 +643,30 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
     std::cout<<"\n noise events between e+ an n: "<<badev1<<std::endl;
     std::cout<<"bad ev following positron mean time (ns): "<<totalbadevdeltaT/badev1<<std::endl;
-
+  */
 
     // save file
     //file_input->Close();
     file_output->cd();
 
     // write objects...
-    h_after_cut_emc_nu.Write();
+    h_energy_full->Write();
+    h_energy_prompt->Write();
+    h_energy_late->Write();
+    h_delT->Write();
+    h_delR->Write();
+    h2_delT_vs_delR->Write();
+    h_Z_prompt->Write();
+    h_Z_late->Write();
+    h_RvsEnergy_prompt->Write();
+    h_ZvsEnergy_prompt->Write();
+    h_ZvsRho_prompt->Write();
+    h_RvsEnergy_late->Write();
+    h_ZvsEnergy_late->Write();
+    h_ZvsRho_late->Write();
+    h_XY_dis->Write();    
+    
+    /*h_after_cut_emc_nu.Write();
     h_after_cut_emc_p1.Write();
     h_after_cut_emc_p2.Write();
     h2_after_cut_emc_p2_vs_p1.Write();
@@ -667,23 +693,23 @@ void process_cuts(const std::string filename_input, const std::string filename_o
 
     deltaTimeBadEVindex1.Write();
     deltaRBadEVindex1.Write();
-
+    */
     //write csv output file with event numbers
     sprintf(name, "%s.csv",filename_output.c_str());
+
     //FILE *fOut = fopen(name,"w");
-    //fprintf(fOut,"filename_input,filename_output,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaTmin,deltaTmax,deltaRmax,initial_entries,final_entries,finished\n");
-    //fprintf(fOut,"%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%llu,%llu,%i\n", filename_input.c_str(), filename_output.c_str(), energy_ep_min, energy_ep_max, energy_n_min, energy_n_max, deltaTmin, deltaTmax, promptRmax, lateRmax, deltaRmax, numsimmed, numtagged,1);
+    //fprintf(fOut,"filename_input,filename_output,Rmax,Zmin,Zmax,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaTmin,deltaTmax,deltaRmax,initial_entries,final_entries,finished\n");
+    //fprintf(fOut,"%s,%s,%f,%f,%f,%f,%f,%f,%f,%i,%i,%f,%i,%i,%i\n", filename_input.c_str().str(), filename_output.c_str().str(), FV, z_cut1, z_cut2, energy1_lower, energy1_upper, energy2_lower, energy2_upper, delTcut_lower, delTcut, delRcut, nsimmed, ntagged,1);
     //fclose(fOut);
     std::ofstream fOut(name);
     fOut<<"filename_input,filename_output,Rmax,Zmin,Zmax,energy_ep_min,energy_ep_max,energy_n_min,energy_n_max,deltaTmin,deltaTmax,deltaRmax,initial_entries,final_entries,finished\n";
-    fOut<<filename_input<<", "<<filename_output<<", "<<promptRmax<<", "<<(-6000)<<", "<<6000<<", "<<energy_ep_min<<", "<<energy_ep_max<<", "<<energy_n_min<<", "<<energy_n_max<<", "<<deltaTmin<<", "<<deltaTmax<<", "<<deltaRmax<<", "<<numsimmed<<", "<<numtagged<<", 1\n";
+    fOut<<filename_input<<", "<<filename_output<<", "<<FV<<", "<<z_cut1<<", "<<z_cut2<<", "<<energy1_lower<<", "<<energy1_upper<<", "<<energy2_lower<<", "<<energy2_upper<<", "<<delTcut_lower<<", "<<delTcut<<", "<<delRcut<<", "<<nsimmed<<", "<<ntagged<<", 1\n";
     fOut.close();
 
+    std::cout<<"fin: "<<filename_input<<" \n fout: "<<filename_output<<"\n Rmax "<<FV<<"\n Zmin "<<z_cut2<<"\n Zmax "<<z_cut1<<"\n e1min "<<energy1_lower<<"\n e1max "<<energy1_upper<<"\n e2min "<<energy2_lower<<"\n e2max "<<energy2_upper<<"\n delT "<<delTcut_lower<<"\n delTmax "<<delTcut<<"\n delR "<<delRcut<<"\n nsimmed: "<<nsimmed<<"\n ntagged: "<<ntagged<<"\n nlatecandidates: "<<late_candidates<<std::endl;
 
-    std::cout<<"fin: "<<filename_input<<" \n fout: "<<filename_output<<"\n e1min "<<energy_ep_min<<"\n e1max "<<energy_ep_max<<"\n e2min "<<energy_n_min<<"\n e2max "<<energy_n_max<<"\n delT "<<deltaTmin<<"\n delTmax "<<deltaTmax<<"\n R1 "<<promptRmax<<"\n R2 "<<lateRmax<<"\n delR "<<deltaRmax<<std::endl;
-  }
-  tree_output->AutoSave();
-  file_output->Close();
-  delete tree_input;
-  delete file_output;
+    tree_output->AutoSave();
+    file_output->Close();
+    delete tree_input;
+    delete file_output;
 }

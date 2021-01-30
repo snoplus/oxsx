@@ -55,13 +55,14 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
     const std::string &split_pdf_params_file,
     const bool apply_energy_scaling, const Double_t e_scaling_estimate,
     const bool apply_energy_resolution_convolution,
-    const Double_t e_resolution_estimate){
+    const Double_t e_resolution_estimate, const int poisson_fluc_bool){
 
     printf("Beginning Fake data prep--------------------------------------\n");
     printf("Fake Data:: del_21:%.9f, sin2_12:%.7f, sin2_13:%.7f\n", param_d21, param_s12, param_s13);
 
     char name[1000];
     TRandom3 *random_generator = new TRandom3();
+    random_generator->SetSeed(0);
     const ULong64_t n_pdf = reactor_names.size();
 
     // set up binning
@@ -338,6 +339,14 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
 	
     }
 
+    if (poisson_fluc_bool == 1){
+      for (size_t i = 0; i < n_bins; i++){
+        Double_t old_content = data_set_pdf.GetBinContent(i);
+        Double_t new_content = random_generator->Poisson(old_content);
+        data_set_pdf.SetBinContent(i, new_content);
+      }
+    }
+
     //databincontents = data_set_pdf.GetBinContents();
     printf("End data prep-------------------------------------\n");
     std::cout<<"\nReactor ev total: "<<reactor_total<<std::endl;
@@ -348,8 +357,8 @@ void Make_Fake_Data(BinnedED &data_set_pdf, const std::string &spectrum_phwr_uno
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 22){
-        std::cout<<"Error: 21 arguments expected."<<std::endl;
+    if (argc != 23){
+        std::cout<<"Error: 22 arguments expected."<<std::endl;
         return 1; // return>0 indicates error code
     }
     else{
@@ -374,6 +383,8 @@ int main(int argc, char *argv[]) {
         const std::string &split_pdf_params_file = argv[19];
         const double e_scaling_estimate = atof(argv[20]);
         const double e_resolution_estimate = atof(argv[21]);
+        const size_t poisson_fluc_bool = atoi(argv[22]);
+        
 
         ///// EScale /////
         //double e_scaling_estimate = 1.;//0.985;//1.015;
@@ -463,7 +474,7 @@ int main(int argc, char *argv[]) {
                        split_pdf_params_file,
                        apply_energy_scaling, e_scaling_estimate,
                        apply_energy_resolution_convolution,
-                       e_resolution_estimate);
+                       e_resolution_estimate,poisson_fluc_bool);
 
         databincontents = data_set_pdf.GetBinContents();
 
@@ -507,7 +518,7 @@ int main(int argc, char *argv[]) {
         TH1D Alphan1stDataDist = DistTools::ToTH1D(alpha_n_1st_data_set_pdf);
         Alphan1stDataDist.SetName("h_data_alphan1st");
         Alphan1stDataDist.SetStats(0);
-        Alphan1stDataDist.SetLineColor(7);
+        Alphan1stDataDist.SetLineColor(6);
         Alphan1stDataDist.GetXaxis()->SetTitle("Reconstructed Energy");
         if (Alphan1stDataDist.Integral() > 0)
           Alphan1stDataDist.Draw("same");
@@ -515,7 +526,7 @@ int main(int argc, char *argv[]) {
         TH1D Alphan2ndDataDist = DistTools::ToTH1D(alpha_n_2nd_data_set_pdf);
         Alphan2ndDataDist.SetName("h_data_alphan2nd");
         Alphan2ndDataDist.SetStats(0);
-        Alphan2ndDataDist.SetLineColor(8);
+        Alphan2ndDataDist.SetLineColor(7);
         Alphan2ndDataDist.GetXaxis()->SetTitle("Reconstructed Energy");
         if (Alphan2ndDataDist.Integral() > 0)
           Alphan2ndDataDist.Draw("same");
@@ -530,15 +541,20 @@ int main(int argc, char *argv[]) {
             AlphanDataDist.Integral() > 0)
           AlphanDataDist.Draw("same");
 
-        TLegend* leg = new TLegend(0.55,0.55,0.9,0.9);
+        TLegend* leg = new TLegend(0.5,0.55,0.9,0.9);
         leg->AddEntry(&DataDist,"Total Signal+BG","l");
         leg->AddEntry(&ReactorsDataDist,"Reactors (Osc)","l");
         leg->AddEntry(&GeosDataDist,"Geoneutrinos","l");
-        leg->AddEntry(&AlphanDataDist,"Alpha-n 13C","l");
-        
+        if (Alphan1stDataDist.Integral() > 0 &&\
+            Alphan2ndDataDist.Integral() > 0){
+          leg->AddEntry(&Alphan1stDataDist,"Alpha-n 13C (low E)","l");
+          leg->AddEntry(&Alphan2ndDataDist,"Alpha-n 13C (hi E)","l");
+        }else
+          leg->AddEntry(&AlphanDataDist,"Alpha-n 13C","l");
         leg->Draw("same");
 
-        c_all->Write();
+        if (poisson_fluc_bool != 1)
+          c_all->Write();
 
         // close output file
         file_out->Close();
