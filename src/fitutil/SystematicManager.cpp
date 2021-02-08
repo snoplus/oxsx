@@ -103,7 +103,7 @@ SystematicManager::UniqueSystematics(const std::vector<std::string>& syss_){
                     syss_.at(i)<<
                     "  is not known to the SystematicManager." );
         std::vector<Systematic*> group = fGroups[syss_.at(i)];
-        for (int j = 0; j < group.size(); ++j) {
+        for (size_t j = 0; j < group.size(); ++j) {
             if(allname.find( group.at(j)->GetName() ) == allname.end())
                 allname.insert(group.at(j)->GetName());
             else
