@@ -140,7 +140,7 @@ DataSetGenerator::RandomDrawsNoReplacement(size_t handleIndex_, int nEvents_,
   size_t draw  = -1; // the random draw 
 
   outData_.Reserve(outData_.GetNEntries() + nEvents_);
-  for(size_t i = 0; i < nEvents_; i++){
+  for(int i = 0; i < nEvents_; i++){
     if(!(i%10000))
       std::cout << i << "/" << nEvents_ << std::endl;
 
@@ -180,7 +180,7 @@ DataSetGenerator::RandomDrawsWithReplacement(size_t handleIndex_, int nEvents_,
 
   if(!eventIndices.size()){
     eventIndices.reserve(origData->GetNEntries());
-    for(size_t i = 0; i < origData -> GetNEntries(); i++)
+    for(int i = 0; i < origData -> GetNEntries(); i++)
       eventIndices.push_back(i);
     max = eventIndices.size() - 1; // the effective end of the array
   }
@@ -188,7 +188,7 @@ DataSetGenerator::RandomDrawsWithReplacement(size_t handleIndex_, int nEvents_,
   size_t draw  = -1; // the random draw 
 
   outData_.Reserve(outData_.GetNEntries() + nEvents_);
-  for(size_t i = 0; i < nEvents_; i++){
+  for(int i = 0; i < nEvents_; i++){
     if(!(i%10000))
       std::cout << i << "/" << nEvents_ << std::endl;
 
