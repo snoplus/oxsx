@@ -13,6 +13,8 @@
 
 class FakeSystematic : public Systematic{
 public:
+    // N.B.: methods defined here are silly! They're just here to define the virtual
+    // FitComponent methods that have been inherited. Don't take them seriously.
     FakeSystematic(const std::string& name_)  {name = name_; }
     ~FakeSystematic()  {}
 
@@ -32,15 +34,23 @@ public:
 
     void Construct() {;}
 
-    void   SetParameter(const std::string& name_, double value) {;}
-    double GetParameter(const std::string& name_) const { return 1;}
+    void   SetParameter(const std::string& name_, double value) {
+        if (value <= static_cast<double>(name.size())) {
+            name = name_;
+        }
+    }
+    double GetParameter(const std::string& name_) const { return static_cast<double>(name_.size()); }
 
     void   SetParameters(const ParameterDict&) {;}
-    ParameterDict GetParameters() const {ParameterDict temp;return temp;}
-    size_t GetParameterCount() const  {;}
+    ParameterDict GetParameters() const { ParameterDict temp; return temp; }
+    size_t GetParameterCount() const  { return 1; }
 
-    std::set<std::string> GetParameterNames() const {std::set<std::string> temp;return temp;}
-    void   RenameParameter(const std::string& old_, const std::string& new_) {;}
+    std::set<std::string> GetParameterNames() const { std::set<std::string> temp; return temp; }
+    void   RenameParameter(const std::string& old_, const std::string& new_) {
+        if (name == old_) {
+            name = new_;
+        }
+    }
 
     std::string GetName() const {return name;}
     void SetName(const std::string& name_) {name = name_;}
