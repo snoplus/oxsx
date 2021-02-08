@@ -10,7 +10,7 @@ TEST_CASE("Dataset generation by random draws"){
   //create events in 2 fake datasets
   OXSXDataSet testDataSet1;
   OXSXDataSet testDataSet2;
-  int eventsInDataSets = 3;
+  size_t eventsInDataSets = 3;
   std::vector<double> eventObs1(4);
   std::vector<double> eventObs2(4);
 
