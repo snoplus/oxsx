@@ -7,7 +7,7 @@ public:
         return fVal;
     }
 
-    int GetParameterCount() const {
+    size_t GetParameterCount() const {
         return 1;
     }
 
