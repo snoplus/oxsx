@@ -93,10 +93,10 @@ DataSetGenerator::AllRemainingEvents(){
   }
   for(size_t iDS = 0; iDS < fDataSets.size(); iDS++){   
     size_t nEvents = fMaxs.at(iDS);
-    if (nEvents==-999) 
+    if (nEvents==static_cast<size_t>(-999)) 
       nEvents = (fDataSets.at(iDS) -> GetNEntries()) - 1;
 
-    if (nEvents==-1) continue; //in case all events drawn and not replaced
+    if (nEvents==static_cast<size_t>(-1)) continue; //in case all events drawn and not replaced
     const std::vector<size_t>& eventIndices = fEventIndicies[iDS];
 
     for(size_t jEV = 0; jEV <= nEvents; jEV++){   
@@ -124,7 +124,7 @@ DataSetGenerator::RandomDrawsNoReplacement(size_t handleIndex_, int nEvents_,
   std::vector<size_t>& eventIndices = fEventIndicies[handleIndex_];
   size_t& max = fMaxs[handleIndex_];
   DataSet* origData = fDataSets.at(handleIndex_);
-  if(origData->GetNEntries() < nEvents_)
+  if(static_cast<int>(origData->GetNEntries()) < nEvents_)
     throw NotFoundError(Formatter() << "DataSetGenerator::RandomDrawsNoReplacement() asked for "
                         << nEvents_ << " but only have " << origData -> GetNEntries() 
                         << "events!");
@@ -144,7 +144,7 @@ DataSetGenerator::RandomDrawsNoReplacement(size_t handleIndex_, int nEvents_,
     if(!(i%10000))
       std::cout << i << "/" << nEvents_ << std::endl;
 
-    if (max==-999)
+    if (max==static_cast<size_t>(-999))
       max = eventIndices.size() -1;
     // draw
     draw = Rand::Shoot(max);
@@ -180,7 +180,7 @@ DataSetGenerator::RandomDrawsWithReplacement(size_t handleIndex_, int nEvents_,
 
   if(!eventIndices.size()){
     eventIndices.reserve(origData->GetNEntries());
-    for(int i = 0; i < origData -> GetNEntries(); i++)
+    for(size_t i = 0; i < origData -> GetNEntries(); i++)
       eventIndices.push_back(i);
     max = eventIndices.size() - 1; // the effective end of the array
   }
@@ -193,7 +193,7 @@ DataSetGenerator::RandomDrawsWithReplacement(size_t handleIndex_, int nEvents_,
       std::cout << i << "/" << nEvents_ << std::endl;
 
 
-    if (max==-999)
+    if (max==static_cast<size_t>(-999))
       max = eventIndices.size() -1;
 
     // draw
