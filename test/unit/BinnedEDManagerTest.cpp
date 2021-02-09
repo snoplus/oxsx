@@ -16,9 +16,12 @@ TEST_CASE("Three pdfs no systematics"){
     BinnedED pdf2("b", DistTools::ToHist(gaus2, axes));
     BinnedED pdf3("c", DistTools::ToHist(gaus3, axes));
 
-    pdf1.SetObservables(0);
-    pdf2.SetObservables(0);    
-    pdf3.SetObservables(0);
+    std::vector<std::string> observable;
+    observable.push_back("obs0");
+
+    pdf1.SetObservables(observable);
+    pdf2.SetObservables(observable);    
+    pdf3.SetObservables(observable);
 
     double prob1 = pdf1.GetBinContent(0);
     double prob2 = pdf2.GetBinContent(0);    
@@ -35,7 +38,12 @@ TEST_CASE("Three pdfs no systematics"){
     }
     
     SECTION("Probability Method"){
-        REQUIRE(edMan.Probability(Event(std::vector<double>(1, -39.5))) == Approx(prob1 * prob2 * prob3));
+        Event ev(std::vector<double>(1, -39.5));
+        std::vector<std::string> observablesEvent;
+        observablesEvent.push_back("obs0");
+        observablesEvent.push_back("obs1");
+        ev.SetObservableNames(&observablesEvent);
+        REQUIRE(edMan.Probability(ev) == Approx(prob1 * prob2 * prob3));
     }
 
 }

@@ -38,12 +38,11 @@ TEST_CASE("Filling a 2x2 PDF"){
 
 
     SECTION("Filling from Event with weights"){
-        std::vector<size_t> relevantIndicies;
-        relevantIndicies.push_back(0);
-        relevantIndicies.push_back(3);
-        ObsSet drep(relevantIndicies);
+        std::vector<std::string> relevantIndicies;
+        relevantIndicies.push_back("obs0");
+        relevantIndicies.push_back("obs3");
         
-        pdf.SetObservables(drep);
+        pdf.SetObservables(relevantIndicies);
 
         for(size_t i = 0; i < 100; i++){
             std::vector<double> vals;
@@ -51,8 +50,15 @@ TEST_CASE("Filling a 2x2 PDF"){
             vals.push_back(-1);
             vals.push_back(-1);
             vals.push_back(i + 1);
-
             Event evData(vals);
+
+            std::vector<std::string> observablesEvent;
+            observablesEvent.push_back("obs0");
+            observablesEvent.push_back("obs1");
+            observablesEvent.push_back("obs2");
+            observablesEvent.push_back("obs3");
+            evData.SetObservableNames(&observablesEvent);
+
             pdf.Fill(evData, 0.36);
         }
         

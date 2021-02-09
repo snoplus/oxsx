@@ -118,14 +118,14 @@ TEST_CASE("Converting 2D gaussian to binned and marginalise", "[DistTools]"){
 
     SECTION("Marginalise"){
         binnedGaus.Normalise();
-        std::vector<size_t> indicies;
-        indicies.push_back(0);
-        indicies.push_back(1);
-        indicies.push_back(2);
-
-        binnedGaus.SetObservables(indicies);
-        BinnedED xProj = binnedGaus.Marginalise(0);
-        BinnedED yProj = binnedGaus.Marginalise(1);
+        std::vector<std::string> obsNames;
+        obsNames.push_back("obs0");
+        obsNames.push_back("obs1");
+        obsNames.push_back("obs2");
+        binnedGaus.SetObservables(obsNames);
+	
+        BinnedED xProj = binnedGaus.Marginalise("ax1");
+        BinnedED yProj = binnedGaus.Marginalise("ax2");
 
         
         double xMean = xProj.Means().at(0);
