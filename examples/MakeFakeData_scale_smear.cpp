@@ -394,7 +394,7 @@ int main(int argc, char *argv[]) {
         //// EResolution ////
         // double e_resolution_estimate = 0.001; //0.015;//0.04;
         bool apply_energy_resolution_convolution = false;
-        if (e_resolution_estimate > 0) apply_energy_resolution_convolution = true;
+        if (e_resolution_estimate >= 0) apply_energy_resolution_convolution = true;
 
         printf("Begin--------------------------------------\n");
 
@@ -493,6 +493,13 @@ int main(int argc, char *argv[]) {
         DataDist.SetLineColor(1);
         DataDist.SetLineWidth(2);
         DataDist.GetXaxis()->SetTitle("Reconstructed Energy");
+        float bin_width = ((e_max - e_min)/(float)n_bins);
+        std::stringstream width_strm;
+        char titlename[100];
+        sprintf(titlename, "Events / %.2f MeV", bin_width);
+        std::cout<<titlename<<" "<<bin_width<<std::endl;
+        //width_strm<<"Events / "<<bin_width<<" MeV";
+        DataDist.GetYaxis()->SetTitle(titlename);
         DataDist.Write();
 
         TCanvas* c_all = new TCanvas("c_all","c_all");
@@ -549,7 +556,7 @@ int main(int argc, char *argv[]) {
             Alphan2ndDataDist.Integral() > 0){
           leg->AddEntry(&Alphan1stDataDist,"Alpha-n 13C (low E)","l");
           leg->AddEntry(&Alphan2ndDataDist,"Alpha-n 13C (hi E)","l");
-        }else
+        }else if (AlphanDataDist.Integral() > 0)
           leg->AddEntry(&AlphanDataDist,"Alpha-n 13C","l");
         leg->Draw("same");
 

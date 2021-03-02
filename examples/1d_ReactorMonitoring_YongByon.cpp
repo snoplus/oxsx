@@ -94,7 +94,7 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
 	  double &fit_geo_uth_norm,
 	  const double param_d21_plot_min, const double param_d21_plot_max, const double param_s12_plot_min, 
 	  const double param_s12_plot_max, const double P_over_D_coeff, const std::vector<double> thermal_powers,
-	  const std::string &data_path, THStack *hs, size_t n_fit, std::string reactor_to_monitor){
+          const std::string &data_path, THStack *hs, size_t n_fit, std::string reactor_to_monitor, double n_years){
 
 
   //////////////////////////////
@@ -127,89 +127,89 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
   bool alphans_included = false;
   
   for (ULong64_t i = 0; i < n_reactors; i++){
-        sprintf(name, "%s_unosc", reactor_names[i].c_str());
-        reactor_unosc_data_pdf[i] = new BinnedED(name, axes);
-        reactor_unosc_data_pdf[i]->SetObservables(0);
-        reactor_osc_data_pdf[i] = new BinnedED(reactor_names[i], axes);
-        reactor_osc_data_pdf[i]->SetObservables(0);
+    sprintf(name, "%s_unosc", reactor_names[i].c_str());
+    reactor_unosc_data_pdf[i] = new BinnedED(name, axes);
+    reactor_unosc_data_pdf[i]->SetObservables(0);
+    reactor_osc_data_pdf[i] = new BinnedED(reactor_names[i], axes);
+    reactor_osc_data_pdf[i]->SetObservables(0);
 
 	bool apply_oscillation = false;
 	bool is_further_reactors = false;
 	if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR")){
-            sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
-	    apply_oscillation = true;
+      sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
+      apply_oscillation = true;
 	}else if (reactor_types[i]=="PHWR"){
-            sprintf(name, "%s", spectrum_phwr_unosc_filepath.c_str());
-	    apply_oscillation = true;
+      sprintf(name, "%s", spectrum_phwr_unosc_filepath.c_str());
+      apply_oscillation = true;
 	}else if (reactor_types[i]=="further_reactors"){
-	    sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
-	    is_further_reactors = true;
+      sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
+      is_further_reactors = true;
 	}else if (reactor_names[i]=="uraniumthorium"){
-            sprintf(name, "%s", spectrum_geo_uraniumthorium_unosc_filepath.c_str());
-	    geos_included = true;
+      sprintf(name, "%s", spectrum_geo_uraniumthorium_unosc_filepath.c_str());
+      geos_included = true;
 	}else if (reactor_names[i]=="alphan"){
-	    sprintf(name, "%s", spectrum_bkg_alphan_unosc_filepath.c_str());
-	    alphans_included = true;
+      sprintf(name, "%s", spectrum_bkg_alphan_unosc_filepath.c_str());
+      alphans_included = true;
 	}else{
-            printf("Throw: Reactor doesn't match any loaded type...\n");
-            exit(0); // throw std::exception(); //continue;
-        }
+      printf("Throw: Reactor doesn't match any loaded type...\n");
+      exit(0); // throw std::exception(); //continue;
+    }
 
-        TFile *f_in = new TFile(name);
-        file_out->cd();
+    TFile *f_in = new TFile(name);
+    file_out->cd();
 	TTree *reactor_unosc_ntp = (TTree*)f_in->Get("nt");
-        TNtuple *reactor_osc_ntp = new TNtuple("nt", "Oscillated Prompt Energy", "ev_fit_energy_p1");
+    TNtuple *reactor_osc_ntp = new TNtuple("nt", "Oscillated Prompt Energy", "ev_fit_energy_p1");
 
-        // oscillate tree
-        if (apply_oscillation)
-	    ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13, distances[i]);
+    // oscillate tree
+    if (apply_oscillation)
+      ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13, distances[i]);
 	else if (is_further_reactors)
-	    ntOscillate_pruned_geo(reactor_unosc_ntp, reactor_osc_ntp, param_s12);
-        else
-	    ntNoOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp);
+      ntOscillate_pruned_geo(reactor_unosc_ntp, reactor_osc_ntp, param_s12);
+    else
+      ntNoOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp);
 
 	// reset branch addresses after oscillating in function (otherwise crash before setting again below..)
-        reactor_unosc_ntp->SetBranchStatus("*", 0);
-        reactor_unosc_ntp->SetBranchStatus("ev_fit_energy_p1", 1); // (re-enable all branches in use)
+    reactor_unosc_ntp->SetBranchStatus("*", 0);
+    reactor_unosc_ntp->SetBranchStatus("ev_fit_energy_p1", 1); // (re-enable all branches in use)
 
-        // fill unoscillated pdf
-        Double_t ev_unosc_energy_p1;
-        reactor_unosc_ntp->SetBranchAddress("ev_fit_energy_p1", &ev_unosc_energy_p1);
-        for(size_t j = 0; j < reactor_unosc_ntp->GetEntries(); j++){
-            reactor_unosc_ntp->GetEntry(j);
-            reactor_unosc_data_pdf[i]->Fill(ev_unosc_energy_p1);
-        }
+    // fill unoscillated pdf
+    Double_t ev_unosc_energy_p1;
+    reactor_unosc_ntp->SetBranchAddress("ev_fit_energy_p1", &ev_unosc_energy_p1);
+    for(size_t j = 0; j < reactor_unosc_ntp->GetEntries(); j++){
+      reactor_unosc_ntp->GetEntry(j);
+      reactor_unosc_data_pdf[i]->Fill(ev_unosc_energy_p1);
+    }
 
-        // fill oscillated pdf
-        Float_t ev_osc_energy_p1;
-        reactor_osc_ntp->SetBranchAddress("ev_fit_energy_p1", &ev_osc_energy_p1);
-        for(size_t j = 0; j < reactor_osc_ntp->GetEntries(); j++){
-            reactor_osc_ntp->GetEntry(j);
-            reactor_osc_data_pdf[i]->Fill(ev_osc_energy_p1);
-        }
+    // fill oscillated pdf
+    Float_t ev_osc_energy_p1;
+    reactor_osc_ntp->SetBranchAddress("ev_fit_energy_p1", &ev_osc_energy_p1);
+    for(size_t j = 0; j < reactor_osc_ntp->GetEntries(); j++){
+      reactor_osc_ntp->GetEntry(j);
+      reactor_osc_data_pdf[i]->Fill(ev_osc_energy_p1);
+    }
 
-        // close unoscillated reactor file
-        f_in->Close();
+    // close unoscillated reactor file
+    f_in->Close();
 
 	if (apply_oscillation || is_further_reactors){
 	  // work out total oscillated integral of constraints
-	  Double_t normalisation_unosc = reactor_unosc_data_pdf[i]->Integral();
-	  Double_t normalisation_reactor = reactor_osc_data_pdf[i]->Integral();
-	  Double_t osc_loss = normalisation_reactor/normalisation_unosc;
+	  int normalisation_unosc = reactor_unosc_data_pdf[i]->Integral();
+	  int normalisation_reactor = reactor_osc_data_pdf[i]->Integral();
+	  double osc_loss = normalisation_reactor/(double)normalisation_unosc;
 
-	  Double_t constraint_osc_mean = reactor_distance_to_evs(distances[i],P_over_D_coeff,thermal_powers[i])*osc_loss*mc_scale_factor;
+	  Double_t constraint_osc_mean = reactor_distance_to_evs(distances[i],P_over_D_coeff,thermal_powers[i])*osc_loss*mc_scale_factor*n_years;
 	  
 	  reactor_osc_data_pdf[i]->Normalise(); 
 
 
 	  /*TH1D *hist_for_smoothing = new TH1D(DistTools::ToTH1D(*reactor_osc_data_pdf[i]));
-	  hist_for_smoothing->Smooth();
-	  std::vector<Double_t> smooth_bin_contents;
-	  for (int bin = 1; bin < hist_for_smoothing->GetNbinsX()+1; bin++){
+        hist_for_smoothing->Smooth();
+        std::vector<Double_t> smooth_bin_contents;
+        for (int bin = 1; bin < hist_for_smoothing->GetNbinsX()+1; bin++){
 	    Double_t content = hist_for_smoothing->GetBinContent(bin);
 	    smooth_bin_contents.push_back(content);
-	  }
-	  reactor_osc_data_pdf[i]->SetBinContents(smooth_bin_contents);
+        }
+        reactor_osc_data_pdf[i]->SetBinContents(smooth_bin_contents);
 	  */
 	  
 	  reactor_osc_data_pdf[i]->Scale(constraint_osc_mean);
@@ -218,8 +218,8 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
 
 	  if (n_fit == 1)
 	    reactor_osc_data_hist[i] = new TH1D(DistTools::ToTH1D(*reactor_osc_data_pdf[i]));
-	  
-	  printf("  added reactor %d/%d: %s, osc_survival: %.3f, norm_constraint: %.3f data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), osc_loss,constraint_osc_mean, data_set_pdf.Integral());
+
+      printf("added reactor %d/%d: %s, %u/%u -> osc_survival: %.3f, norm_constraint: %.3f data_int:%.0f \n", i+1, n_reactors, reactor_names[i].c_str(), normalisation_reactor, normalisation_unosc, osc_loss,constraint_osc_mean, data_set_pdf.Integral());
 	  
 	}else if (geos_included){
 	  Double_t normalisation_unosc = reactor_unosc_data_pdf[i]->Integral();
@@ -254,9 +254,11 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
   }
   
   // Poisson_fluctuations
-  for(size_t i = 0; i < data_set_pdf.GetNBins(); i++) 
-    data_set_pdf.SetBinContent(i, random_generator->Poisson(data_set_pdf.GetBinContent(i)));
-
+  for(size_t i = 0; i < data_set_pdf.GetNBins(); i++){
+    Double_t old_content = data_set_pdf.GetBinContent(i);
+    Double_t new_content = random_generator->Poisson(old_content);
+    data_set_pdf.SetBinContent(i, new_content);
+  }
   /*TFile *file_data_out = new TFile(data_path.c_str(), "RECREATE");
   TH1D DataDist = DistTools::ToTH1D(data_set_pdf);
   DataDist.Write();
@@ -372,9 +374,9 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
 
     if (apply_oscillation || is_further_reactors){
       // work out total oscillated integral of constraints
-      Double_t normalisation_unosc = reactor_unosc_pdf[i]->Integral();
-      Double_t normalisation_reactor = reactor_osc_pdf[i]->Integral();
-      Double_t osc_loss = normalisation_reactor/normalisation_unosc;
+      int normalisation_unosc = reactor_unosc_pdf[i]->Integral();
+      int normalisation_reactor = reactor_osc_pdf[i]->Integral();
+      double osc_loss = normalisation_reactor/(double)normalisation_unosc;
 
       osc_losses.push_back(osc_loss);
       
@@ -395,12 +397,12 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
       initial_val[name] = constraint_osc_mean*random;
       initial_err[name] = 0.5*constraint_osc_mean; //constraint_osc_sigma;
 
-      lh_function.AddDist(*reactor_osc_pdf[i]);
+      lh_function.AddPdf(*reactor_osc_pdf[i]);
       //lh_function.SetConstraint(name, constraint_osc_mean, constraint_osc_sigma);
       if (known_reactor_constraints[i] > 0.){
 	  Double_t sigma =  constraint_osc_mean*known_reactor_constraints[i];
 	  lh_function.SetConstraint(name, constraint_osc_mean,sigma);
-	  printf("  added CONSTRAINED reactor %d/%d: %s, osc_survival: %.3f, norm_constraint: %.3f (min:%.3f max:%.3f) data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), osc_loss,constraint_osc_mean, min, max, data_set_pdf_integral);
+	  printf("  added CONSTRAINED reactor %d/%d: %s, %u/%u -> osc_survival: %.3f, norm_constraint: %.3f (min:%.3f max:%.3f) data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(),  normalisation_reactor, normalisation_unosc, osc_loss,constraint_osc_mean, min, max, data_set_pdf_integral);
 	}
 	else
 	  printf("  added reactor %d/%d: %s, osc_survival: %.3f, norm_constraint: %.3f (min:%.3f max:%.3f) data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), osc_loss,constraint_osc_mean, min, max, data_set_pdf_integral);
@@ -418,7 +420,7 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
       initial_val[name] = min + (max-min)*random;
       initial_err[name] = min + (max-min)*random;
 
-      lh_function.AddDist(*reactor_osc_pdf[i]);
+      lh_function.AddPdf(*reactor_osc_pdf[i]);
       //lh_function.SetConstraint(name, constraint_osc_mean, constraint_osc_sigma);
     }
   }
@@ -552,13 +554,19 @@ int main(int argc, char *argv[]) {
       job_id = atoi(argv[4]);
 
     const std::string &info_file = "";
-    const std::string &spectrum_phwr_unosc_filepath = "/data/snoplus/blakei/antinu/reactor_monitoring/pdfs/pwr_pdf_flux1_day365_passcombined5000_cleanround4.ntuple.root";//"/data/snoplusmc/antinu/ntuples/snop_rat6176_2017/reactors/scintFitter/flux1/pdfs/pwr_pdf_flux1_day365_passcombined3000_cleanround4.ntuple.root";
-    const std::string &spectrum_pwr_unosc_filepath = "/data/snoplus/blakei/antinu/reactor_monitoring/pdfs/pwr_pdf_flux1_day365_passcombined5000_cleanround4.ntuple.root";//"/data/snoplusmc/antinu/ntuples/snop_rat6176_2017/reactors/scintFitter/flux1/pdfs/pwr_pdf_flux1_day365_passcombined3000_cleanround4.ntuple.root";
-    const std::string &spectrum_geo_uraniumthorium_unosc_filepath = "/data/snoplusmc/antinu/ntuples/snop_rat6169_2017/reactors/scintFitter/flux1/pdfs/pwr_pdf_flux1_day365_passcombined1000_cleanround4.ntuple.root";
-    const std::string &spectrum_bkg_alphan_unosc_filepath = "/data/snoplusmc/antinu/ntuples/snop_rat6169_2017/reactors/scintFitter/flux1/pdfs/pwr_pdf_flux1_day365_passcombined1000_cleanround4.ntuple.root";
+    const std::string &spectrum_phwr_unosc_filepath = "";
+    //"/data/snoplus/blakei/antinu/reactor_monitoring/pdfs/pwr_pdf_flux1_day365_passcombined5000_cleanround4.ntuple.root";//"/data/snoplusmc/antinu/ntuples/snop_rat6176_2017/reactors/scintFitter/flux1/pdfs/pwr_pdf_flux1_day365_passcombined3000_cleanround4.ntuple.root";
+    const std::string &spectrum_pwr_unosc_filepath = "/data/snoplus2/blakei/Monitoring/pruned_ntuples/charlie_scaling/reactors/latest_osc/pdfs/pwr_pdf_flux30000_combined_cleanround299.ntuple.root";
+    //"/data/snoplus/blakei/antinu/reactor_monitoring/pdfs/pwr_pdf_flux1_day365_passcombined5000_cleanround4.ntuple.root";//"/data/snoplusmc/antinu/ntuples/snop_rat6176_2017/reactors/scintFitter/flux1/pdfs/pwr_pdf_flux1_day365_passcombined3000_cleanround4.ntuple.root";
+    const std::string &spectrum_geo_uraniumthorium_unosc_filepath = "";
+    //"/data/snoplusmc/antinu/ntuples/snop_rat6169_2017/reactors/scintFitter/flux1/pdfs/pwr_pdf_flux1_day365_passcombined1000_cleanround4.ntuple.root";
+    const std::string &spectrum_bkg_alphan_unosc_filepath = "";
+    //"/data/snoplusmc/antinu/ntuples/snop_rat6169_2017/reactors/scintFitter/flux1/pdfs/pwr_pdf_flux1_day365_passcombined1000_cleanround4.ntuple.root";
+
     const std::string &constraints_info_file = "";
-    const double s12 = 0.297;
-    const double d21 = 7.37e-5;
+
+    const double s12 = 0.306;
+    const double d21 = 7.51e-5;
     const double s13 = 0.0215;
     const size_t x_bin = 0;
     const size_t y_bin = 0;
@@ -566,7 +574,7 @@ int main(int argc, char *argv[]) {
     const double mc_scale_factor = 1.;
     const double e_min = 0.9;
     const double e_max = 7.7;
-    const size_t n_bins = 40;//68;
+    const size_t n_bins = 68;
     const double param_d21_plot_min = 9e-5;
     const double param_d21_plot_max = 9e-5;
     const double param_s12_plot_min = 0.29;
@@ -585,11 +593,14 @@ int main(int argc, char *argv[]) {
 
     printf("Begin--------------------------------------\n");
 
-    double P_over_D_coeff = 219.*number_of_ktonnes;
+    //double P_over_D_coeff = 219.*number_of_ktonnes;
+    double cut_effic = 0.68; //<- ~clean300
+    double P_over_D_coeff = 408.282*cut_effic*number_of_ktonnes;
 
-    /*
-       const std::string reactor_to_monitor = "Yongbyon";
-       std::vector<std::string> reactor_names;
+    double n_years = 1.;
+    
+    const std::string reactor_to_monitor = "Yongbyon";
+    std::vector<std::string> reactor_names;
     reactor_names.push_back("Hanul"); // Reactor A
     reactor_names.push_back("Hanbit"); // Reactor B
     reactor_names.push_back("Wolsong"); // Reactor C
@@ -620,7 +631,7 @@ int main(int argc, char *argv[]) {
     known_reactor_constraints.push_back(0.06);
     known_reactor_constraints.push_back(0.06);
 
-    known_reactor_constraints.push_back(-1.);
+    known_reactor_constraints.push_back(0.99);
     //known_reactor_constraints.push_back(-1.);
 
     known_reactor_constraints.push_back(0.06);
@@ -637,10 +648,10 @@ int main(int argc, char *argv[]) {
 
     reactor_locations.push_back(TVector3(39.795132, 121.481271, 0.) );
     reactor_locations.push_back(TVector3(34.686477, 119.459362, 0.) );
-    */
+    
 
     // Iran //
-    const std::string reactor_to_monitor = "Bushehr";
+    /*const std::string reactor_to_monitor = "Bushehr";
 
     std::vector<std::string> reactor_names;
     reactor_names.push_back("Bushehr"); // Reactor A
@@ -659,7 +670,9 @@ int main(int argc, char *argv[]) {
     std::vector<TVector3> reactor_locations;
     reactor_locations.push_back(TVector3(28.829717, 50.886004, 0.) );
     reactor_locations.push_back(TVector3(23.968670, 52.231329, 0.) );
+    */
     
+
     std::vector<TVector3> reactor_positions;
     for (size_t i = 0; i < reactor_locations.size(); i++){
       reactor_positions.push_back(LLAtoECEF(reactor_locations[i][0], reactor_locations[i][1], reactor_locations[i][2]));
@@ -672,7 +685,7 @@ int main(int argc, char *argv[]) {
       std::cout<<"reactor name, powers and pos not equal!"<<std::endl;
       exit(0);
     }
-
+    
 
     ///////////////////////////////////
     //// detector positions, names ////
@@ -682,9 +695,9 @@ int main(int argc, char *argv[]) {
 
     std::vector<TVector3> detector_locations;
     //detector_locations.push_back(TVector3(38.236731, 127.090735, 0.) ); //SK NK border
-    //detector_locations.push_back(TVector3(40.522792, 124.905926, 0.) );  //NK China border
+    detector_locations.push_back(TVector3(40.522792, 124.905926, 0.) );  //NK China border
 
-    detector_locations.push_back(TVector3(29.795038, 48.255271, 0.) ); //Kuwait - Iran
+    //detector_locations.push_back(TVector3(29.795038, 48.255271, 0.) ); //Kuwait - Iran
     
     std::vector<TVector3> detector_positions;
     for (size_t i = 0; i < detector_locations.size(); i++)
@@ -751,12 +764,6 @@ int main(int argc, char *argv[]) {
     BinnedED data_set_pdf("data_set_pdf", axes);
     data_set_pdf.SetObservables(data_rep);
     
-    // initialise data
-    /*if (constrained_data == false)
-      LHFit_initialise(data_set_pdf, data_path, flux_data, e_min, e_max, n_bins);
-    else
-      LHFit_load_fake_data(data_set_pdf, data_path, flux_data, e_min, e_max, n_bins);
-    */
     ////save objects to file
     printf("Save objects to file...\n");
     TFile *file_out = new TFile(out_filename_plots.c_str(), "RECREATE");
@@ -789,33 +796,34 @@ int main(int argc, char *argv[]) {
       std::cout<<"\n\n"<<"  fit: "<<n_fit<<"/"<<number_of_fits<<std::endl;
 
       for (ULong64_t fit_try=1; fit_try<=fit_try_max; fit_try++) {
-	reactor_power_uncert = LHFit_fit(spectrum_phwr_unosc_filepath,
-					 spectrum_pwr_unosc_filepath,
-					 spectrum_geo_uraniumthorium_unosc_filepath,
-					 spectrum_bkg_alphan_unosc_filepath,
-					 detector_names,
-					 reactor_names, reactor_types,
-					 distances,
-					 known_reactor_constraints, constraint_sigmas,
-					 file_out,
-					 d21, s12, s13,
-					 fit_validity, e_min, e_max, n_bins,
-					 flux_data, mc_scale_factor,
-					 fit_geo_uth_norm,
-					 param_d21_plot_min, param_d21_plot_max,
-					 param_s12_plot_min, param_s12_plot_max,
-					 P_over_D_coeff, thermal_powers,
-					 data_path, hs, n_fit, reactor_to_monitor);
+        reactor_power_uncert = LHFit_fit(spectrum_phwr_unosc_filepath,
+                                         spectrum_pwr_unosc_filepath,
+                                         spectrum_geo_uraniumthorium_unosc_filepath,
+                                         spectrum_bkg_alphan_unosc_filepath,
+                                         detector_names,
+                                         reactor_names, reactor_types,
+                                         distances,
+                                         known_reactor_constraints, constraint_sigmas,
+                                         file_out,
+                                         d21, s12, s13,
+                                         fit_validity, e_min, e_max, n_bins,
+                                         flux_data, mc_scale_factor,
+                                         fit_geo_uth_norm,
+                                         param_d21_plot_min, param_d21_plot_max,
+                                         param_s12_plot_min, param_s12_plot_max,
+                                         P_over_D_coeff, thermal_powers,
+                                         data_path, hs, n_fit, reactor_to_monitor,
+                                         n_years);
 	
-	if (fit_validity==0)
-	  printf("Fit invalid... retrying (attempt no: %llu)\n", fit_try);
-	else{
-	  printf("Fit valid. (attempt no: %llu)\n", fit_try);
-	  for (ULong64_t i = 0; i < n_reactors; i++){
-	    reactor_power_uncert_at_d_vec[i].Fill(reactor_power_uncert[i]);
-	  }
-	  fit_try = fit_try_max+1;
-	}
+        if (fit_validity==0)
+          printf("Fit invalid... retrying (attempt no: %llu)\n", fit_try);
+        else{
+          printf("Fit valid. (attempt no: %llu)\n", fit_try);
+          for (ULong64_t i = 0; i < n_reactors; i++){
+            reactor_power_uncert_at_d_vec[i].Fill(reactor_power_uncert[i]);
+          }
+          fit_try = fit_try_max+1;
+        }
       }
     }
 
@@ -830,10 +838,10 @@ int main(int argc, char *argv[]) {
 
     //Write fit coefficients to txt file
     /*printf("writing to: %s\n", out_filename_csv.c_str());
-    ofstream outcsvfile;
-    outcsvfile.open(out_filename_csv.c_str(), std::ios_base::app);
-    outcsvfile<<s12<<","<<d21<<","<<x_bin<<","<<y_bin<<","<<"\n";
-    outcsvfile.close();
+      ofstream outcsvfile;
+      outcsvfile.open(out_filename_csv.c_str(), std::ios_base::app);
+      outcsvfile<<s12<<","<<d21<<","<<x_bin<<","<<y_bin<<","<<"\n";
+      outcsvfile.close();
     */
     reactor_power_uncert_vs_d_vec.push_back(reactor_power_uncert_at_d_vec);
     
@@ -843,7 +851,7 @@ int main(int argc, char *argv[]) {
     }
     for (size_t j = 0; j < n_ds; j++){
       for (size_t i = 0; i < n_reactors; i++){
-	reactor_power_uncert_vs_d_vec[j][i].Write();
+        reactor_power_uncert_vs_d_vec[j][i].Write();
       }
     }
     file_res_plots_out->Close();    

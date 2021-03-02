@@ -48,7 +48,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
   bool &fit_validity,
   const double e_min, const double e_max, const size_t n_bins,
   const double flux_data, const double geo_scale_factor, double alphan_scale_factor,
-  double &fit_geo_uth_norm,
+  double &fit_geo_uth_norm,double &fit_e_scale,double &fit_e_smear,
   const double param_d21_plot_min, const double param_d21_plot_max, const double param_s12_plot_min,
   const double param_s12_plot_max, const std::string &split_pdf_params_file,
   const bool output_all_fit_results, std::vector<Double_t> &best_fits,
@@ -72,7 +72,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
   // create LH function
   BinnedNLLH lh_function;
   lh_function.SetBufferAsOverflow(true);
-  int buff = 2;
+  int buff = 3;
   lh_function.SetBuffer(0, buff, buff);
   lh_function.SetDataDist(data_set_pdf); // initialise withe the data set
 
@@ -279,7 +279,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
       
       lh_function.AddSystematic(scale);
       if (constrain_energy_scaling)
-        lh_function.SetConstraint("escale_", e_scaling_estimate, e_scaling_estimate_sigma);
+        lh_function.SetConstraint("escale_", 1./*e_scaling_estimate*/, e_scaling_estimate_sigma);
   }
   
   if (apply_energy_resolution_convolution) {
@@ -311,9 +311,9 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
       conv->SetDistributionObs(obsSet);
       conv->Construct();
   
-      minima["eres"] = e_resolution_estimate - 2.*e_resolution_estimate_sigma;
+      minima["eres"] = 0.;//-1.*e_resolution_estimate_sigma;//e_resolution_estimate - 2.*e_resolution_estimate_sigma;
       maxima["eres"] = e_resolution_estimate + 2.*e_resolution_estimate_sigma;
-      initial_val["eres"] = e_resolution_estimate;
+      initial_val["eres"] = 0.;//e_resolution_estimate;
       initial_err["eres"] = e_resolution_estimate_sigma;
       
       /*minima["mean"] = -1;
@@ -323,7 +323,7 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
       
       lh_function.AddSystematic(conv);
       if (constrain_energy_resolution_convolution) 
-        lh_function.SetConstraint("eres", e_resolution_estimate, e_resolution_estimate_sigma);
+        lh_function.SetConstraint("eres", 0./*e_resolution_estimate*/, e_resolution_estimate_sigma);
   }
 
   // fit
@@ -358,6 +358,15 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
     fit_geo_uth_norm = best_fit.at("uraniumthorium_norm");
   else
     fit_geo_uth_norm = 0.;
+  if (apply_energy_scaling)
+    fit_e_scale = best_fit.at("escale_");
+  else
+    fit_e_scale = -1;
+  if (apply_energy_resolution_convolution)
+    fit_e_smear = best_fit.at("eres");
+  else
+    fit_e_smear = -1;
+  
     
   Double_t lh_val = 99999; // positive non-sensical value to return if fit is not valid
   if (fit_validity == true)
@@ -365,44 +374,65 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
     
   // write plots to file (only 'good' plots - those with the best fit values)
   if (param_d21>=param_d21_plot_min && param_d21<=param_d21_plot_max && param_s12>=param_s12_plot_min && param_s12<=param_s12_plot_max){
-    file_out->cd();
-    TCanvas* c_data_fit = new TCanvas("c_data_fit");
-    c_data_fit->cd();
-
-    // and their sum
-    TH1D reactor_hist_fitosc_sum = DistTools::ToTH1D(reactor_osc_pdf_fitosc_sum);
-    sprintf(name, "reactor_hist_fitosc_sum_d21%.9f_s12%.7f_s13%.7f", param_d21, param_s12, param_s13);
-    reactor_hist_fitosc_sum.SetName(name);
-    reactor_hist_fitosc_sum.GetXaxis()->SetTitle("Energy (MeV)");
-    reactor_hist_fitosc_sum.GetYaxis()->SetTitle("Counts");
-    reactor_hist_fitosc_sum.SetLineColor(kRed);
-    reactor_hist_fitosc_sum.Write();
-    reactor_hist_fitosc_sum.Draw("same");
-
-    // data set
-    TH1D data_set_hist = DistTools::ToTH1D(data_set_pdf);
-    // data_hist.Sumw2();
-    sprintf(name, "data_set_hist");
-    data_set_hist.SetName(name);
-    data_set_hist.GetYaxis()->SetTitle("Counts");
-    data_set_hist.GetXaxis()->SetTitle("Energy (MeV)");
-    data_set_hist.SetLineColor(kBlue);
-    data_set_hist.Write();
-    data_set_hist.Draw("same");
 
     file_out->cd();
-    c_data_fit->Write();
+    Convolution* dataconv = new Convolution("dataconv");
+    if (apply_energy_resolution_convolution) {
+      GaussianERes* datagaus = new GaussianERes(best_fit.at("eres"),"datagaus"); 
+      dataconv->SetFunctionalParamDependence(datagaus);
 
+      dataconv->SetAxes(axes);
+      dataconv->SetTransformationObs(obsSet);
+      dataconv->SetDistributionObs(obsSet);
+      dataconv->Construct();
+    }
+    Scale* datascale = new Scale("datascale");
+    if (apply_energy_scaling) {
+      datascale->SetScaleFactor(best_fit.at("escale_"));
+      
+      datascale->SetAxes(axes);
+      datascale->SetTransformationObs(obsSetToTransform);
+      datascale->SetDistributionObs(obsSet);
+      datascale->Construct();
+    }
+  
     // reactor pdfs
+    TH1D reactor_hist_fitosc_sum;
     TH1D reactor_osc_hist;
     for (ULong64_t j = 0; j < n_pdf; j++){
-      reactor_osc_hist = DistTools::ToTH1D(*reactor_osc_pdf[j]);
+      reactor_osc_pdf[j]->Normalise();
+      sprintf(name, "%s_norm", reactor_names[j].c_str());
+      if (apply_energy_scaling && apply_energy_resolution_convolution) {
+        BinnedED pdf_escale = datascale->operator()(*reactor_osc_pdf[j]);
+        pdf_escale.Normalise();
+        BinnedED pdf_escale_eres = dataconv->operator()(pdf_escale);
+        pdf_escale_eres.Normalise();
+        pdf_escale_eres.Scale(best_fit.at(name));
+        reactor_osc_hist = DistTools::ToTH1D(pdf_escale_eres);
+      }else if (apply_energy_scaling && !apply_energy_resolution_convolution){
+        BinnedED pdf_escale = datascale->operator()(*reactor_osc_pdf[j]);
+        pdf_escale.Normalise();
+        pdf_escale.Scale(best_fit.at(name));
+        reactor_osc_hist = DistTools::ToTH1D(pdf_escale);
+      }else if (!apply_energy_scaling && apply_energy_resolution_convolution){
+        BinnedED pdf_eres = dataconv->operator()(*reactor_osc_pdf[j]);
+        pdf_eres.Normalise();
+        pdf_eres.Scale(best_fit.at(name));
+        reactor_osc_hist = DistTools::ToTH1D(pdf_eres);
+      }else{
+        reactor_osc_hist = DistTools::ToTH1D(*reactor_osc_pdf[j]);
+      }
+      
       // data_hist.Sumw2();
       sprintf(name, "reactor_osc_pdf_%s_d21%.9f_s12%.7f_s13%.7f", reactor_names[j].c_str(), param_d21, param_s12, param_s13);
       reactor_osc_hist.SetName(name);
       reactor_osc_hist.GetYaxis()->SetTitle("Counts");
       reactor_osc_hist.GetXaxis()->SetTitle("Energy (MeV)");
       reactor_osc_hist.Write();
+      if (j == 0)
+        reactor_hist_fitosc_sum = reactor_osc_hist;
+      else
+        reactor_hist_fitosc_sum.Add(&reactor_osc_hist);
     }
 
     // pdfs of spectra
@@ -416,6 +446,34 @@ Double_t LHFit_fit(BinnedED &data_set_pdf, const std::string &spectrum_phwr_unos
       reactor_unosc_hist.GetXaxis()->SetTitle("Energy (MeV)");
       reactor_unosc_hist.Write();
     }
+    
+    TCanvas* c_data_fit = new TCanvas("c_data_fit");
+    c_data_fit->cd();
+
+    // data set
+    TH1D data_set_hist = DistTools::ToTH1D(data_set_pdf);
+    // data_hist.Sumw2();
+    sprintf(name, "data_set_hist");
+    data_set_hist.SetName(name);
+    data_set_hist.GetYaxis()->SetTitle("Counts");
+    data_set_hist.GetXaxis()->SetTitle("Energy (MeV)");
+    data_set_hist.SetLineColor(kBlue);
+    data_set_hist.Write();
+    data_set_hist.Draw("same");
+
+    // and their sum
+    //TH1D reactor_hist_fitosc_sum = DistTools::ToTH1D(reactor_osc_pdf_fitosc_sum);
+    sprintf(name, "reactor_hist_fitosc_sum_d21%.9f_s12%.7f_s13%.7f", param_d21, param_s12, param_s13);
+    reactor_hist_fitosc_sum.SetName(name);
+    reactor_hist_fitosc_sum.GetXaxis()->SetTitle("Energy (MeV)");
+    reactor_hist_fitosc_sum.GetYaxis()->SetTitle("Counts");
+    reactor_hist_fitosc_sum.SetLineColor(kRed);
+    reactor_hist_fitosc_sum.Write();
+    reactor_hist_fitosc_sum.Draw("same");
+
+    file_out->cd();
+    c_data_fit->Write();
+
   }
 
   printf("fit valid: %d, lh_value:%.9f\n", fit_validity, lh_val);
@@ -476,7 +534,7 @@ int main(int argc, char *argv[]) {
     //// EResolution ////
     // double e_resolution_estimate = 0.001; //0.015;//0.04;
     bool apply_energy_resolution_convolution = false;
-    if (e_resolution_estimate > 0) apply_energy_resolution_convolution = true;
+    if (e_resolution_estimate >= 0) apply_energy_resolution_convolution = true;
     
     // read in reactor information
     std::vector<std::string> reactor_names;
@@ -529,6 +587,7 @@ int main(int argc, char *argv[]) {
     TFile *file_out = new TFile(out_filename_plots.c_str(), "RECREATE");
     bool fit_validity = 0;
     ULong64_t fit_try_max = 20;
+
     ULong64_t print_plots = 0;
 
     printf("running: d_21:%.9f(%.9f-%.9f) s_12:%.7f(%.7f-%.7f)\n", d21, param_d21_plot_min, param_d21_plot_max, s12, param_s12_plot_min, param_s12_plot_max);
@@ -544,6 +603,10 @@ int main(int argc, char *argv[]) {
 
     double fit_geo_uth_norm = -999999;
     
+    double fit_e_scale = -1;
+
+    double fit_e_smear = -1;
+
     fit_validity = 0;
     for (ULong64_t fit_try=1; fit_try<=fit_try_max; fit_try++) {
       lh_value = LHFit_fit(data_set_pdf, spectrum_phwr_unosc_filepath,
@@ -559,7 +622,7 @@ int main(int argc, char *argv[]) {
               d21, s12, s13,
               fit_validity, e_min, e_max, n_bins,
               flux_data, geo_scale_factor, alphan_scale_factor,
-              fit_geo_uth_norm,
+              fit_geo_uth_norm, fit_e_scale, fit_e_smear,
               param_d21_plot_min, param_d21_plot_max,
               param_s12_plot_min, param_s12_plot_max,
               split_pdf_params_file,
@@ -594,7 +657,7 @@ int main(int argc, char *argv[]) {
     printf("writing to: %s\n", out_filename_csv.c_str());
     ofstream outcsvfile;
     outcsvfile.open(out_filename_csv.c_str(), std::ios_base::app);
-    outcsvfile<<s12<<","<<d21<<","<<x_bin<<","<<y_bin<<","<<lh_value<<","<<fit_validity<<","<<fit_geo_uth_norm<<"\n";
+    outcsvfile<<s12<<","<<d21<<","<<x_bin<<","<<y_bin<<","<<lh_value<<","<<fit_validity<<","<<fit_geo_uth_norm<<","<<fit_e_scale<<","<<fit_e_smear<<"\n";
     outcsvfile.close();
 
     if (output_all_fit_results){

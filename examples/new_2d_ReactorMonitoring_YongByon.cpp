@@ -100,6 +100,7 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
 	  const std::vector<std::string> &detector_names,
 	  const std::vector<std::string> &reactor_names, std::vector<std::string> &reactor_types,
 	  std::vector<std::vector<Double_t> > &distances,
+      std::vector<std::vector<std::vector<Double_t> > > &distances_fit,
       std::vector<Double_t> &known_reactor_constraints, /*std::vector<Double_t> &constraint_sigmas,*/
 	  TFile *file_out,
 	  Double_t param_d21, Double_t param_s12, Double_t param_s13,
@@ -113,7 +114,7 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
 	  TH2D &h2_data, TH2D * h2_best_fit, const bool poisson_fluc,
 	  TH1D &h_data_set_detector_1, TH1D &h_data_set_detector_2,
           TH1D &h_data_set_detector_1_poisson_fluc, TH1D &h_data_set_detector_2_poisson_fluc,
-          double n_years){
+          double n_years, std::vector<double> &lh_values_vec_rot, const int rotationZ_n, int rotationZ_0value_index){
 
   //////////////////////////////
   ///// Constrained Data  //////
@@ -141,22 +142,12 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
   ObsSet data_rep(indices);
   BinnedED data_set_pdf("data_set_pdf", axes);
   data_set_pdf.SetObservables(data_rep);
+  data_set_pdf.Empty();
 
   ObsSet data_rep_1d(0);
   AxisCollection axes_1d;
   axes_1d.AddAxis(BinAxis("ev_prompt_fit", e_min, e_max, n_bins));
   
-  /*
-  BinnedED data_set_pdf("data_set_pdf", axes);
-  data_set_pdf.SetObservables(data_rep);
-    
-  // set up binning
-  ObsSet data_rep(0);
-  AxisCollection axes;
-  axes.AddAxis(BinAxis("ev_prompt_fit", e_min, e_max, n_bins));
-  */
-  
-  //TH2D test_2d("test_2d", "test_2d", n_bins, e_min, e_max, n_bins, e_min, e_max);
   
   /////////////////
   // 2d BinnedEDs//
@@ -185,10 +176,7 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
   bool alphans_included = false;
 
   // read in constraint information
-  double constraint_means [n_detectors][n_reactors];
-  //std::vector<Double_t> constraint_mean_errs;
-  //std::vector<Double_t> constraint_sigmas;
-  //std::vector<Double_t> constraint_sigma_errs;
+  std::vector<double> total_unosc_constraint_means;
 
   for (ULong64_t i = 0; i < n_reactors; i++){
     Double_t nd_reactor_Int_fit = 0.;
@@ -229,7 +217,7 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
       // oscillate tree
       if (apply_oscillation){
 	    ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13, distances[j][i]);
-        std::cout<<"osc: "<<detector_names[j]<<" -> "<<reactor_names[i]<<" "<<distances[j][i]<<std::endl;
+        //std::cout<<"osc: "<<detector_names[j]<<" -> "<<reactor_names[i]<<" "<<distances[j][i]<<std::endl;
       }else if (is_further_reactors)
 	    ntOscillate_pruned_geo(reactor_unosc_ntp, reactor_osc_ntp, param_s12);
       else
@@ -265,6 +253,11 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
 
         Double_t constraint_osc_mean = reactor_distance_to_evs(distances[j][i],P_over_D_coeff,thermal_powers[i])*osc_loss*n_years;
 
+        if (j == 0)
+          total_unosc_constraint_means.push_back(constraint_osc_mean);
+        else if (j == 1)
+          total_unosc_constraint_means[i] += constraint_osc_mean;
+
         nd_reactor_Int_fit += constraint_osc_mean;
 
         reactor_osc_data_1d_pdf[j][i]->Normalise(); 
@@ -277,8 +270,8 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
 	  
         //data_set_pdf.Add(*reactor_osc_data_1d_pdf[j][i]);
         //printf("  added reactor %d/%d: %s, osc_survival: %.3f, norm_constraint: %.3f data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), osc_loss,constraint_osc_mean, data_set_pdf.Integral());
-        printf(" detector %d/%d: %s, added reactor %d/%d: %s, %u/%u -> osc_survival: %.3f, norm_constraint: %.3f \n", j+1, n_detectors, detector_names[j].c_str(), i+1, n_reactors, reactor_names[i].c_str(), normalisation_reactor, normalisation_unosc, osc_loss,constraint_osc_mean);
-        std::cout<<"i: "<<i+1<<" j: "<<j+1<<" reactor: "<<reactor_names[i]<<"  reactor_osc_total_data_axes_pdf int: "<<reactor_osc_total_data_axes_pdf[j]->Integral()<<std::endl;
+        printf(" detector %d/%d: %s, added reactor %d/%d: %s, %u/%u -> osc_survival: %.3f, norm_constraint: %.3f dist: %.3f\n", j+1, n_detectors, detector_names[j].c_str(), i+1, n_reactors, reactor_names[i].c_str(), normalisation_reactor, normalisation_unosc, osc_loss,constraint_osc_mean,distances[j][i]);
+        //std::cout<<"i: "<<i+1<<" j: "<<j+1<<" reactor: "<<reactor_names[i]<<"  reactor_osc_total_data_axes_pdf int: "<<reactor_osc_total_data_axes_pdf[j]->Integral()<<std::endl;
 
       }else if (geos_included){
         Double_t normalisation_unosc = reactor_unosc_data_1d_pdf[j][i]->Integral();
@@ -306,52 +299,15 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
         //data_set_pdf.Add(*reactor_osc_data_1d_pdf[j][i]);
         //printf("  added alpha-n %d/%d: %s, osc_survival: %.3f, data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), osc_loss, data_set_pdf.Integral());
       }
-
-      /////////////// end of detector loop for given reactor ^ /////////////
-      /*if (j == n_detectors-1){
-        reactor_osc_data_nd_pdf[i] = new BinnedED(reactor_names[i], axes);
-        reactor_osc_data_nd_pdf[i]->SetObservables(data_rep);
-
-        Double_t reactor_nd_Int = 0.;
-	  
-        //std::vector<Double_t> bin_centres_1d;
-        //for (size_t bin = 0; bin < n_bins; bin++){
-        //bin_centres_1d.push_back(axes_1d.GetBinCentres(bin));
-        std::vector<Double_t> e1_e2_vec(n_detectors, 0.);
-        for (size_t l = 0; l < n_bins; l++){
-	    for (size_t k = 0; k < n_bins; k++){
-        std::vector<Double_t> e1_bin_centre_vals(1, 0.);
-        axes_1d.GetBinCentres(l, e1_bin_centre_vals);
-        e1_e2_vec[0] = e1_bin_centre_vals[0];
-        std::vector<Double_t> e2_bin_centre_vals(1, 0.);
-        axes_1d.GetBinCentres(k, e2_bin_centre_vals);
-        e1_e2_vec[1] = e2_bin_centre_vals[0];
-	      
-        //Event * event_to_be_normalised = new Event(nd_bin_centre_vals);
-        //normalised_event->ToObs
-	    
-        Double_t bin_content = reactor_osc_data_1d_pdf[0][i]->GetBinContent(l);
-        for (size_t nd = 1; nd < n_detectors; nd++)
-		bin_content *= reactor_osc_data_1d_pdf[nd][i]->GetBinContent(k);
-	    
-        //std::cout<<"e1: "<<e1_e2_vec[0]<<" e2: "<<e1_e2_vec[1]<<"   content1: "<<reactor_osc_data_1d_pdf[0][i]->GetBinContent(l)<<" content2: "<<reactor_osc_data_1d_pdf[0][i]->GetBinContent(k)<<"  1*2: "<<bin_content<<std::endl;
-	      
-        reactor_osc_data_nd_pdf[i]->Fill(e1_e2_vec, bin_content);
-        //reactor_osc_data_nd_pdf[i]->Fill(axis_map_vec[k], bin_content);
-        //reactor_osc_data_nd_pdf[i]->Fill(*event_to_be_normalised, bin_content);
-        test_2d.Fill(e1_e2_vec[0], e1_e2_vec[1], bin_content);
-        reactor_nd_Int += bin_content;
-	    }
-        }
-        printf("added reactor %d/%d: %s, nd_pdf_Integral: %.3f \n", i+1, n_reactors, reactor_names[i].c_str(), reactor_nd_Int);
-        data_set_pdf.Add(*reactor_osc_data_nd_pdf[i]);
-        }*/
     }
     std::cout<<reactor_names[i]<<" -> "<<nd_reactor_Int_fit<<std::endl;
   }
 
+
+  // data set integral over all detectors
   Double_t reactor_nd_Int = 0.;
 
+  // each detector's measured spectrum
   std::vector<Double_t> data_integrals_1d(n_detectors, 0.);
   h_data_set_detector_1 = DistTools::ToTH1D(*reactor_osc_total_data_axes_pdf[0]);
   h_data_set_detector_2 = DistTools::ToTH1D(*reactor_osc_total_data_axes_pdf[1]);
@@ -359,24 +315,25 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
   h_data_set_detector_1.SetTitle("Simulated Data at detector 1");
   h_data_set_detector_2.SetName("h_data_set_detector_2");
   h_data_set_detector_2.SetTitle("Simulated Data at detector 2");
-  //h_data_set_detector_1.Scale(1./(double)h_data_set_detector_1.Integral());
-  //h_data_set_detector_2.Scale(1./(double)h_data_set_detector_2.Integral());
 
+  //poisson fluctuate data:
+  double frac_poisson_change[n_detectors][n_bins];
   for (ULong64_t j = 0; j < n_detectors; j++){
     std::cout<<"det: "<<j<<" Int: "<<reactor_osc_total_data_axes_pdf[j]->Integral()<<std::endl;
-    
     if (poisson_fluc){
       for (size_t l = 0; l < n_bins; l++){
         Double_t old_content = reactor_osc_total_data_axes_pdf[j]->GetBinContent(l);
         Double_t new_content = random_generator->Poisson(old_content);
-        //std::cout<<"det: "<<j<<" bin: "<<l<<"  "<<old_content<<" -> "<<new_content<<std::endl;
         reactor_osc_total_data_axes_pdf[j]->SetBinContent(l, new_content);
+        frac_poisson_change[j][l] = (new_content/old_content);
+        //std::cout<<"det: "<<j<<" bin: "<<l<<" "<<old_content<<" -> "<<new_content<<"  "<<frac_poisson_change[j][l]<<std::endl;
       }
     }
+
     data_integrals_1d[j] = reactor_osc_total_data_axes_pdf[j]->Integral();
     reactor_nd_Int += data_integrals_1d[j];
-    //reactor_osc_total_data_axes_pdf[j]->Normalise();
   }
+
   h_data_set_detector_1_poisson_fluc = DistTools::ToTH1D(*reactor_osc_total_data_axes_pdf[0]);
   h_data_set_detector_2_poisson_fluc = DistTools::ToTH1D(*reactor_osc_total_data_axes_pdf[1]);
   h_data_set_detector_1_poisson_fluc.SetName("h_data_set_detector_1_poisson_fluc");
@@ -389,7 +346,77 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
   reactor_osc_total_data_axes_pdf[0]->Normalise();
   reactor_osc_total_data_axes_pdf[1]->Normalise();
 
-  std::vector<Double_t> e1_e2_vec(n_detectors, 0.);
+  ///  Make 2d BinnedED
+  // make each reactor's 2d pdf, scale to expected value, then add to data_set_pdf
+  for (ULong64_t i = 0; i < n_reactors ; i++){
+    reactor_osc_data_nd_pdf[i] = new BinnedED(reactor_names[i], axes);
+    reactor_osc_data_nd_pdf[i]->SetObservables(data_rep);
+	
+    std::vector<Double_t> e1_e2_vec(n_detectors, 0.);
+    for (size_t l = 0; l < n_bins; l++){
+      for (size_t k = 0; k < n_bins; k++){
+        std::vector<Double_t> e1_bin_centre_vals(1, 0.);
+        axes_1d.GetBinCentres(l, e1_bin_centre_vals);
+        e1_e2_vec[0] = e1_bin_centre_vals[0];
+        std::vector<Double_t> e2_bin_centre_vals(1, 0.);
+        axes_1d.GetBinCentres(k, e2_bin_centre_vals);
+        e1_e2_vec[1] = e2_bin_centre_vals[0];	      
+        
+        reactor_osc_data_1d_pdf[0][i]->Normalise();
+        Double_t bin_content = reactor_osc_data_1d_pdf[0][i]->GetBinContent(l);
+      
+        for (size_t nd = 1; nd < n_detectors; nd++){
+          reactor_osc_data_1d_pdf[nd][i]->Normalise();
+          bin_content *= reactor_osc_data_1d_pdf[nd][i]->GetBinContent(k);
+        }
+
+        reactor_osc_data_nd_pdf[i]->Fill(e1_e2_vec, bin_content);
+        //data_content[l][k] += bin_content*total_unosc_constraint_means[i];
+      }
+    }
+    reactor_osc_data_nd_pdf[i]->Normalise();
+    reactor_osc_data_nd_pdf[i]->Scale(total_unosc_constraint_means[i]);
+    std::cout<<reactor_names[i]<<" total int: "<<reactor_osc_data_nd_pdf[i]->Integral()<<" contraint: "<<total_unosc_constraint_means[i]<<std::endl;
+    //if (!poisson_fluc)
+    data_set_pdf.Add(*reactor_osc_data_nd_pdf[i]);
+  }
+  std::cout<<"\n Data norm: Total number of events across detectors = "<<data_set_pdf.Integral()<<"\n"<<std::endl;  
+
+  // apply previously calculated poisson fluctuations to data
+  if (poisson_fluc){
+    TH2D h2_data_temp = DistTools::ToTH2D(data_set_pdf);
+    h2_data_temp.SetName("h2_data_temp");
+    data_set_pdf.Empty(); // empty it then fill
+    std::vector<Double_t> e1_e2_vec(n_detectors, 0.);
+    for (size_t l = 0; l < n_bins; l++){
+      for (size_t k = 0; k < n_bins; k++){
+        std::vector<Double_t> e1_bin_centre_vals(1, 0.);
+        axes_1d.GetBinCentres(l, e1_bin_centre_vals);
+        e1_e2_vec[0] = e1_bin_centre_vals[0];
+        std::vector<Double_t> e2_bin_centre_vals(1, 0.);
+        axes_1d.GetBinCentres(k, e2_bin_centre_vals);
+        e1_e2_vec[1] = e2_bin_centre_vals[0];	      
+        
+        double old_content = h2_data_temp.GetBinContent(l+1,k+1);
+        double new_content = 0.;
+        //if (frac_poisson_uncert[0][l] != -1. && frac_poisson_uncert[1][k] != -1.)
+        new_content = old_content*frac_poisson_change[0][l]*frac_poisson_change[1][k];
+        //std::cout<<"x: "<<l<<" y: "<<k<<" "<<frac_poisson_change[0][l]<<" "<<frac_poisson_change[1][k]<<std::endl;
+        //std::cout<<"x: "<<l<<" y: "<<k<<" "<<old_content<<" -> "<<new_content<<std::endl;
+        data_set_pdf.Fill(e1_e2_vec,new_content);
+      }
+    }
+  }
+  data_set_pdf.Normalise();
+  
+  std::cout<<"\n Data norm: Total number of events across detectors = "<<reactor_nd_Int<<"\n"<<std::endl;
+  data_set_pdf.Scale(reactor_nd_Int);
+  
+  std::cout<<"\n Data norm: Total number of events across detectors = "<<data_set_pdf.Integral()<<"\n"<<std::endl;  
+  
+
+  // Data method old
+  /*std::vector<Double_t> e1_e2_vec(n_detectors, 0.);
   for (size_t l = 0; l < n_bins; l++){
     for (size_t k = 0; k < n_bins; k++){
       std::vector<Double_t> e1_bin_centre_vals(1, 0.);
@@ -404,6 +431,8 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
       for (size_t nd = 1; nd < n_detectors; nd++)
         bin_content *= reactor_osc_total_data_axes_pdf[nd]->GetBinContent(k);
 
+      //reactor_nd_Int += bin_content;
+      //std::cout<<"e1: "<<e1_e2_vec[0]<<" e2: "<<e1_e2_vec[1]<<"  ->  "<<bin_content<<std::endl;
       data_set_pdf.Fill(e1_e2_vec, bin_content);
     }
   }
@@ -411,7 +440,9 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
   
   std::cout<<"\n Data norm: Total number of events across detectors = "<<reactor_nd_Int<<"\n"<<std::endl;
   data_set_pdf.Scale(reactor_nd_Int);
+  */
 
+  
   h2_data = DistTools::ToTH2D(data_set_pdf);
   h2_data.SetName("h2_data");
 
@@ -430,338 +461,359 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
   test_2d.Write();
   file_data_out->Close();
   */
+
+
   ////////////////////////////////////
   ////////////  Fitting  /////////////
   ////////////////////////////////////
   //fit_validity = true;
-  
-  printf("\n\nBegin fit--------------------------------------\n");
-  printf("LHFit_fit:: del_21:%.9f, sin2_12:%.7f, sin2_13:%.7f\n", param_d21, param_s12, param_s13);
-
-  //ObsSet fit_rep(0);
-  // create LH function
-  BinnedNLLH lh_function;
-  lh_function.SetBufferAsOverflow(true);
-  int buff = 1;
-  lh_function.SetBuffer(0, buff, buff);
-  lh_function.SetDataDist(data_set_pdf); // initialise withe the data set
-
-  // setup max and min ranges
-  ParameterDict minima;
-  ParameterDict maxima;
-  ParameterDict initial_val;
-  ParameterDict initial_err;
-
-  BinnedED reactor_osc_pdf_fitosc_sum("reactor_osc_pdf_fitosc_sum",axes);
-  reactor_osc_pdf_fitosc_sum.SetObservables(data_rep);
-
-  BinnedED **reactor_osc_nd_pdf = new BinnedED*[n_reactors];
-  // distances: { [distances to 1] ,  [distances to 2] }
-  BinnedED*** reactor_unosc_1d_pdf = new BinnedED**[n_detectors];   
-  BinnedED*** reactor_osc_1d_pdf = new BinnedED**[n_detectors];
-  for (ULong64_t j = 0; j < n_detectors; j++){
-    reactor_unosc_1d_pdf[j] = new BinnedED*[n_reactors];
-    reactor_osc_1d_pdf[j] = new BinnedED*[n_reactors];
-  }
-
-  Double_t data_set_pdf_integral = data_set_pdf.Integral();
-  std::cout<<" Data Int: "<<data_set_pdf_integral<<std::endl;
-
-  geos_included = false;
-
-  std::vector<std::vector<Double_t> >osc_losses;   // losses: { [reactor A losses to detectors] ,  [reactor B losses to detectors] ..}
-
-  for (ULong64_t i = 0; i < n_reactors; i++){
-    std::vector<Double_t> reactor_osc_losses;
-    osc_losses.push_back(reactor_osc_losses);
-
-    Double_t nd_reactor_Int_fit = 0.;
-    for (ULong64_t j = 0; j < n_detectors; j++){
-      sprintf(name, "%s_%s_unosc", detector_names[j].c_str(),  reactor_names[i].c_str());
-      reactor_unosc_1d_pdf[j][i] = new BinnedED(name, axes_1d);
-      reactor_unosc_1d_pdf[j][i]->SetObservables(0);
-      reactor_osc_1d_pdf[j][i] = new BinnedED(reactor_names[i], axes_1d);
-      reactor_osc_1d_pdf[j][i]->SetObservables(0);
-
-      bool apply_oscillation = false;
-      bool is_further_reactors = false;
-      if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR")){
-        sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
-        apply_oscillation = true;
-      }else if (reactor_types[i]=="PHWR"){
-        sprintf(name, "%s", spectrum_phwr_unosc_filepath.c_str());
-        apply_oscillation = true;
-      }else if (reactor_types[i]=="further_reactors"){
-        sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
-        is_further_reactors = true;
-      }else if (reactor_names[i]=="uraniumthorium"){
-        sprintf(name, "%s", spectrum_geo_uraniumthorium_unosc_filepath.c_str());
-        geos_included = true;
-      }else if (reactor_names[i]=="alphan"){
-        sprintf(name, "%s", spectrum_bkg_alphan_unosc_filepath.c_str());
-        alphans_included = true;
-      }else{
-        printf("Throw: Reactor doesn't match any loaded type...\n");
-        exit(0);
-      }
-      
-      TFile *f_in = new TFile(name);
-      file_out->cd();
-      TTree *reactor_unosc_ntp = (TTree*)f_in->Get("nt");
-      TNtuple *reactor_osc_ntp = new TNtuple("nt", "Oscillated Prompt Energy", "ev_fit_energy_p1");
-
-      // oscillate tree
-      if (apply_oscillation)
-        ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13, distances[j][i]);
-      else if (is_further_reactors)
-        ntOscillate_pruned_geo(reactor_unosc_ntp, reactor_osc_ntp, param_s12);
-      else
-        ntNoOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp);
-
-      // reset branch addresses after oscillating in function (otherwise crash before setting again below..)
-      reactor_unosc_ntp->SetBranchStatus("*", 0);
-      reactor_unosc_ntp->SetBranchStatus("ev_fit_energy_p1", 1); // (re-enable all branches in use)
-
-      // fill unoscillated pdf
-      Double_t ev_unosc_energy_p1;
-      reactor_unosc_ntp->SetBranchAddress("ev_fit_energy_p1", &ev_unosc_energy_p1);
-      for(size_t e = 0; e < reactor_unosc_ntp->GetEntries(); e++){
-        reactor_unosc_ntp->GetEntry(e);
-        reactor_unosc_1d_pdf[j][i]->Fill(ev_unosc_energy_p1);
-      }
-      
-      // fill oscillated pdf
-      Float_t ev_osc_energy_p1;
-      reactor_osc_ntp->SetBranchAddress("ev_fit_energy_p1", &ev_osc_energy_p1);
-      for(size_t e = 0; e < reactor_osc_ntp->GetEntries(); e++){
-        reactor_osc_ntp->GetEntry(e);
-        reactor_osc_1d_pdf[j][i]->Fill(ev_osc_energy_p1);
-      }
-
-      // close unoscillated reactor file
-      f_in->Close();
-
-      if (apply_oscillation || is_further_reactors){
-        // work out total oscillated integral of constraints
-        int normalisation_unosc = reactor_unosc_1d_pdf[j][i]->Integral();
-        int normalisation_reactor = reactor_osc_1d_pdf[j][i]->Integral();
-        Double_t osc_loss = normalisation_reactor/(double)normalisation_unosc;
-	
-        osc_losses[i].push_back(osc_loss);
-	  
-        Double_t constraint_osc_mean = reactor_distance_to_evs(distances[j][i],P_over_D_coeff,thermal_powers[i])*osc_loss*n_years;
-	
-        reactor_osc_1d_pdf[j][i]->Normalise(); 
-        //reactor_osc_1d_pdf[j][i]->Scale(constraint_osc_mean);
-
-        nd_reactor_Int_fit += constraint_osc_mean;
-        //data_set_pdf.Add(*reactor_osc_1d_pdf[j][i]);
-        //printf("  added reactor %d/%d: %s, osc_survival: %.3f, norm_constraint: %.3f data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), osc_loss,constraint_osc_mean, data_set_pdf.Integral());
-        printf(" detector %d/%d: %s, added reactor %d/%d: %s, %i/%i -> osc_survival: %.3f, norm_constraint: %.3f \n", j+1, n_detectors, detector_names[j].c_str(), i+1, n_reactors, reactor_names[i].c_str(), normalisation_reactor, normalisation_unosc, osc_loss,constraint_osc_mean);
-        //printf(" detector %d/%d: %s, added reactor %d/%d: %s, osc_survival: %.3f, norm_constraint: %.3f \n", j+1, n_detectors, detector_names[j].c_str(), i+1, n_reactors, reactor_names[i].c_str(), osc_loss,constraint_osc_mean);
-	
-      }else if (geos_included){
-        Double_t normalisation_unosc = reactor_unosc_1d_pdf[j][i]->Integral();
-        Double_t normalisation_reactor = reactor_osc_1d_pdf[j][i]->Integral();
-        Double_t osc_loss = normalisation_reactor/normalisation_unosc;
-	
-        double scale = 0.;
-	
-        // geo custom flux = coefficient times 1 years predicted geos
-        reactor_osc_1d_pdf[j][i]->Scale(0.);//geo_uth_custom_flux/(double)flux_data);
-	
-        //data_set_pdf.Add(*reactor_osc_1d_pdf[j][i]);
-        //printf("  added geo %d/%d: %s, osc_survival: %.3f, data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), osc_loss, data_set_pdf.Integral());
-	
-      }else if (alphans_included){
-        Double_t normalisation_unosc = reactor_unosc_1d_pdf[j][i]->Integral();
-        Double_t normalisation_reactor = reactor_osc_1d_pdf[j][i]->Integral();
-        Double_t osc_loss = normalisation_reactor/normalisation_unosc;
-	
-        double scale = 0.;
-	  
-        reactor_osc_1d_pdf[j][i]->Normalise(); // currently custom flux number = total events in livetime
-        reactor_osc_1d_pdf[j][i]->Scale(0.);//bkg_alphan_custom_flux);///(double)flux_data);
-	
-        //data_set_pdf.Add(*reactor_osc_1d_pdf[j][i]);
-        //printf("  added alpha-n %d/%d: %s, osc_survival: %.3f, data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), osc_loss, data_set_pdf.Integral());
-      }
-      
-      /////////////// end of detector loop for given reactor ^ /////////////
-      if (j == n_detectors-1){
-        reactor_osc_nd_pdf[i] = new BinnedED(reactor_names[i], axes);
-        reactor_osc_nd_pdf[i]->SetObservables(data_rep);
-	
-        std::vector<Double_t> e1_e2_vec(n_detectors, 0.);
-        for (size_t l = 0; l < n_bins; l++){
-          for (size_t k = 0; k < n_bins; k++){
-            std::vector<Double_t> e1_bin_centre_vals(1, 0.);
-            axes_1d.GetBinCentres(l, e1_bin_centre_vals);
-            e1_e2_vec[0] = e1_bin_centre_vals[0];
-            std::vector<Double_t> e2_bin_centre_vals(1, 0.);
-            axes_1d.GetBinCentres(k, e2_bin_centre_vals);
-            e1_e2_vec[1] = e2_bin_centre_vals[0];
-	      
-            Double_t bin_content = reactor_osc_1d_pdf[0][i]->GetBinContent(l);
-            for (size_t nd = 1; nd < n_detectors; nd++)
-              bin_content *= reactor_osc_1d_pdf[nd][i]->GetBinContent(k);
-	      
-            reactor_osc_nd_pdf[i]->Fill(e1_e2_vec, bin_content);
-          }
-        }
-        reactor_osc_nd_pdf[i]->Normalise();
-
-        // Setting optimisation limits
-        sprintf(name, "%s_norm", reactor_names[i].c_str());
-        Double_t min = 0.;
-        Double_t max = 3.*nd_reactor_Int_fit;
-        if (min < 0) min = 0;
-        minima[name] = min;
-        maxima[name] = max;
-        Double_t random = random_generator->Uniform(0.7,1.3);
-        std::cout<<name<<" -> "<<nd_reactor_Int_fit<<std::endl;
-        initial_val[name] = nd_reactor_Int_fit;//*random;
-        initial_err[name] = 0.5*nd_reactor_Int_fit;
-
-        lh_function.AddPdf(*reactor_osc_nd_pdf[i]);
-        if (known_reactor_constraints[i] > 0.){
-          Double_t sigma =  nd_reactor_Int_fit*known_reactor_constraints[i];
-          lh_function.SetConstraint(name, nd_reactor_Int_fit, sigma);
-          printf("  added CONSTRAINED reactor %d/%d: %s (min:%.3f max:%.3f) constraint: %.3f , sigma: %.3f data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), min, max, nd_reactor_Int_fit, sigma, data_set_pdf_integral);
-        }
-        else
-          printf("  added reactor %d/%d: %s (min:%.3f max:%.3f) constraint: %.3f , sigma: %.3f data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), min, max, nd_reactor_Int_fit, 0., data_set_pdf_integral);
-
-      }
-    }
-  }
-
-  // fit
-  printf("Built LH function, fitting...\n");
-  Minuit min;
-  min.SetMethod("Migrad");
-  min.SetMaxCalls(100000);
-  min.SetTolerance(0.01);
-  min.SetMinima(minima);
-  min.SetMaxima(maxima);
-  min.SetInitialValues(initial_val);
-  min.SetInitialErrors(initial_err);
-  
-  FitResult fit_result = min.Optimise(&lh_function);
-  fit_result.SetPrintPrecision(9);
-  ParameterDict best_fit = fit_result.GetBestFit();
-  fit_result.Print();
-  fit_validity = fit_result.GetValid();
-
-
-  if (n_fit == 1 && fit_validity){
-    for (ULong64_t i = 0; i < n_reactors; i++){
-      for (ULong64_t j = 0; j < n_detectors; j++){
-        if (reactor_names[i] == "Yongbyon"){
-          //std::cout<<" FOUND YB i:"<<i<<" j:"<<j<<std::endl;
-          if (j == 0){
-            reactor_osc_data_1d_hist[j][i]->SetFillColor(8);
-            reactor_osc_data_1d_hist[j][i]->SetLineColor(1);
-            hs_e1->Add(reactor_osc_data_1d_hist[j][i]);
-          }else if (j == 1){
-            reactor_osc_data_1d_hist[j][i]->SetFillColor(3);
-            reactor_osc_data_1d_hist[j][i]->SetLineColor(1);
-            hs_e2->Add(reactor_osc_data_1d_hist[j][i]);
-          }
-        }
-      }
-    }
-    
-    for (ULong64_t i = 0; i < n_reactors; i++){
-      for (ULong64_t j = 0; j < n_detectors; j++){
-        if (reactor_names[i] != "Yongbyon"){
-          //std::cout<<" ADDING OTHER i:"<<i<<" j:"<<j<<std::endl;
-          if (j == 0){
-            reactor_osc_data_1d_hist[j][i]->SetFillColor(9);
-            reactor_osc_data_1d_hist[j][i]->SetLineColor(1);
-            hs_e1->Add(reactor_osc_data_1d_hist[j][i]);
-          }else if (j == 1){ 
-            reactor_osc_data_1d_hist[j][i]->SetFillColor(4);
-            reactor_osc_data_1d_hist[j][i]->SetLineColor(1);
-            hs_e2->Add(reactor_osc_data_1d_hist[j][i]);
-          }
-        }
-      }
-    }
-
-  }
-  
-  
-  Double_t lh_val = 99999; // positive non-sensical value to return if fit is not valid
-  if (fit_validity == true)
-    lh_val = (-1.)*lh_function.Evaluate();
-
-  //Double_t total_power_resolution = 0.;
   std::vector<Double_t> reactor_power_resolutions(n_reactors, 0.);
-  for (ULong64_t i = 0; i < n_reactors; i++){
-    sprintf(name, "%s_norm", reactor_names[i].c_str());
-    std::vector<Double_t> reactor_distances;
-    std::vector<Double_t> reactor_osc_losses;
-    for (ULong64_t j = 0; j < n_detectors; j++){
-      reactor_distances.push_back(distances[j][i]);
-      reactor_osc_losses.push_back(osc_losses[i][j]); // losses: { [reactor A losses to detectors] ,  [reactor B losses to detectors] ..}
-    }
-    Double_t reactor_therm_power = nd_evs_integral_to_power(best_fit.at(name), n_detectors, reactor_distances, reactor_osc_losses, P_over_D_coeff);
-    Double_t reactor_therm_power_uncert = (reactor_therm_power - thermal_powers[i])/thermal_powers[i];
-    //total_power_resolution += reactor_therm_power_uncert;
-    Double_t true_data_nd_int = 0.;
-    for (ULong64_t j = 0; j < n_detectors; j++)
-      true_data_nd_int += reactor_osc_data_1d_pdf[j][i]->Integral();
-    std::cout<<name<<" best fit nd Integral: "<<best_fit.at(name)<<"  true nd Int: "<<true_data_nd_int<<" -> Fit therm power: "<<reactor_therm_power<<"  true: therm power: "<<thermal_powers[i]<<" resolution: "<<reactor_therm_power_uncert<<std::endl;
-    reactor_power_resolutions[i] = reactor_therm_power_uncert;
-  }
-  //total_power_resolution = total_power_resolution/(double)n_reactors;
-  
-  /*for (ULong64_t j = 0; j < n_reactors; j++){
-    sprintf(name, "%s_norm", reactor_names[j].c_str());
-    reactor_osc_pdf[j]->Normalise();
-    reactor_osc_pdf[j]->Scale(best_fit.at(name));
-    reactor_osc_pdf_fitosc_sum.Add(*reactor_osc_pdf[j]);
-  }
-  
-  if (geos_included)
-    fit_geo_uth_norm = best_fit.at("uraniumthorium_norm");
-  else
-    fit_geo_uth_norm = 0.;
-  
-  // write plots to file (only 'good' plots - those with the best fit values)
-  if (param_d21>=param_d21_plot_min && param_d21<=param_d21_plot_max && param_s12>=param_s12_plot_min && param_s12<=param_s12_plot_max){
-    file_out->cd();
-    TCanvas* c_data_fit = new TCanvas("c_data_fit");
-    c_data_fit->cd();
+  for (int rot_i = 0; rot_i < rotationZ_n ; rot_i++){
+    if (rotationZ_n > 1) std::cout<<"\n Rotation: "<<rot_i<<std::endl;
 
-    // and their sum
-    TH1D reactor_hist_fitosc_sum = DistTools::ToTH1D(reactor_osc_pdf_fitosc_sum);
-    sprintf(name, "reactor_hist_fitosc_sum_d21%.9f_s12%.7f_s13%.7f", param_d21, param_s12, param_s13);
-    reactor_hist_fitosc_sum.SetName(name);
-    reactor_hist_fitosc_sum.GetXaxis()->SetTitle("Energy (MeV)");
-    reactor_hist_fitosc_sum.GetYaxis()->SetTitle("Counts");
-    reactor_hist_fitosc_sum.SetLineColor(kRed);
-    reactor_hist_fitosc_sum.Write();
-    reactor_hist_fitosc_sum.Draw("same");
+    printf("\n\nBegin fit--------------------------------------\n");
+    printf("LHFit_fit:: del_21:%.9f, sin2_12:%.7f, sin2_13:%.7f\n", param_d21, param_s12, param_s13);
+
+    //ObsSet fit_rep(0);
+    // create LH function
+    BinnedNLLH lh_function;
+    lh_function.SetBufferAsOverflow(true);
+    int buff = 1;
+    lh_function.SetBuffer(0, buff, buff);
+    lh_function.SetDataDist(data_set_pdf); // initialise withe the data set
+
+    // setup max and min ranges
+    ParameterDict minima;
+    ParameterDict maxima;
+    ParameterDict initial_val;
+    ParameterDict initial_err;
+
+    BinnedED reactor_osc_pdf_fitosc_sum("reactor_osc_pdf_fitosc_sum",axes);
+    reactor_osc_pdf_fitosc_sum.SetObservables(data_rep);
+
+    BinnedED **reactor_osc_nd_pdf = new BinnedED*[n_reactors];
+    // distances: { [distances to 1] ,  [distances to 2] }
+    BinnedED*** reactor_unosc_1d_pdf = new BinnedED**[n_detectors];   
+    BinnedED*** reactor_osc_1d_pdf = new BinnedED**[n_detectors];
+    for (ULong64_t j = 0; j < n_detectors; j++){
+      reactor_unosc_1d_pdf[j] = new BinnedED*[n_reactors];
+      reactor_osc_1d_pdf[j] = new BinnedED*[n_reactors];
+    }
+
+    Double_t data_set_pdf_integral = data_set_pdf.Integral();
+    std::cout<<" Data Int: "<<data_set_pdf_integral<<std::endl;
+
+    geos_included = false;
+
+    std::vector<std::vector<Double_t> >osc_losses;   // losses: { [reactor A losses to detectors] ,  [reactor B losses to detectors] ..}
+
+    for (ULong64_t i = 0; i < n_reactors; i++){
+      std::vector<Double_t> reactor_osc_losses;
+      osc_losses.push_back(reactor_osc_losses);
+
+      Double_t nd_reactor_Int_fit = 0.;
+      for (ULong64_t j = 0; j < n_detectors; j++){
+        sprintf(name, "%s_%s_unosc", detector_names[j].c_str(),  reactor_names[i].c_str());
+        reactor_unosc_1d_pdf[j][i] = new BinnedED(name, axes_1d);
+        reactor_unosc_1d_pdf[j][i]->SetObservables(0);
+        reactor_osc_1d_pdf[j][i] = new BinnedED(reactor_names[i], axes_1d);
+        reactor_osc_1d_pdf[j][i]->SetObservables(0);
+
+        bool apply_oscillation = false;
+        bool is_further_reactors = false;
+        if ((reactor_types[i]=="PWR")||(reactor_types[i]=="BWR")){
+          sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
+          apply_oscillation = true;
+        }else if (reactor_types[i]=="PHWR"){
+          sprintf(name, "%s", spectrum_phwr_unosc_filepath.c_str());
+          apply_oscillation = true;
+        }else if (reactor_types[i]=="further_reactors"){
+          sprintf(name, "%s", spectrum_pwr_unosc_filepath.c_str());
+          is_further_reactors = true;
+        }else if (reactor_names[i]=="uraniumthorium"){
+          sprintf(name, "%s", spectrum_geo_uraniumthorium_unosc_filepath.c_str());
+          geos_included = true;
+        }else if (reactor_names[i]=="alphan"){
+          sprintf(name, "%s", spectrum_bkg_alphan_unosc_filepath.c_str());
+          alphans_included = true;
+        }else{
+          printf("Throw: Reactor doesn't match any loaded type...\n");
+          exit(0);
+        }
+      
+        TFile *f_in = new TFile(name);
+        file_out->cd();
+        TTree *reactor_unosc_ntp = (TTree*)f_in->Get("nt");
+        TNtuple *reactor_osc_ntp = new TNtuple("nt", "Oscillated Prompt Energy", "ev_fit_energy_p1");
+
+        // oscillate tree
+        if (apply_oscillation)
+          ntOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp, param_d21, param_s12, param_s13, distances_fit[rot_i][j][i]);
+        else if (is_further_reactors)
+          ntOscillate_pruned_geo(reactor_unosc_ntp, reactor_osc_ntp, param_s12);
+        else
+          ntNoOscillate_pruned(reactor_unosc_ntp, reactor_osc_ntp);
+
+        // reset branch addresses after oscillating in function (otherwise crash before setting again below..)
+        reactor_unosc_ntp->SetBranchStatus("*", 0);
+        reactor_unosc_ntp->SetBranchStatus("ev_fit_energy_p1", 1); // (re-enable all branches in use)
+
+        // fill unoscillated pdf
+        Double_t ev_unosc_energy_p1;
+        reactor_unosc_ntp->SetBranchAddress("ev_fit_energy_p1", &ev_unosc_energy_p1);
+        for(size_t e = 0; e < reactor_unosc_ntp->GetEntries(); e++){
+          reactor_unosc_ntp->GetEntry(e);
+          reactor_unosc_1d_pdf[j][i]->Fill(ev_unosc_energy_p1);
+        }
+      
+        // fill oscillated pdf
+        Float_t ev_osc_energy_p1;
+        reactor_osc_ntp->SetBranchAddress("ev_fit_energy_p1", &ev_osc_energy_p1);
+        for(size_t e = 0; e < reactor_osc_ntp->GetEntries(); e++){
+          reactor_osc_ntp->GetEntry(e);
+          reactor_osc_1d_pdf[j][i]->Fill(ev_osc_energy_p1);
+        }
+
+        // close unoscillated reactor file
+        f_in->Close();
+
+        if (apply_oscillation || is_further_reactors){
+          // work out total oscillated integral of constraints
+          int normalisation_unosc = reactor_unosc_1d_pdf[j][i]->Integral();
+          int normalisation_reactor = reactor_osc_1d_pdf[j][i]->Integral();
+          Double_t osc_loss = normalisation_reactor/(double)normalisation_unosc;
+	
+          osc_losses[i].push_back(osc_loss);
+	  
+          Double_t constraint_osc_mean = reactor_distance_to_evs(distances_fit[rot_i][j][i],P_over_D_coeff,thermal_powers[i])*osc_loss*n_years;
+	
+          reactor_osc_1d_pdf[j][i]->Normalise(); 
+          //reactor_osc_1d_pdf[j][i]->Scale(constraint_osc_mean);
+
+          nd_reactor_Int_fit += constraint_osc_mean;
+          //data_set_pdf.Add(*reactor_osc_1d_pdf[j][i]);
+          //printf("  added reactor %d/%d: %s, osc_survival: %.3f, norm_constraint: %.3f data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), osc_loss,constraint_osc_mean, data_set_pdf.Integral());
+          printf(" detector %d/%d: %s, added reactor %d/%d: %s, %i/%i -> osc_survival: %.3f, norm_constraint: %.3f \n", j+1, n_detectors, detector_names[j].c_str(), i+1, n_reactors, reactor_names[i].c_str(), normalisation_reactor, normalisation_unosc, osc_loss,constraint_osc_mean);
+          //printf(" detector %d/%d: %s, added reactor %d/%d: %s, osc_survival: %.3f, norm_constraint: %.3f \n", j+1, n_detectors, detector_names[j].c_str(), i+1, n_reactors, reactor_names[i].c_str(), osc_loss,constraint_osc_mean);
+	
+        }else if (geos_included){
+          Double_t normalisation_unosc = reactor_unosc_1d_pdf[j][i]->Integral();
+          Double_t normalisation_reactor = reactor_osc_1d_pdf[j][i]->Integral();
+          Double_t osc_loss = normalisation_reactor/normalisation_unosc;
+	
+          double scale = 0.;
+	
+          // geo custom flux = coefficient times 1 years predicted geos
+          reactor_osc_1d_pdf[j][i]->Scale(0.);//geo_uth_custom_flux/(double)flux_data);
+	
+          //data_set_pdf.Add(*reactor_osc_1d_pdf[j][i]);
+          //printf("  added geo %d/%d: %s, osc_survival: %.3f, data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), osc_loss, data_set_pdf.Integral());
+	
+        }else if (alphans_included){
+          Double_t normalisation_unosc = reactor_unosc_1d_pdf[j][i]->Integral();
+          Double_t normalisation_reactor = reactor_osc_1d_pdf[j][i]->Integral();
+          Double_t osc_loss = normalisation_reactor/normalisation_unosc;
+	
+          double scale = 0.;
+	  
+          reactor_osc_1d_pdf[j][i]->Normalise(); // currently custom flux number = total events in livetime
+          reactor_osc_1d_pdf[j][i]->Scale(0.);//bkg_alphan_custom_flux);///(double)flux_data);
+	
+          //data_set_pdf.Add(*reactor_osc_1d_pdf[j][i]);
+          //printf("  added alpha-n %d/%d: %s, osc_survival: %.3f, data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), osc_loss, data_set_pdf.Integral());
+        }
+      
+        /////////////// end of detector loop for given reactor ^ /////////////
+        if (j == n_detectors-1){
+          reactor_osc_nd_pdf[i] = new BinnedED(reactor_names[i], axes);
+          reactor_osc_nd_pdf[i]->SetObservables(data_rep);
+	
+          std::vector<Double_t> e1_e2_vec(n_detectors, 0.);
+          for (size_t l = 0; l < n_bins; l++){
+            for (size_t k = 0; k < n_bins; k++){
+              std::vector<Double_t> e1_bin_centre_vals(1, 0.);
+              axes_1d.GetBinCentres(l, e1_bin_centre_vals);
+              e1_e2_vec[0] = e1_bin_centre_vals[0];
+              std::vector<Double_t> e2_bin_centre_vals(1, 0.);
+              axes_1d.GetBinCentres(k, e2_bin_centre_vals);
+              e1_e2_vec[1] = e2_bin_centre_vals[0];
+	      
+              Double_t bin_content = reactor_osc_1d_pdf[0][i]->GetBinContent(l);
+              for (size_t nd = 1; nd < n_detectors; nd++)
+                bin_content *= reactor_osc_1d_pdf[nd][i]->GetBinContent(k);
+	      
+              reactor_osc_nd_pdf[i]->Fill(e1_e2_vec, bin_content);
+            }
+          }
+          reactor_osc_nd_pdf[i]->Normalise();
+
+          // Setting optimisation limits
+          sprintf(name, "%s_norm", reactor_names[i].c_str());
+          Double_t min = 0.;
+          Double_t max = 1.5*nd_reactor_Int_fit;
+          if (reactor_names[i] == "Yongbyon")
+            max = 2.5*nd_reactor_Int_fit;
+          if (min < 0) min = 0;
+          minima[name] = min;
+          maxima[name] = max;
+          Double_t random = random_generator->Uniform(0.8,1.2);
+          std::cout<<name<<" -> "<<nd_reactor_Int_fit<<std::endl;
+          initial_val[name] = nd_reactor_Int_fit*random;
+          initial_err[name] = 0.5*nd_reactor_Int_fit;
+
+          lh_function.AddPdf(*reactor_osc_nd_pdf[i]);
+          if (known_reactor_constraints[i] > 0.){
+            Double_t sigma =  nd_reactor_Int_fit*known_reactor_constraints[i];
+            lh_function.SetConstraint(name, nd_reactor_Int_fit, sigma);
+            printf("  added CONSTRAINED reactor %d/%d: %s (min:%.3f max:%.3f) constraint: %.3f , sigma: %.3f data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), min, max, nd_reactor_Int_fit, sigma, data_set_pdf_integral);
+          }
+          else
+            printf("  added reactor %d/%d: %s (min:%.3f max:%.3f) constraint: %.3f , sigma: %.3f data_int:%.0f\n", i+1, n_reactors, reactor_names[i].c_str(), min, max, nd_reactor_Int_fit, 0., data_set_pdf_integral);
+
+        }
+      }
+    }
+
+    // fit
+    printf("Built LH function, fitting...\n");
+    Minuit min;
+    min.SetMethod("Migrad");
+    min.SetMaxCalls(100000);
+    min.SetTolerance(0.01);
+    min.SetMinima(minima);
+    min.SetMaxima(maxima);
+    min.SetInitialValues(initial_val);
+    min.SetInitialErrors(initial_err);
+  
+    FitResult fit_result = min.Optimise(&lh_function);
+    fit_result.SetPrintPrecision(9);
+    ParameterDict best_fit = fit_result.GetBestFit();
+    fit_result.Print();
+
+    //if (rot_i == 0)
+    if (fit_validity == 1)
+      fit_validity *= fit_result.GetValid();
+    else
+      fit_validity = fit_result.GetValid();
     
-    // data set
-    TH1D data_set_hist = DistTools::ToTH1D(data_set_pdf);
-    // data_hist.Sumw2();
-    sprintf(name, "data_set_hist");
-    data_set_hist.SetName(name);
-    data_set_hist.GetYaxis()->SetTitle("Counts");
-    data_set_hist.GetXaxis()->SetTitle("Energy (MeV)");
-    data_set_hist.SetLineColor(kBlue);
-    data_set_hist.Write();
-    data_set_hist.Draw("same");
+
+    /////////////
+    // checking only for zero rotation!!!
+    if (n_fit == 1 && fit_validity && rot_i == 0){
+      for (ULong64_t i = 0; i < n_reactors; i++){
+        for (ULong64_t j = 0; j < n_detectors; j++){
+          if (reactor_names[i] == "Yongbyon"){
+            //std::cout<<" FOUND YB i:"<<i<<" j:"<<j<<std::endl;
+            if (j == 0){
+              reactor_osc_data_1d_hist[j][i]->SetFillColor(8);
+              reactor_osc_data_1d_hist[j][i]->SetLineColor(1);
+              hs_e1->Add(reactor_osc_data_1d_hist[j][i]);
+            }else if (j == 1){
+              reactor_osc_data_1d_hist[j][i]->SetFillColor(3);
+              reactor_osc_data_1d_hist[j][i]->SetLineColor(1);
+              hs_e2->Add(reactor_osc_data_1d_hist[j][i]);
+            }
+          }
+        }
+      }
     
-    file_out->cd();
-    c_data_fit->Write();
+      for (ULong64_t i = 0; i < n_reactors; i++){
+        for (ULong64_t j = 0; j < n_detectors; j++){
+          if (reactor_names[i] != "Yongbyon"){
+            //std::cout<<" ADDING OTHER i:"<<i<<" j:"<<j<<std::endl;
+            if (j == 0){
+              reactor_osc_data_1d_hist[j][i]->SetFillColor(9);
+              reactor_osc_data_1d_hist[j][i]->SetLineColor(1);
+              hs_e1->Add(reactor_osc_data_1d_hist[j][i]);
+            }else if (j == 1){ 
+              reactor_osc_data_1d_hist[j][i]->SetFillColor(4);
+              reactor_osc_data_1d_hist[j][i]->SetLineColor(1);
+              hs_e2->Add(reactor_osc_data_1d_hist[j][i]);
+            }
+          }
+        }
+      }
+
+    }
+
+    Double_t lh_val = 99999; // positive non-sensical value to return if fit is not valid
+    if (fit_validity == true)
+      lh_val = (-1.)*lh_function.Evaluate();
+
+    //Double_t total_power_resolution = 0.;
+    //std::vector<Double_t> reactor_power_resolutions(n_reactors, 0.);
+    /////////////////////////
+    if (rotationZ_0value_index == rot_i){
+      for (ULong64_t i = 0; i < n_reactors; i++){
+        sprintf(name, "%s_norm", reactor_names[i].c_str());
+        std::vector<Double_t> reactor_distances;
+        std::vector<Double_t> reactor_osc_losses;
+        for (ULong64_t j = 0; j < n_detectors; j++){
+          reactor_distances.push_back(distances[j][i]);
+          reactor_osc_losses.push_back(osc_losses[i][j]); // losses: { [reactor A losses to detectors] ,  [reactor B losses to detectors] ..}
+        }
+        Double_t reactor_therm_power = nd_evs_integral_to_power(best_fit.at(name), n_detectors, reactor_distances, reactor_osc_losses, P_over_D_coeff);
+        Double_t reactor_therm_power_uncert = (reactor_therm_power - thermal_powers[i])/thermal_powers[i];
+        //total_power_resolution += reactor_therm_power_uncert;
+        Double_t true_data_nd_int = 0.;
+        for (ULong64_t j = 0; j < n_detectors; j++)
+          true_data_nd_int += reactor_osc_data_1d_pdf[j][i]->Integral();
+        std::cout<<name<<" best fit nd Integral: "<<best_fit.at(name)<<"  true nd Int: "<<true_data_nd_int<<" -> Fit therm power: "<<reactor_therm_power<<"  true: therm power: "<<thermal_powers[i]<<" resolution: "<<reactor_therm_power_uncert<<std::endl;
+        reactor_power_resolutions[i] = reactor_therm_power_uncert;
+
+        if (reactor_names[i] == "Yongbyon"){
+          if (best_fit.at(name) < 5.)
+            fit_validity = 0;
+        }
+      }
+    }
+    //total_power_resolution = total_power_resolution/(double)n_reactors;
+  
+    /*for (ULong64_t j = 0; j < n_reactors; j++){
+      sprintf(name, "%s_norm", reactor_names[j].c_str());
+      reactor_osc_pdf[j]->Normalise();
+      reactor_osc_pdf[j]->Scale(best_fit.at(name));
+      reactor_osc_pdf_fitosc_sum.Add(*reactor_osc_pdf[j]);
+      }
+  
+      if (geos_included)
+      fit_geo_uth_norm = best_fit.at("uraniumthorium_norm");
+      else
+      fit_geo_uth_norm = 0.;
+  
+      // write plots to file (only 'good' plots - those with the best fit values)
+      if (param_d21>=param_d21_plot_min && param_d21<=param_d21_plot_max && param_s12>=param_s12_plot_min && param_s12<=param_s12_plot_max){
+      file_out->cd();
+      TCanvas* c_data_fit = new TCanvas("c_data_fit");
+      c_data_fit->cd();
+
+      // and their sum
+      TH1D reactor_hist_fitosc_sum = DistTools::ToTH1D(reactor_osc_pdf_fitosc_sum);
+      sprintf(name, "reactor_hist_fitosc_sum_d21%.9f_s12%.7f_s13%.7f", param_d21, param_s12, param_s13);
+      reactor_hist_fitosc_sum.SetName(name);
+      reactor_hist_fitosc_sum.GetXaxis()->SetTitle("Energy (MeV)");
+      reactor_hist_fitosc_sum.GetYaxis()->SetTitle("Counts");
+      reactor_hist_fitosc_sum.SetLineColor(kRed);
+      reactor_hist_fitosc_sum.Write();
+      reactor_hist_fitosc_sum.Draw("same");
     
-    // reactor pdfs
-    TH1D reactor_osc_hist;
-    for (ULong64_t j = 0; j < n_reactors; j++){
+      // data set
+      TH1D data_set_hist = DistTools::ToTH1D(data_set_pdf);
+      // data_hist.Sumw2();
+      sprintf(name, "data_set_hist");
+      data_set_hist.SetName(name);
+      data_set_hist.GetYaxis()->SetTitle("Counts");
+      data_set_hist.GetXaxis()->SetTitle("Energy (MeV)");
+      data_set_hist.SetLineColor(kBlue);
+      data_set_hist.Write();
+      data_set_hist.Draw("same");
+    
+      file_out->cd();
+      c_data_fit->Write();
+    
+      // reactor pdfs
+      TH1D reactor_osc_hist;
+      for (ULong64_t j = 0; j < n_reactors; j++){
       reactor_osc_hist = DistTools::ToTH1D(*reactor_osc_pdf[j]);
       // data_hist.Sumw2();
       sprintf(name, "reactor_osc_pdf_%s_d21%.9f_s12%.7f_s13%.7f", reactor_names[j].c_str(), param_d21, param_s12, param_s13);
@@ -769,23 +821,26 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
       reactor_osc_hist.GetYaxis()->SetTitle("Counts");
       reactor_osc_hist.GetXaxis()->SetTitle("Energy (MeV)");
       reactor_osc_hist.Write();
-    }
+      }
     
-    // pdfs of spectra
-    TH1D reactor_unosc_hist;
-    for (ULong64_t j = 0; j < n_reactors; j++){
-        reactor_unosc_hist = DistTools::ToTH1D(*reactor_unosc_pdf[j]);
-        // reactor_unosc_hist.Sumw2();
-        sprintf(name, "reactor_unosc_pdf_%s_d21%.9f_s12%.7f_s13%.7f", reactor_names[j].c_str(), param_d21, param_s12, param_s13);
-        reactor_unosc_hist.SetName(name);
-        reactor_unosc_hist.GetYaxis()->SetTitle("Counts");
-        reactor_unosc_hist.GetXaxis()->SetTitle("Energy (MeV)");
-        reactor_unosc_hist.Write();
-    }
+      // pdfs of spectra
+      TH1D reactor_unosc_hist;
+      for (ULong64_t j = 0; j < n_reactors; j++){
+      reactor_unosc_hist = DistTools::ToTH1D(*reactor_unosc_pdf[j]);
+      // reactor_unosc_hist.Sumw2();
+      sprintf(name, "reactor_unosc_pdf_%s_d21%.9f_s12%.7f_s13%.7f", reactor_names[j].c_str(), param_d21, param_s12, param_s13);
+      reactor_unosc_hist.SetName(name);
+      reactor_unosc_hist.GetYaxis()->SetTitle("Counts");
+      reactor_unosc_hist.GetXaxis()->SetTitle("Energy (MeV)");
+      reactor_unosc_hist.Write();
+      }
+      }
+    */
+    printf("fit valid: %d, lh_value:%.9f\n", fit_validity, lh_val);
+    printf("End fit--------------------------------------\n");
+    //lh_value = lh_val;
+    lh_values_vec_rot[rot_i] = lh_val;
   }
-  */
-  printf("fit valid: %d, lh_value:%.9f\n", fit_validity, lh_val);
-  printf("End fit--------------------------------------\n");
   //return lh_val;
   return reactor_power_resolutions;//total_power_resolution;
   //return 0;
@@ -793,8 +848,8 @@ LHFit_fit(const std::string &spectrum_phwr_unosc_filepath,
 
 int main(int argc, char *argv[]) {
 
-  if (argc < 7){
-      std::cout<<"Error: 6(7) argument expected."<<std::endl;
+  if (argc < 12){
+      std::cout<<"Error: 11(12) argument expected."<<std::endl;
       return 1; // return>0 indicates error code
   }
   else{
@@ -810,9 +865,17 @@ int main(int argc, char *argv[]) {
     const std::string reactor_names_csv_file = argv[6];
       //"/data/snoplus/blakei/antinu/reactor_monitoring/csv_files/reactor_names.csv";
 
+    const bool poisson_fluc = atoi(argv[7]);
+
+    const std::string out_file_name = argv[8];
+    
+    Double_t rotationZ_min = atof(argv[9]);
+    Double_t rotationZ_max = atof(argv[10]);
+    Double_t rotationZ_n = atof(argv[11]);
+
     size_t job_id = 0;
-    if(argc == 8)
-      job_id = atoi(argv[7]);
+    if(argc == 13)
+      job_id = atoi(argv[12]);
     
     const std::string &info_file = "";
     const std::string &spectrum_phwr_unosc_filepath = "";
@@ -829,24 +892,27 @@ int main(int argc, char *argv[]) {
     const double mc_scale_factor = 1.;
     const double e_min = 0.9;
     const double e_max = 7.7;
-    const size_t n_bins = 51;//51; //40;
+    const size_t n_bins = 68;//51; //40;
     const double param_d21_plot_min = 9e-5;
     const double param_d21_plot_max = 9e-5;
     const double param_s12_plot_min = 0.29;
     const double param_s12_plot_max = 0.3;
     const bool constrained_data = true;
 
-    const bool poisson_fluc = false;//true;
-
     std::stringstream _dstream;
     _dstream<<"_d"<<reactor_separation_d<<"km";
+    std::stringstream _rotstream;
+    _rotstream<<"_rot"<<rotationZ_min<<"_"<<rotationZ_max<<"_"<<rotationZ_n;
+    //if (rotationZ != 0.)
+    //_dstream<<"_rot"<<rotationZ<<"deg";
     std::stringstream job_id_stream;
     job_id_stream<<"_r"<<job_id;
-const std::string &data_path = reactor_monitoring_folder+"sim_2d_data"+_dstream.str()+job_id_stream.str()+".root";
+    const std::string &data_path = reactor_monitoring_folder+"sim_2d_data"+_dstream.str()+job_id_stream.str()+".root";
     const std::string &out_filename_csv = reactor_monitoring_folder+"output"+_dstream.str()+job_id_stream.str()+".csv";
     const std::string &out_filename_plots = reactor_monitoring_folder+"plot_2d_output"+_dstream.str()+job_id_stream.str()+".root";
-    const std::string &out_filename_res_plots = reactor_monitoring_folder+"plot_e_uncert"+_dstream.str()+job_id_stream.str()+".root";
+    const std::string &out_filename_res_plots = reactor_monitoring_folder+out_file_name+"_"+_dstream.str()+job_id_stream.str()+".root";
 
+    
     //double P_over_D_coeff = 219.*number_of_ktonnes;
     double cut_effic = 0.68; //<- ~clean300
     double P_over_D_coeff = 408.282*cut_effic*number_of_ktonnes;
@@ -859,59 +925,8 @@ const std::string &data_path = reactor_monitoring_folder+"sim_2d_data"+_dstream.
     std::ifstream in_csv_detector;
     in_csv_detector.open(detector_names_csv_file.c_str());
 
-    //const double avg_total_therm_power = 5000.;
-    /////////////////////////////////////////
-    //// reactor names, positions types  ////    
-    std::vector<std::string> reactor_names;
-    std::vector<Double_t> reactor_latitude;
-    std::vector<Double_t> reactor_longitude;
-    std::vector<Double_t> reactor_altitude;
-    std::vector<Double_t> thermal_powers;
-    std::vector<Double_t> known_reactor_constraints;
-   
-    
-    std::string reactor_name,latitude,longitude,altitude,power,constrain;
-    ULong64_t line_no = 0;
 
-    while(in_csv_reactor.good()){
-      std::getline(in_csv_reactor,reactor_name,',');
-      std::getline(in_csv_reactor,latitude,',');
-      std::getline(in_csv_reactor,longitude,',');
-      std::getline(in_csv_reactor,altitude,',');
-      std::getline(in_csv_reactor,power,',');
-      std::getline(in_csv_reactor,constrain,'\n');
-
-      if (line_no>0){ //skip csv header
-	    if (strcmp(reactor_name.c_str(),"")!=0) {
-          reactor_names.push_back(reactor_name);
-          reactor_latitude.push_back(atof(latitude.c_str()));
-          reactor_longitude.push_back(atof(longitude.c_str()));
-          reactor_altitude.push_back(atof(altitude.c_str()));
-          thermal_powers.push_back(atof(power.c_str()));
-          known_reactor_constraints.push_back(atof(constrain.c_str()));
-	    }
-      }
-      line_no++;
-    }
-    in_csv_reactor.close();
-    
-    const size_t n_reactors = reactor_names.size();
-
-    std::vector<TVector3> reactor_positions;
-    for (size_t i = 0; i < reactor_latitude.size(); i++)
-      reactor_positions.push_back(LLAtoECEF(reactor_latitude[i], reactor_longitude[i], reactor_altitude[i]));
-
-    
-    std::vector<std::string> reactor_types;
-    for (size_t i = 0; i < reactor_names.size(); i++)
-      reactor_types.push_back("PWR");
-
-    if (reactor_names.size() != reactor_positions.size() || reactor_names.size() != thermal_powers.size()){
-      std::cout<<"reactor name, powers and pos not equal!"<<std::endl;
-      exit(0);
-    }
-    
-    ///////////////////////////////////
+        ///////////////////////////////////
     //// detector positions, names ////
     std::vector<std::string> detector_names;
     std::vector<Double_t> detector_latitudes;
@@ -919,7 +934,8 @@ const std::string &data_path = reactor_monitoring_folder+"sim_2d_data"+_dstream.
     std::vector<Double_t> detector_altitudes;
     
     std::string detector_name,detector_latitude,detector_longitude,detector_altitude;
-    line_no = 0;
+    ULong64_t line_no = 0;
+
     while(in_csv_detector.good()){
       std::getline(in_csv_detector,detector_name,',');
       std::getline(in_csv_detector,detector_latitude,',');
@@ -961,17 +977,127 @@ const std::string &data_path = reactor_monitoring_folder+"sim_2d_data"+_dstream.
       std::cout<<"detector names: "<<detector_names.size()<<" positions: "<<detector_positions.size()<<std::endl;
       exit(0);
     }
-      
+
+    //const double avg_total_therm_power = 5000.;
+    /////////////////////////////////////////
+    //// reactor names, positions types  ////    
+    std::vector<std::string> reactor_names;
+    std::vector<Double_t> reactor_latitude;
+    std::vector<Double_t> reactor_longitude;
+    std::vector<Double_t> reactor_altitude;
+    std::vector<Double_t> thermal_powers;
+    std::vector<Double_t> known_reactor_constraints;
+   
+    
+    std::string reactor_name,latitude,longitude,altitude,power,constrain;
+    line_no = 0;
+    
+    while(in_csv_reactor.good()){
+      std::getline(in_csv_reactor,reactor_name,',');
+      std::getline(in_csv_reactor,latitude,',');
+      std::getline(in_csv_reactor,longitude,',');
+      std::getline(in_csv_reactor,altitude,',');
+      std::getline(in_csv_reactor,power,',');
+      std::getline(in_csv_reactor,constrain,'\n');
+
+      if (line_no>0){ //skip csv header
+	    if (strcmp(reactor_name.c_str(),"")!=0) {
+          reactor_names.push_back(reactor_name);
+          reactor_latitude.push_back(atof(latitude.c_str()));
+          reactor_longitude.push_back(atof(longitude.c_str()));
+          reactor_altitude.push_back(atof(altitude.c_str()));
+          thermal_powers.push_back(atof(power.c_str()));
+          known_reactor_constraints.push_back(atof(constrain.c_str()));
+	    }
+      }
+      line_no++;
+    }
+    in_csv_reactor.close();
+    
+    const size_t n_reactors = reactor_names.size();
+
+    std::vector<TVector3> reactor_positions;
+    std::vector<std::vector<TVector3> >reactor_positions_fit;
+    for (size_t i = 0; i < reactor_latitude.size(); i++){
+      TVector3 reactor_pos = LLAtoECEF(reactor_latitude[i], reactor_longitude[i], reactor_altitude[i]);
+      reactor_positions.push_back(reactor_pos);
+      /*if (rotationZ != 0){
+       if (reactor_names[i] == "Yongbyon"){
+          std::cout<<"Rot: Yongbyon: "<<reactor_pos.X()<<","<<reactor_pos.Y()<<","<<reactor_pos.Z();
+          rotationZ = rotationZ*3.14159265359/180.;  //deg to rad
+          reactor_pos.Rotate(rotationZ,mean_detector_pos);
+          std::cout<<" -> "<<reactor_pos.X()<<","<<reactor_pos.Y()<<","<<reactor_pos.Z()<<std::endl;
+        }
+      }
+      reactor_positions_fit.push_back(reactor_pos);*/
+    }
+    double del_rotation = (rotationZ_max - rotationZ_min)/(double)rotationZ_n;
+    int rotationZ_0value_index;
+    for (int rot_i = 0; rot_i < rotationZ_n ; rot_i++){
+      double rotationZ = rotationZ_min + rot_i*del_rotation;
+      if (rotationZ == 0.){
+        rotationZ_0value_index = rot_i;
+        std::cout<<"\n\n 0 rotation index == "<<rotationZ_0value_index<<"\n\n"<<std::endl;
+      }
+      std::cout<<"Rotation: "<<rotationZ;
+      std::vector<TVector3> reactor_positions_fit_rotation;
+      for (size_t i = 0; i < reactor_latitude.size(); i++){
+        TVector3 reactor_pos = LLAtoECEF(reactor_latitude[i], reactor_longitude[i], reactor_altitude[i]);
+        if (reactor_names[i] == "Yongbyon"){
+          std::cout<<"Rot: Yongbyon: "<<reactor_pos.X()<<","<<reactor_pos.Y()<<","<<reactor_pos.Z();
+          rotationZ = rotationZ*3.14159265359/180.;  //deg to rad
+          reactor_pos.Rotate(rotationZ,mean_detector_pos);
+          std::cout<<" -> "<<reactor_pos.X()<<","<<reactor_pos.Y()<<","<<reactor_pos.Z()<<std::endl;
+        }
+        reactor_positions_fit_rotation.push_back(reactor_pos);
+      }
+      reactor_positions_fit.push_back(reactor_positions_fit_rotation);
+    }
+    
+    std::vector<std::string> reactor_types;
+    for (size_t i = 0; i < reactor_names.size(); i++)
+      reactor_types.push_back("PWR");
+
+    if (reactor_names.size() != reactor_positions.size() || reactor_names.size() != thermal_powers.size()){
+      std::cout<<"reactor name, powers and pos not equal!"<<std::endl;
+      exit(0);
+    }
+          
     std::vector<std::vector<Double_t> > distances; // { [distances to 1] ,  [distances to 2] }
     for (size_t i = 0; i < n_detectors; i++){
       std::cout<<"\n reactor distances to detector "<<detector_names[i]<<": "<<std::endl;
       std::vector<Double_t> distances_to_detector;
       distances.push_back(distances_to_detector);
+      //std::vector<Double_t> distances_fit_to_detector;
+      //distances_fit.push_back(distances_fit_to_detector);
       for (size_t j = 0; j < n_reactors; j++){
         distances[i].push_back((detector_positions[i] - reactor_positions[j]).Mag());
+        //distances_fit[i].push_back((detector_positions[i] - reactor_positions_fit[j]).Mag());
         std::cout<<detector_names[i]<<"<->"<<reactor_names[j]<<" = "<<distances[i][j]<<"km"<<std::endl;
       }
     }
+
+    std::vector<std::vector<std::vector<Double_t> > >distances_fit; // { [distances to 1] ,  [distances to 2] }
+    for (int rot_i = 0; rot_i < rotationZ_n ; rot_i++){
+      std::vector<std::vector<Double_t> > distances_to_detector_rot;
+      distances_fit.push_back(distances_to_detector_rot);
+      for (size_t i = 0; i < n_detectors; i++){
+        std::vector<Double_t> distances_fit_to_detector;
+        distances_fit[rot_i].push_back(distances_fit_to_detector);
+        for (size_t j = 0; j < n_reactors; j++){
+          distances_fit[rot_i][i].push_back((detector_positions[i] - reactor_positions[j]).Mag());
+        }
+      }
+    }
+
+    /*if (rotationZ != 0.){
+      for (size_t i = 0; i < n_detectors; i++){
+        std::cout<<"\n ROTATED reactor distances to detector "<<detector_names[i]<<": "<<std::endl;
+        for (size_t j = 0; j < n_reactors; j++){
+          std::cout<<detector_names[i]<<"<->"<<reactor_names[j]<<" = "<<distances_fit[i][j]<<"km"<<std::endl;
+        }
+      }
+      }*/
     std::cout<<"Centre of Detector positions: ("<<mean_detector_pos[0]<<", "<<mean_detector_pos[1]<<", "<<mean_detector_pos[2]<<")"<<std::endl;
     
     /*const size_t n_inter_ds = 10;
@@ -1024,7 +1150,7 @@ const std::string &data_path = reactor_monitoring_folder+"sim_2d_data"+_dstream.
     */
     for (size_t i = 0; i < n_detectors; i++){
       for (size_t j = 0; j < n_reactors; j++){
-	printf("detector_name:%s, reactor_name:%s, fit_mean: %.3f\n", detector_names[i].c_str(),reactor_names[j].c_str(), reactor_distance_to_evs(distances[i][j],P_over_D_coeff,thermal_powers[j]));
+        printf("detector_name:%s, reactor_name:%s, fit_mean: %.3f\n", detector_names[i].c_str(),reactor_names[j].c_str(), reactor_distance_to_evs(distances[i][j],P_over_D_coeff,thermal_powers[j]));
       }
     }
       
@@ -1058,15 +1184,6 @@ const std::string &data_path = reactor_monitoring_folder+"sim_2d_data"+_dstream.
       
     fit_validity = 0;
 
-    /*BinnedED data_set_sans_YB_pdf_e1("data_set_sans_YB_pdf_e1", axes_1d);
-    data_set_sans_YB_pdf_e1.SetObservables(data_rep_1d);
-    BinnedED data_set_sans_YB_pdf_e2("data_set_sans_YB_pdf_e2", axes_1d);
-    data_set_sans_YB_pdf_e2.SetObservables(data_rep_1d);
-    BinnedED data_set_YB_pdf_e1("data_set_YB_pdf_e1", axes_1d);
-    data_set_YB_pdf_e1.SetObservables(data_rep_1d);
-    BinnedED data_set_YB_pdf_e2("data_set_YB_pdf_e2", axes_1d);
-    data_set_YB_pdf_e2.SetObservables(data_rep_1d);
-    */
     THStack * hs_e1 = new THStack("hs_e1", "Simulated Data: YongByon (green) reactor + rest at detector 1");
     THStack * hs_e2 = new THStack("hs_e2", "Simulated Data: YongByon (green) reactor + rest at detector 2");
 
@@ -1078,10 +1195,15 @@ const std::string &data_path = reactor_monitoring_folder+"sim_2d_data"+_dstream.
     TH2D h2_data;
     TH2D * h2_best_fit = new TH2D("h2_best_fit","h2_best_fit",n_bins, e_min, e_max, n_bins, e_min, e_max);
 
+    std::vector<std::vector<double> >lh_values_vec;
+
     for (ULong64_t n_fit=1; n_fit<=number_of_fits; n_fit++) {
       std::cout<<"\n\nd: "<<reactor_separation_d<<" n_ktonnes:  "<<number_of_ktonnes<<"  fit: "<<n_fit<<"/"<<number_of_fits<<std::endl;
 
       for (ULong64_t fit_try=1; fit_try<=fit_try_max; fit_try++) {
+        std::vector<double> lh_values_vec_rot; //double lh_value;
+        for (int rot_i = 0; rot_i < rotationZ_n ; rot_i++)
+          lh_values_vec_rot.push_back(999999);
         reactor_power_uncert = LHFit_fit(spectrum_phwr_unosc_filepath,
                                          spectrum_pwr_unosc_filepath,
                                          spectrum_geo_uraniumthorium_unosc_filepath,
@@ -1089,6 +1211,7 @@ const std::string &data_path = reactor_monitoring_folder+"sim_2d_data"+_dstream.
                                          detector_names,
                                          reactor_names, reactor_types,
                                          distances,
+                                         distances_fit,
                                          known_reactor_constraints,/*constraint_sigmas,*/
                                          file_out,
                                          d21, s12, s13,
@@ -1101,18 +1224,21 @@ const std::string &data_path = reactor_monitoring_folder+"sim_2d_data"+_dstream.
                                          data_path, hs_e1, hs_e2, n_fit,
                                          h2_data, h2_best_fit, poisson_fluc,
                                          h_data_set_detector_1, h_data_set_detector_2,
-                                         h_data_set_detector_1_poisson_fluc, h_data_set_detector_2_poisson_fluc,
-                                         n_years);
+                                         h_data_set_detector_1_poisson_fluc,
+                                         h_data_set_detector_2_poisson_fluc,
+                                         n_years, lh_values_vec_rot, rotationZ_n,
+                                         rotationZ_0value_index);
 	
         if (fit_validity==0)
-	  printf("Fit invalid... retrying (attempt no: %llu)\n", fit_try);
-	else{
-	  printf("Fit valid. (attempt no: %llu)\n", fit_try);
-	  for (ULong64_t i = 0; i < n_reactors; i++){
-	    reactor_power_uncert_at_d_vec[i].Fill(reactor_power_uncert[i]);
-	  }
-	  fit_try = fit_try_max+1;
-	}
+          printf("Fit invalid... retrying (attempt no: %llu)\n", fit_try);
+        else{
+          printf("Fit valid. (attempt no: %llu)\n", fit_try);
+          lh_values_vec.push_back(lh_values_vec_rot);//lh_value);
+          for (ULong64_t i = 0; i < n_reactors; i++){
+            reactor_power_uncert_at_d_vec[i].Fill(reactor_power_uncert[i]);
+          }
+          fit_try = fit_try_max+1;
+        }
       }
     }
       
@@ -1255,6 +1381,33 @@ const std::string &data_path = reactor_monitoring_folder+"sim_2d_data"+_dstream.
     c_detector_reactor_pos->Write();
 
     file_res_plots_out->Close();
+
+    ///////////////
+    // record lh_values in ntuple
+    std::string out_LHtree_filename_res_plots = reactor_monitoring_folder+"LHTree_"+out_file_name+"_"+_dstream.str()+_rotstream.str()+job_id_stream.str()+".root";
+
+    TFile *file_LH_plots_out = new TFile(out_LHtree_filename_res_plots.c_str(), "RECREATE");
+    
+    ///////////////////
+    // filling every rot_i^th entry to be fit value for that rotation
+    TNtuple *LH_vals_ntp = new TNtuple("nt", "LH_values", "lh_value:rot_value");
+    double lh_val_ntp;
+    double rot_value;
+    //for (int rot_i = 0; rot_i < rotationZ_n ; rot_i++){
+    //lh_val_ntp.push_back(99999);
+    for (size_t i = 0; i < lh_values_vec.size(); i++){
+      for (int rot_i = 0; rot_i < rotationZ_n ; rot_i++){
+        double rotationZ = rotationZ_min + rot_i*del_rotation;
+        lh_val_ntp = lh_values_vec[i][rot_i];
+        rot_value = rotationZ;
+        LH_vals_ntp->Fill(lh_val_ntp, rot_value);
+      }
+    }
+    //////////////
+
+    LH_vals_ntp->Write();
+
+    file_LH_plots_out->Close();
     
     printf("End--------------------------------------\n");
       
