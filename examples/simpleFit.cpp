@@ -61,9 +61,9 @@ int main(){
     ROOTNtuple dataNt(dataFile, dataTreeName);
     BinnedNLLH lhFunction;
     lhFunction.SetDataSet(&dataNt); // initialise withe the data set
-    lhFunction.AddPdf(bgPdf);
-    lhFunction.AddPdf(signalPdf);
-
+    lhFunction.AddPdf(bgPdf);        
+    lhFunction.AddPdf(signalPdf);        
+  
     std::cout << "Built LH function " << std::endl;
 
     // Set up the optimisation

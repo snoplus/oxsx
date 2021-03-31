@@ -3,6 +3,7 @@
 ################################################################
 # Prune away branches of a flat root tree to produce an ntuple #
 ################################################################
+from __future__ import print_function
 import argparse
 import os
 import sys
@@ -10,29 +11,29 @@ from array import array
 try:
     from ROOT import TFile, TTree, TNtuple, TChain
 except ImportError:
-    print "Cant find root lib is it in $PYTHONPATH?"
+    print("Cant find root lib is it in $PYTHONPATH?")
     sys.exit()
 
 def make_ntup(file_name, tree_name,  branches, outfile, n_events, new_tree_name):
     if new_tree_name == "":
         new_tree_name = tree_name
 
-    print file_name
+    print(file_name)
     
     # Get the event tree 
     tree = TChain(tree_name)
     tree.Add(file_name)
     if not tree:
-        print "Error: No tree named %s in %s" %(tree_name, file_name)
+        print("Error: No tree named %s in %s" %(tree_name, file_name))
         sys.exit()
     
     # Check branches exist
     branches_avail = [x.GetName() for x in tree.GetListOfBranches()]
     for b in branches:
         if not b in branches_avail:
-            print "Error branch '%s' not a branch in input tree" %(b)
-            print "Branches available are: \n"
-            print "\t".join(branches_avail)
+            print("Error branch '%s' not a branch in input tree" %(b))
+            print("Branches available are: \n")
+            print("\t".join(branches_avail))
             sys.exit()
 
     # output
@@ -50,15 +51,15 @@ def make_ntup(file_name, tree_name,  branches, outfile, n_events, new_tree_name)
         nt.Fill(vals)
         
         if (index % 100000 == 0):
-            print index, "/", n_events
+            print(index, "/", n_events)
     # Save
     out_file.cd()
     nt.Write()
     out_file.Close()
 
-    print "Written %i entries of branch(es) '%s' \nto tree %s  \nin file %s" %(n_events, 
+    print("Written %i entries of branch(es) '%s' \nto tree %s  \nin file %s" %(n_events, 
                                                                              ":".join(branches), 
-                                                                             new_tree_name, outfile)
+                                                                             new_tree_name, outfile))
 
 
 if __name__ == "__main__":

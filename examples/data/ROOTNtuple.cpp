@@ -2,7 +2,7 @@
   Demonstrates how to read data from a ROOTNtuple
  */
 #include <ROOTNtuple.h>
-#include <DataRepresentation.h>
+#include <ObsSet.h>
 #include <string>
 #include <iostream>
 
@@ -30,7 +30,7 @@ int main(){
     relevantObservablesForMyPDF.push_back(observableName1);
     relevantObservablesForMyPDF.push_back(observableName2);
 
-    DataRepresentation dataRepForMyPDF = nt.MakeDataRep(relevantObservablesForMyPDF);
+    ObsSet dataRepForMyPDF = nt.MakeDataRep(relevantObservablesForMyPDF);
     // Call pdf.SetDataRep(dataRepForMyPDF) so that your pdf automatically
     // picks out <observableName1> and <observableName2> from events
 
