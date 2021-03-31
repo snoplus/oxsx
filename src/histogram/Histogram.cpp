@@ -336,7 +336,7 @@ Histogram::GetAxisNames() const{
 size_t
 Histogram::GetAxisIndex(const std::string& name_) const{
     return fAxes.GetAxisIndex(name_);
-
+}
 void
 Histogram::AddPadding(double padding_){
   std::vector<double> newBinContents;
