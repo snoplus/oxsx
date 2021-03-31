@@ -21,10 +21,11 @@ class BinnedNLLH : public TestStatistic{
     void   SetSystematicManager(const SystematicManager&);
 
     void   AddPdf(const BinnedED&);
-    void   AddSystematic(Systematic*);
+    void   AddSystematic(Systematic* sys_);
+    void   AddSystematic(Systematic* sys_, const std::string& group_ );
 
-    void   AddPdfs(const std::vector<BinnedED>&);
     void   AddSystematics(const std::vector<Systematic*>);
+    void   AddSystematics(const std::vector<Systematic*>, const std::vector<std::string>&);
 
     void   SetConstraint(const std::string& paramName_, double mean_, double sigma_);
     
@@ -41,6 +42,11 @@ class BinnedNLLH : public TestStatistic{
 
     void SetBuffer(const std::string& dim_, unsigned lower_, unsigned upper_);
     std::pair<unsigned, unsigned> GetBuffer(const std::string& dim_) const;
+
+    void AddPdf(const BinnedED& pdf, const std::vector<std::string>& syss_);
+    void AddPdfs(const std::vector<BinnedED>& pdfs);
+    void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& syss_);
+
     void SetBufferAsOverflow(bool b_); // true by default
     bool GetBufferAsOverflow() const;
 

@@ -27,10 +27,14 @@ class SparseMatrix{
                        const std::vector<double>& values_);
 
     SparseMatrix operator*=(const SparseMatrix& other_);
+    SparseMatrix operator*(const SparseMatrix& other_);
     size_t GetNRows() const {return fNRows;}
     size_t GetNCols() const {return fNCols;}
     void   SetZeros();
     void   SetToIdentity();
+
+    void   Print(const std::string&);
+    void   PrintDense(const std::string&);
 
  private:
     arma::sp_mat fArmaMat;

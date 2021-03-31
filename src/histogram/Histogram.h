@@ -9,6 +9,7 @@
 #include <AxisCollection.h>
 #include <vector>
 #include <map>
+#include <limits>
 
 class Histogram{
  public:
@@ -59,7 +60,8 @@ class Histogram{
     
     std::vector<std::string> GetAxisNames() const;
     size_t GetAxisIndex(const std::string& name_) const;
-    
+    void AddPadding(double padding_ = std::numeric_limits<double>::min());
+ 
  private:
     AxisCollection fAxes;
     std::vector<double> fBinContents;

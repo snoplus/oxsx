@@ -117,3 +117,15 @@ DenseMatrix::SetSymmetricMatrix(const std::vector<double>& _input){
 	  }
       }
 }
+
+void 
+DenseMatrix::Print(const std::string& prefix_=""){
+    fArmaMat.print(prefix_);
+}
+
+void 
+DenseMatrix::PrintSparse(const std::string& prefix_=""){
+    arma::sp_mat B(fArmaMat);
+    B.print(prefix_);
+
+}

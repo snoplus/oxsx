@@ -169,7 +169,7 @@ DataSetGenerator::RandomDrawsNoReplacement(size_t handleIndex_, int nEvents_,
     max = eventIndices.size() - 1; // the effective end of the array
   }
 
-  if(nEvents_ >  max)
+  if(nEvents_ > origData -> GetNEntries())
     throw NotFoundError(Formatter() << "DataSetGenerator::RandomDrawsNoReplacement() asked for "
                         << nEvents_ << " but only have " << origData -> GetNEntries() 
                         << "events!)");

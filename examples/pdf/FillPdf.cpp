@@ -1,12 +1,12 @@
 /*
 Fill a pdf with some data from a root ntuple. We do this two ways:
 First the long way around to see what's happening, then in one line with 
-PdfFiller
+DistFiller
 */
 
-#include <BinnedPdf.h>
+#include <BinnedED.h>
 #include <ROOTNtuple.h>
-#include <PdfFiller.h>
+#include <DistFiller.h>
 #include <vector>
 #include <string>
 
@@ -23,17 +23,17 @@ int main(){
 
     // Create a 2D binned pdf, axes named obs1, obs2
     AxisCollection axes;
-    axes.AddAxis(PdfAxis("obs1", 0, 10, 10));
-    axes.AddAxis(PdfAxis("obs2", 0, 10, 10));
+    axes.AddAxis(BinAxis("obs1", 0, 10, 10));
+    axes.AddAxis(BinAxis("obs2", 0, 10, 10));
 
-    BinnedPdf pdf(axes);
+    BinnedED pdf("pdf", axes);
     
     // now link up the pdf to the two observables we want, by name
     std::vector<std::string> relevantObs;
     relevantObs.push_back(obs1);
     relevantObs.push_back(obs2);
 
-    pdf.SetDataRep(nt.MakeDataRep(relevantObs));
+    pdf.SetObservables(nt.MakeDataRep(relevantObs));
 
     // Now fill em up
     for(size_t i = 0; i < nt.GetNEntries(); i++)
@@ -41,8 +41,8 @@ int main(){
     
     // Done!
 
-    // Lets do it again, but this time using the PdfFiller
-    PdfFiller::FillPdf(pdf, nt);
+    // Lets do it again, but this time using the DistFiller
+    DistFiller::FillDist(pdf, nt);
 
     return 0;
 }

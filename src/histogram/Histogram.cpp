@@ -332,7 +332,19 @@ Histogram::GetAxisNames() const{
     return fAxes.GetAxisNames();
 }
 
+
 size_t
 Histogram::GetAxisIndex(const std::string& name_) const{
     return fAxes.GetAxisIndex(name_);
+
+void
+Histogram::AddPadding(double padding_){
+  std::vector<double> newBinContents;
+  for(int i =0; i<fBinContents.size();i++){
+    if(fBinContents.at(i)==0)
+      newBinContents.push_back(padding_);
+    else
+      newBinContents.push_back(fBinContents[i]);
+  }  
+  fBinContents = newBinContents;
 }

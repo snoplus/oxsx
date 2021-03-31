@@ -280,3 +280,9 @@ BinnedED::Divide(const BinnedED& other_){
         throw ValueError("BinnedED::Add can't add distributions with different binning definitions!");
     }
 }
+
+
+void
+BinnedED::AddPadding(double padding_){
+  fHistogram.AddPadding(padding_);
+}
