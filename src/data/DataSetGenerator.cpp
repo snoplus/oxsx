@@ -86,7 +86,7 @@ DataSetGenerator::PoissonFluctuatedDataSet(std::vector<int>* eventsTaken_){
     dataSet.Reserve(eventsNeeded);
 
     for(size_t i = 0; i < fDataSets.size(); i++){
-        int counts = Rand::Poisson(fExpectedRates.at(i));
+        size_t counts = Rand::Poisson(fExpectedRates.at(i));
 
         if(fBootstraps.at(i))
             RandomDrawsWithReplacement(i, counts, dataSet);
