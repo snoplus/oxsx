@@ -22,7 +22,7 @@ public:
     ParameterDict GetMaxima() const;
 
     double KineticEnergy(const ParameterDict& momenta_) const;
-    double CorrectAccParam(double orig_);
+    double CorrectAccParam();
     
 private:
     typedef Gradient<StatType> GradType;
