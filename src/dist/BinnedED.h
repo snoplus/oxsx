@@ -58,11 +58,13 @@ class BinnedED : public EventDistribution{
     void     Empty();
     unsigned GetNDims() const;
         
-    BinnedED Marginalise(const std::vector<size_t>& indices_) const;
-    BinnedED Marginalise(size_t index_) const;
-    
-    void   SetObservables(const ObsSet&);
-    ObsSet GetObservables() const;
+    BinnedED Marginalise(const std::vector<std::string>& indices_) const;
+    BinnedED Marginalise(const std::string& index_) const;
+
+    BinnedED GetSlice(const std::map<std::string, size_t>& namesAndBins_) const;
+
+    void   SetObservables(const std::vector<std::string>&);
+    const std::vector<std::string>& GetObservables() const;
 
     void Add(const BinnedED& other_, double weight_ = 1);
     void Multiply(const BinnedED& other_);

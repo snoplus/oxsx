@@ -21,9 +21,9 @@ class CountingResult{
     const std::vector<double>& GetExpectedRates() const;
     const std::vector<double>& GetExpectedRateErrors() const;
 
-    void Print() const;
-    void SaveAs(const std::string& filename_) const;
-    std::string AsString() const;
+    void Print();
+    void SaveAs(const std::string& filename_);
+    std::string AsString();
 
  private:
     int  fObservedCounts;

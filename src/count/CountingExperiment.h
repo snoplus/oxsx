@@ -13,7 +13,7 @@ class CountingExperiment{
     void CountBackgrounds();
     void CountSignal();
 
-    void AddCut(const Cut&, const std::string& name_);
+    void AddCut(const Cut&);
     void AddSystematic(EventSystematic*, const std::string& name_);
     void AddBackground(DataSet* mcData_, double rate_, const std::string& name_);
     void SetSignal(DataSet* mcData_, const std::string& name_);

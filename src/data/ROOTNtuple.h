@@ -20,12 +20,17 @@ class ROOTNtuple : public DataSet{
     Event GetEntry(size_t iEvent_) const;
     unsigned  GetNEntries() const;
     unsigned  GetNObservables() const;
-    std::vector<std::string> GetObservableNames() const;
 
     void LoadBaskets();
     void DropBaskets();
-    
+
+    std::vector<std::string> GetObservableNames() const; // just returns the cache
+
  private:
+    void GatherObservableNames(); // actually works the names out
+    std::vector<std::string> fObsNames;
+
+    // no copying allowed
     ROOTNtuple(const ROOTNtuple&);
     ROOTNtuple operator=(const ROOTNtuple&);
 

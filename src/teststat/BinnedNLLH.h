@@ -40,12 +40,13 @@ class BinnedNLLH : public TestStatistic{
     void SetDataSet(DataSet*);
     DataSet* GetDataSet();
 
+    void SetBuffer(const std::string& dim_, unsigned lower_, unsigned upper_);
+    std::pair<unsigned, unsigned> GetBuffer(const std::string& dim_) const;
+
     void AddPdf(const BinnedED& pdf, const std::vector<std::string>& syss_);
     void AddPdfs(const std::vector<BinnedED>& pdfs);
     void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& syss_);
 
-    void SetBuffer(size_t dim_, unsigned lower_, unsigned upper_);
-    std::pair<unsigned, unsigned> GetBuffer(size_t dim_) const;
     void SetBufferAsOverflow(bool b_); // true by default
     bool GetBufferAsOverflow() const;
 

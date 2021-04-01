@@ -7,6 +7,7 @@
 #include <Exceptions.h>
 #include <Formatter.hpp>
 #include <iostream>
+#include <Formatter.hpp>
 
 double 
 BinnedNLLH::Evaluate(){
@@ -33,9 +34,11 @@ BinnedNLLH::Evaluate(){
     // loop over bins and calculate the likelihood
     double nLogLH = 0;
     for(size_t i = 0; i < fDataDist.GetNBins(); i++){
+        if(!fDataDist.GetBinContent(i))
+            continue;
         double prob = fPdfManager.BinProbability(i);
         if(!prob)
-            throw std::runtime_error("BinnedNLLH::Encountered zero probability bin!");
+            throw std::runtime_error(Formatter() << "BinnedNLLH::Encountered zero probability bin! #" << i);
         nLogLH -= fDataDist.GetBinContent(i) *  log(prob);        
     }
 
@@ -133,12 +136,12 @@ BinnedNLLH::GetDataDist() const{
 
 
 void
-BinnedNLLH::SetBuffer(size_t dim_, unsigned lower_, unsigned upper_){
+BinnedNLLH::SetBuffer(const std::string& dim_, unsigned lower_, unsigned upper_){
     fPdfShrinker.SetBuffer(dim_, lower_, upper_);
 }
 
 std::pair<unsigned, unsigned>
-BinnedNLLH::GetBuffer(size_t dim_) const{
+BinnedNLLH::GetBuffer(const std::string& dim_) const{
     return fPdfShrinker.GetBuffer(dim_);
 }
 

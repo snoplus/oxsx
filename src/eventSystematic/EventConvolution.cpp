@@ -19,7 +19,8 @@ EventConvolution::EventConvolution(const EventConvolution& other_){
     fDist = other_.fDist -> Clone();
   else
     fDist = NULL;
-  fObservables = other_.fObservables;
+  fInObservables = other_.fInObservables;
+  fOutObservables = other_.fOutObservables;
 }
 
 EventConvolution
@@ -28,7 +29,9 @@ EventConvolution::operator=(const EventConvolution& other_){
     fDist = other_.fDist -> Clone();
   else                                 
     fDist = NULL;
-  fObservables = other_.fObservables;
+
+  fInObservables = other_.fInObservables;
+  fOutObservables = other_.fOutObservables;
   return *this;
 }
 
@@ -138,9 +141,12 @@ EventConvolution::operator()(const Event& event_){
     throw NULLPointerAccessError("EventConvolution::operator()", 
                                  "Have you set the sampling function?");
 
-  double newVal = fDist->Sample(event_.ToObsSet(fObservables)).at(0);
+  std::string obsToActOn = fOutObservables.GetNames().at(0);
+  // change below once we support more than 1D
+  double newVal = fDist->Sample(event_.ToObsSet(fOutObservables)).at(0);
 
-  std::vector<double> obs = event_.GetData();
-  obs[fObservables.GetIndex(0)] = newVal;
-  return Event(obs);
+  Event newEv(event_);
+  newEv.SetDatum(obsToActOn, newVal);
+
+  return newEv;
 }

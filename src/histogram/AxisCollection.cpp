@@ -30,11 +30,16 @@ AxisCollection::GetAxis(size_t axisIndex_) const{
 
 const BinAxis& 
 AxisCollection::GetAxis(const std::string& axisName_) const{
-    std::vector<std::string>::const_iterator it = std::find(fAxisNames.begin(), fAxisNames.end(), axisName_);
+    return fAxes.at(GetAxisIndex(axisName_));
+}
+
+size_t
+AxisCollection::GetAxisIndex(const std::string& name_) const{
+    std::vector<std::string>::const_iterator it = std::find(fAxisNames.begin(), fAxisNames.end(), name_);
     if(it == fAxisNames.end())
-        throw NotFoundError("No axis by the name of " + axisName_ + " found!" + "\n axes are: " + ContainerTools::ToString(fAxisNames));
-                            
-    return fAxes[it - fAxisNames.begin()];
+        throw NotFoundError("No axis by the name of " + name_ + " found!" + "\n axes are: " + ContainerTools::ToString(fAxisNames));
+    
+    return it - fAxisNames.begin();
 }
 
 std::vector<std::string> 

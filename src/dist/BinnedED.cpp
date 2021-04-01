@@ -16,13 +16,13 @@ BinnedED::BinnedED(const std::string& name_, const Histogram& histo_){
 }
 
 void
-BinnedED::SetObservables(const ObsSet& rep_){
-    fObservables = rep_;
+BinnedED::SetObservables(const std::vector<std::string>& rep_){
+    fObservables = ObsSet(rep_);
 }
 
-ObsSet
+const std::vector<std::string>&
 BinnedED::GetObservables() const {
-    return fObservables;
+    return fObservables.GetNames();
 }
 
 const Histogram&
@@ -196,27 +196,51 @@ BinnedED::Variances() const{
 }
 
 BinnedED 
-BinnedED::Marginalise(const std::vector<size_t>& indices_) const{
+BinnedED::Marginalise(const std::vector<std::string>& names_) const{
     // Find the relative indicies indicies in 
-    ObsSet newRep = ObsSet(indices_);
-    std::vector<size_t> relativeIndices = newRep.GetRelativeIndices(fObservables);
+    ObsSet newRep = ObsSet(names_);
 
     // create a name for the projection
     Formatter f;
     f << fName;
-    for(size_t i = 0; i < indices_.size(); i++)
-        f << "_" << i;
+    for(size_t i = 0; i < names_.size(); i++)
+        f << "_" << names_.at(i);
     f << "_proj";
 
     // Marginalise the histogram
-    BinnedED proj(std::string(f), fHistogram.Marginalise(relativeIndices));
-    proj.SetObservables(newRep);
+    BinnedED proj(std::string(f), fHistogram.Marginalise(names_));
+    proj.SetObservables(names_);
     return proj;
 }
 
 BinnedED
-BinnedED::Marginalise(size_t index_) const{
-    return Marginalise(std::vector<size_t>(1, index_));
+BinnedED::Marginalise(const std::string& name_) const{
+    return Marginalise(std::vector<std::string>(1, name_));
+}
+
+BinnedED 
+BinnedED::GetSlice(const std::map<std::string, size_t>& namesAndBins_) const{
+    
+    const std::vector<std::string> allAxisNames = fHistogram.GetAxes().GetAxisNames();
+    std::vector<std::string> newObsNames;
+
+    // create a name for the slice and get the observable name
+    Formatter f;
+    f << fName;
+    for(std::vector<std::string>::const_iterator it = allAxisNames.begin(); it!=allAxisNames.end(); it++){
+        if(namesAndBins_.find(*it) == namesAndBins_.end()){
+	    //this is the axis we want the slice in
+	    newObsNames.push_back(*it);
+	}else{
+	    f << "_" << *it << namesAndBins_.at(*it);
+	}
+    }
+    f << "_slice";
+
+    // slice the histogram
+    BinnedED slice(std::string(f), fHistogram.GetSlice(namesAndBins_));
+    slice.SetObservables(newObsNames);
+    return slice;
 }
 
 void

@@ -14,6 +14,8 @@ class TH1D;
 class DistTools{
  public:
     static Histogram ToHist(const PDF&,       const AxisCollection& axes_);
+    static Histogram ToHist(const TH1D&);
+    static Histogram ToHist(const TH2D&);
     static TH1D      ToTH1D(const BinnedED&,  const bool widthCorrect_ = false);
     static TH1D      ToTH1D(const Histogram&, const bool widthCorrect_ = false);
     static TH2D      ToTH2D(const Histogram&, const bool widthCorrect_ = false);

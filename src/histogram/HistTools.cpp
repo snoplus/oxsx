@@ -2,28 +2,30 @@
 #include <Histogram.h>
 #include <ContainerTools.hpp>
 
-std::vector<Histogram>
+std::map<std::string, Histogram>
 HistTools::MakeAllHists(const AxisCollection& axes_,
                         const std::set<std::pair<std::string, std::string> >& combinations_){
-    std::vector<Histogram> hists;
-    hists.reserve(combinations_.size());
-    
-    typedef std::set<std::pair<std::string, std::string> >::iterator SetIt;
 
+    typedef std::set<std::pair<std::string, std::string> >::iterator SetIt;
+    typedef std::map<std::string, Histogram> HistMap;
+
+    HistMap hists;
     for(SetIt it = combinations_.begin(); it != combinations_.end(); ++it){
         AxisCollection axes;
         axes.AddAxis(axes_.GetAxis(it->first));
         axes.AddAxis(axes_.GetAxis(it->second));
             
-        hists.push_back(Histogram(axes));
+        hists[it->first + "_" + it->second] = (Histogram(axes));
     }
     return hists;
 }
 
 void
-HistTools::FillAllHists(std::vector<Histogram>& hists_, const std::map<std::string, double>& fillVals_){
+HistTools::FillAllHists(std::map<std::string, Histogram>& hists_, const std::map<std::string, double>& fillVals_){
     // note this assumes that the histograms have axes that match the keys of fillvals throws otherwise
-    for(size_t i = 0; i < hists_.size(); i++){
-        hists_.at(i).Fill(fillVals_);
-    }    
+    typedef std::map<std::string, Histogram>::iterator It;
+    for(It it = hists_.begin(); it != hists_.end(); ++it)
+        it->second.Fill(fillVals_);
 }
+
+

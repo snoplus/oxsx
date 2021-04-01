@@ -2,6 +2,8 @@
 #include <Exceptions.h>
 #include <iostream>
 #include <iomanip>
+#include <fstream>
+#include <Exceptions.h>
 
 void
 CutLog::CalculateMeta(){
@@ -52,7 +54,7 @@ CutLog::GetCutNames() const{
 }
 
 std::string
-CutLog::AsString() const{
+CutLog::AsString(){
     if (!fCutCounts.size())
         return "";
 
@@ -61,6 +63,7 @@ CutLog::AsString() const{
                          << fCutCounts.size()
                          << " cut counts and "
                          << fCutNames.size() << " names!");
+    CalculateMeta();
     Formatter outString;
     outString << std::left
               << std::setw(15)
@@ -105,6 +108,27 @@ CutLog::AsString() const{
 }
 
 void
-CutLog::Print() const{
+CutLog::Print(){
     std::cout << AsString() << std::endl;
+}
+
+void
+CutLog::SaveAs(const std::string& title_, 
+	       const std::string& path_){
+  std::ofstream fs;
+  if (fs.is_open()){
+    throw IOError("CutLog::SaveAs - couldn't open file" + path_);
+  }
+  fs.open(path_.c_str());
+  fs << "-----------------------------------"
+     << "-----------------------------------" 
+     << std::endl
+     << "Cut Log : " << title_  << "\n"
+     << "-----------------------------------"
+     << std::endl
+     << AsString()
+     << "-----------------------------------"
+     << "-----------------------------------" 
+     << std::endl;
+  fs.close();  
 }

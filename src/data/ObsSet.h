@@ -7,26 +7,22 @@
 #define __OBS_SET__
 #include <vector>
 #include <string>
-#include <utility>
+#include <map>
 
 class ObsSet{
  public:    
     ObsSet(){}
     ~ObsSet(){}
-    ObsSet(const std::vector<size_t>& indices_);
-    ObsSet(size_t index_);
-    ObsSet(const ObsSet&);   
+    ObsSet(const std::vector<std::string>& names_);
+    ObsSet(const std::string& name_);
+    void SetNames(const std::vector<std::string>& indices_);
+    
+    const std::vector<std::string>& GetNames() const; 
 
-    std::vector<size_t> GetIndices() const; 
-    void SetIndices(const std::vector<size_t>& indices_); 
-
-    std::string GetName() const;
-    void SetName(const std::string& name_);
-
-    size_t GetIndex(size_t indexNum_) const;
     size_t GetNObservables() const;
     
-    size_t GetDataIndexPos(size_t dataIndex_) const; // where is data index x in this representation
+    size_t GetIndex(const std::string& name_) const;
+
     // Call this something else
     std::vector<size_t> GetRelativeIndices(const ObsSet&) const; 
     
@@ -35,9 +31,7 @@ class ObsSet{
     bool operator!=(const ObsSet& other_) const;
 
  private:
-    std::vector<size_t> fIndices;
-    std::vector< std::pair<size_t, size_t> > fInverse;
-    std::string fName;
-    size_t fNObservables;
+    std::vector<std::string> fNames;
+    std::map<std::string, size_t> fInverseMap; //cache this
 };
 #endif

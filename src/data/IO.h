@@ -16,13 +16,21 @@ class Histogram;
 
 class IO{
  public:
-    static void SaveDataSet(const DataSet&, const std::string& filename_);
-    static OXSXDataSet* LoadDataSet(const std::string& filename_);
-    
-    static void SaveHistogram(const Histogram& hist, const std::string& filename_);
-    static Histogram LoadHistogram(const std::string& filename_);
+    static void SaveDataSet(const DataSet&, const std::string& filename_, const std::string& = "oxsx_saved");    
+    static void SaveDataSetH5(const DataSet&, const std::string& filename_);
+    static void SaveDataSetROOT(const DataSet&, const std::string& filename_, const std::string& = "oxsx_saved");
+      
 
+    static void SaveHistogramH5(const Histogram& , const std::string& filename_);
+    static void SaveHistogramROOT(const Histogram& , const std::string& filename_);
+    static void SaveHistogram(const Histogram&, const std::string& filename_);
+
+    static OXSXDataSet* LoadDataSet(const std::string& filename_);
+    static Histogram    LoadHistogram(const std::string& filename_);
+
+    
  private:
+    static std::string GetExt(const std::string&);
     const static char fDelimiter;
 
     // used for combining and unpacking the observable names into a delimited string for hdf5 attr

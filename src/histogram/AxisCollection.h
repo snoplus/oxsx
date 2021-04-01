@@ -21,6 +21,7 @@ class AxisCollection{
     void    AddAxes(const std::vector<BinAxis>& axes_);
     const BinAxis& GetAxis(size_t axisIndex_) const;    
     const BinAxis& GetAxis(const std::string& axisName_) const;
+    size_t GetAxisIndex(const std::string& name_) const;
     
     size_t GetNDimensions() const;
     size_t FlattenIndices(const std::vector<size_t>& indicies_) const;

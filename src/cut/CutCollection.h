@@ -17,12 +17,10 @@ class CutCollection{
   bool PassesCuts(const Event& event_, CutLog& log_) const;
 
   void AddCut(const Cut&);
-  void AddCut(const Cut&, const std::string&);
 
   std::vector<std::string> GetCutNames() const;
   
  private:
   std::vector<Cut*> fCuts;
-  std::vector<std::string> fCutNames;
 };
 #endif
