@@ -5,9 +5,9 @@
 
 class AutoCorrelationCalc{
  public:
- AutoCorrelationCalc(int nVals_) : fQLen(nVals_),
-                                   fDiffs(std::vector<double>(nVals_, 0)),
-                                   fNorms(std::vector<double>(nVals_, 0))
+ AutoCorrelationCalc(int nVals_) : fDiffs(std::vector<double>(nVals_, 0)),
+                                   fNorms(std::vector<double>(nVals_, 0)),
+                                   fQLen(nVals_)
                                    {}
 
     void Fill(double);
