@@ -27,6 +27,7 @@ Converter<TargetType>::operator()(const std::string& s_) const{
 
   if (buffer.fail())
       throw ValueError("String conversion failed : value is invalid (this can mean the numerical type isn't big enough)");
+	
   return val;
 }
 

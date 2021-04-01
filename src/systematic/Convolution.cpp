@@ -30,7 +30,6 @@ Convolution::Construct(){
         CacheCompatibleBins();
 
     const AxisCollection& axes = fAxes;
-    std::vector<size_t> relativeIndices = fTransObs.GetRelativeIndices(fDistObs);
 
     // Work out the transition probabilitites within this sub set of the bins
     std::vector<double> binCentres(fSubMapAxes.GetNDimensions());

@@ -7,11 +7,79 @@
 #include <Exceptions.h>
 #include <Histogram.h>
 #include <Formatter.hpp>
+#include <TFile.h>
+#include <TNtuple.h>
+#include <DistTools.h>
+#include <TH1D.h>
+#include <TH2D.h>
 
 const char IO::fDelimiter = ':';
 
+
+std::string
+IO::GetExt(const std::string& path_){
+    if(path_.find_last_of(".") != std::string::npos)
+        return path_.substr(path_.find_last_of(".") + 1);
+    else
+        throw IOError("Can't interpret extension of " + path_);
+}
+
 void
-IO::SaveDataSet(const DataSet& dataSet_, const std::string& filename_){
+IO::SaveDataSet(const DataSet& dataSet_, const std::string& filename_, const std::string& treename_){
+    std::string ext = GetExt(filename_);
+    if(ext == "h5")
+        SaveDataSetH5(dataSet_, filename_);
+
+    else if(ext == "root")
+        SaveDataSetROOT(dataSet_, filename_, treename_);
+
+    else
+        throw IOError("IO::SaveDataSet Don't know how to save file as ." + ext);
+}
+
+
+void
+IO::SaveDataSetROOT(const DataSet& dataSet_, const std::string& filename_, const std::string& treename_){
+    // note if this is already a ROOT tree this is a super silly way to do it, but it doesn't make sense to do it
+    // anyway
+    if(!dataSet_.GetObservableNames().size()){
+        std::cout << "Tried to save a dataset with nothing in it.. nothing done" << std::endl;
+        return;
+    }
+
+    std::string branchString = dataSet_.GetObservableNames().at(0);
+    for(size_t i = 1; i < dataSet_.GetObservableNames().size(); i++){
+        branchString += ":";
+        branchString += dataSet_.GetObservableNames().at(i);
+    }
+
+    TFile f(filename_.c_str(), "RECREATE");
+    TNtuple nt(treename_.c_str(), "", branchString.c_str());
+
+    int oneTenth = dataSet_.GetNEntries()/10;
+    for(size_t i = 0; i < dataSet_.GetNEntries(); i++){
+        if(oneTenth && !(i%oneTenth))
+	  std::cout << "(" <<  10 * i/oneTenth << "%)" << std::endl;
+
+        // save these as floats
+        Event ev = dataSet_.GetEntry(i);
+	const std::vector<double>& datad = ev.GetData();
+        std::vector<float> dataf(datad.begin(), datad.end());
+
+        f.cd();
+        // and write
+        nt.Fill(&dataf[0]);
+    }    
+    f.cd();
+    
+    nt.Write();
+    f.Close();
+    
+}
+
+
+void
+IO::SaveDataSetH5(const DataSet& dataSet_, const std::string& filename_){
     // Get the relevant params
     hsize_t nEntries     = dataSet_.GetNEntries();
     hsize_t nObs  = dataSet_.GetNObservables();
@@ -110,7 +178,7 @@ IO::LoadDataSet(const std::string& filename_){
     countAtt.read(countAtt.getDataType(), &nObs);    
 
     // Assemble into an OXSX data set
-    OXSXDataSet* oxsxDataSet = new OXSXDataSet;
+    OXSXDataSet* oxsxDataSet= new OXSXDataSet;
 
     // Set the variable names
     oxsxDataSet -> SetObservableNames(UnpackString(strreadbuf));
@@ -179,7 +247,6 @@ IO::LoadDataSet(const std::string& filename_){
       }
       
     } // else.. 
-
     return oxsxDataSet;
 }
 
@@ -217,8 +284,33 @@ IO::UnpackString(const std::string& str_){
 }
 
 
+void
+IO::SaveHistogram(const Histogram& hist_, const std::string& filename_){
+    std::string ext = GetExt(filename_);
+    if(ext == "h5")
+        SaveHistogramH5(hist_, filename_);
+
+    else if(ext == "root")
+        SaveHistogramROOT(hist_, filename_);
+
+    else
+        throw IOError("IO::SaveDataSet Don't know how to save file as ." + ext);
+}
+
+void
+IO::SaveHistogramROOT(const Histogram& hist_, const std::string& filename_){
+    int dim = hist_.GetNDims();
+    if(dim == 1)
+        DistTools::ToTH1D(hist_).SaveAs(filename_.c_str());
+    else if(dim == 2)
+        DistTools::ToTH2D(hist_).SaveAs(filename_.c_str());
+    else
+        throw IOError(Formatter() << "IO::SaveHistogramROOT don't know how to save a " << dim
+                      << "histogram (just 1D or 2D)");
+}
+
 void 
-IO::SaveHistogram(const Histogram& histo_, const std::string& fileName_){
+IO::SaveHistogramH5(const Histogram& histo_, const std::string& fileName_){
     hsize_t nDims[] = {histo_.GetNDims()};
     hsize_t nBins[] = {histo_.GetNBins()};
     std::vector<double> contents = histo_.GetBinContents();

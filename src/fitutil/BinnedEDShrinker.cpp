@@ -7,21 +7,21 @@ BinnedEDShrinker::BinnedEDShrinker(){
 }
 
 void
-BinnedEDShrinker::SetBuffer(size_t dim_, unsigned lowerBuff_, unsigned upperBuff_){
-    fBuffers[dim_] = std::pair<unsigned, unsigned> (lowerBuff_, upperBuff_);
+BinnedEDShrinker::SetBuffer(const std::string& obs_, unsigned lowerBuff_, unsigned upperBuff_){
+    fBuffers[obs_] = std::pair<unsigned, unsigned> (lowerBuff_, upperBuff_);
 }
 
 std::pair<unsigned, unsigned>
-BinnedEDShrinker::GetBuffer(size_t dim_) const{
+BinnedEDShrinker::GetBuffer(const std::string& obs_) const{
     try{
-        return fBuffers.at(dim_);
+        return fBuffers.at(obs_);
     }
     catch(const std::out_of_range&){
-        throw NotFoundError(Formatter() << "BinnedEDShrinker::Requested buffer boundaries on non-existent dim " << dim_ << "!");
+        throw NotFoundError(Formatter() << "BinnedEDShrinker::Requested buffer boundaries on non-existent observable " << obs_ << "!");
     }
 }
 
-std::map<size_t, std::pair<unsigned, unsigned> > 
+std::map<std::string, std::pair<unsigned, unsigned> > 
 BinnedEDShrinker::GetBuffers() const{
     return fBuffers;
 }
@@ -67,20 +67,17 @@ BinnedEDShrinker::ShrinkDist(const BinnedED& dist_) const{
 
     // 1. Build new axes. ShrinkPdf method just makes a copy if buffer size is zero
     AxisCollection newAxes;
-    const std::vector<size_t> distDataIndices = dist_.GetObservables().GetIndices();
-    size_t dataIndex = 0;
-    
     for(size_t i = 0; i < nDims; i++){
-        dataIndex = distDataIndices.at(i);
-        if (!fBuffers.count(dataIndex))
+        const std::string& axisName = dist_.GetAxes().GetAxis(i).GetName();
+        if (!fBuffers.count(axisName))
             newAxes.AddAxis(dist_.GetAxes().GetAxis(i));
         else
-            newAxes.AddAxis(ShrinkAxis(dist_.GetAxes().GetAxis(i), 
-                                       fBuffers.at(dataIndex).first,  
-                                       fBuffers.at(dataIndex).second));
+            newAxes.AddAxis(ShrinkAxis(dist_.GetAxes().GetAxis(i),
+                                       fBuffers.at(axisName).first,
+                                       fBuffers.at(axisName).second));
     }
 
-    // 2. Initialise the new pdf with same data rep
+    // 2. Initialise the new pdf with same observables
     BinnedED newDist(dist_.GetName() + "_shrunk", newAxes);
     newDist.SetObservables(dist_.GetObservables());
 
@@ -97,11 +94,12 @@ BinnedEDShrinker::ShrinkDist(const BinnedED& dist_) const{
         if(!content) // no content no problem
             continue;
 
-        // work out the index of this bin in the new shrunk pdf. 
+        // work out the index of this bin in the new shrunk pdf.
         for(size_t j = 0; j < nDims; j++){
+            std::string axisName = axes.GetAxis(j).GetName();
             offsetIndex = axes.UnflattenIndex(i, j);            // the index in old pdf
-            if (fBuffers.count(distDataIndices.at(j)))          // offset by lower buffer if nonzero
-                offsetIndex -= fBuffers.at(distDataIndices.at(j)).first;
+            if (fBuffers.count(axisName))          // offset by lower buffer if nonzero
+                offsetIndex -= fBuffers.at(axisName).first;
 
             // Correct the ones that fall in the buffer regions
             // bins in the lower buffer have negative index. Put in first bin in fit region or ignore

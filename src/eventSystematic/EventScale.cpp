@@ -10,10 +10,13 @@ using ContainerTools::GetKeys;
 
 Event
 EventScale::operator()(const Event& inEvent_){
+    Event newEvent = inEvent_;
+
+    std::string obsToChange = fOutObservables.GetNames().at(0);
+
     // pull out the relevant data point
-    std::vector<double> obs = inEvent_.GetData();
-    obs[fObservables.GetIndex(0)] *= GetScale();
-    return Event(obs);
+    newEvent.SetDatum(obsToChange, inEvent_.GetDatum(obsToChange) * GetScale());
+    return newEvent;
 }
 
 void 

@@ -53,8 +53,8 @@ CountingExperiment::CountSignal(){
 }
 
 void
-CountingExperiment::AddCut(const Cut& c_, const std::string& name_){
-    fCuts.AddCut(c_, name_);
+CountingExperiment::AddCut(const Cut& c_){
+    fCuts.AddCut(c_);
 }
 
 void

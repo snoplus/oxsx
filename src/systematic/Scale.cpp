@@ -14,8 +14,8 @@ Scale::Construct(){
 
     const AxisCollection& axes       = fAxes;
     // the axis to scale
-    const size_t  scaleAxisDataIndex = fTransObs.GetIndex(0);
-    const BinAxis& scaleAxis         = axes.GetAxis(fDistObs.GetDataIndexPos(scaleAxisDataIndex));
+    const std::string&  scaleAxisName = fTransObs.GetNames().at(0);
+    const BinAxis& scaleAxis          = axes.GetAxis(fDistObs.GetIndex(scaleAxisName));
 
 
     const size_t nBins               = axes.GetNBins(); 
@@ -25,7 +25,7 @@ Scale::Construct(){
         // For each old bin, work out the contributions into all of the new bins
         // indices in other components should be unaffected
         std::vector<size_t> oldIndices = axes.UnpackIndices(i);
-        size_t scaleBin                = oldIndices.at(fDistObs.GetDataIndexPos(scaleAxisDataIndex));
+        size_t scaleBin                = oldIndices.at(fDistObs.GetIndex(scaleAxisName));
         
         double scaledLow   = scaleAxis.GetBinLowEdge(scaleBin)  * fScaleFactor;
         double scaledHigh  = scaleAxis.GetBinHighEdge(scaleBin) * fScaleFactor;
@@ -37,7 +37,7 @@ Scale::Construct(){
         
         std::vector<size_t> newIndices = oldIndices;
         for(size_t j = 0; j < scaleAxisNBins; j++){
-            newIndices[fDistObs.GetDataIndexPos(scaleAxisDataIndex)] = j;
+            newIndices[fDistObs.GetIndex(scaleAxisName)] = j;
             size_t newScaleBin = j;
                         
             double newLow  = scaleAxis.GetBinLowEdge(newScaleBin);

@@ -17,9 +17,11 @@ class CutLog{
     std::vector<double>      GetRemainderPercentages() const;
     std::vector<std::string> GetCutNames() const;
     
-    std::string AsString() const;
+    std::string AsString();
     void CalculateMeta();
-    void Print() const;
+    void Print();
+    void SaveAs(const std::string& title_, 
+		const std::string& path_);
 
  private:
     std::vector<int>         fCutCounts;

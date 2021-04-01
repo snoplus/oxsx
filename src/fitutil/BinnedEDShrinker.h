@@ -20,17 +20,17 @@ class BinnedEDShrinker{
                        const unsigned upperBuff_) const;
     BinnedED ShrinkDist(const BinnedED& dist_) const;
     
-    void SetBuffer(size_t dim_, unsigned lowerBuf_, unsigned upperBuf_);
-    std::pair<unsigned, unsigned> GetBuffer(size_t dim_) const;
+    void SetBuffer(const std::string& dim_, unsigned lowerBuf_, unsigned upperBuf_);
+    std::pair<unsigned, unsigned> GetBuffer(const std::string&) const;
     
-    std::map<size_t, std::pair<unsigned, unsigned> > GetBuffers() const;
+    std::map<std::string, std::pair<unsigned, unsigned> > GetBuffers() const;
      
     void SetUsingOverflows(bool b_);
     bool GetUsingOverflows() const;
 
  private:
     // Pairs of lower/upper buffer sizes in number of bins, keyed by diminension to shrink
-    std::map<size_t, std::pair<unsigned, unsigned> > fBuffers; 
+    std::map<std::string, std::pair<unsigned, unsigned> > fBuffers; 
     bool fUsingOverflows; // false at initialisation
 };
 #endif

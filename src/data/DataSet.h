@@ -7,7 +7,6 @@
 #include <vector>
 #include <string>
 
-class ObsSet;
 class Event;
 class DataSet{
  public:
@@ -18,7 +17,6 @@ class DataSet{
     virtual unsigned GetNObservables() const = 0; 
 
     virtual std::vector<std::string> GetObservableNames() const = 0;
-    ObsSet MakeDataRep(const std::vector<std::string> observableNames_) const;
 
 };
 #endif
