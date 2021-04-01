@@ -216,7 +216,7 @@ BinnedNLLH::RegisterFitComponents(){
     fComponentManager.AddComponent(&fPdfManager);
     
     //Because the limits are set by name they can be added in any order.
-    const auto sys_ = fSystematicManager.GetSystematicsGroup();
+    const auto std::map<std::string, std::vector<Systematic*> > = fSystematicManager.GetSystematicsGroup();
     std::vector<std::string> alreadyAdded;
     for (const auto& group_: sys_) {
         for (const auto& item: group_.second) {
