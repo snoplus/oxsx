@@ -50,7 +50,7 @@ ChiSquare::RegisterFitComponents(){
     fComponentManager.AddComponent(&fPdfManager);
 
     //Because the limits are set by name you only need to make sure you add the systematic once.
-    const auto sys_ = fSystematicManager.GetSystematicsGroup();
+    const std::map<std::string, std::vector<Systematic*> > sys_ = fSystematicManager.GetSystematicsGroup();
     std::vector<std::string> alreadyAdded;
     for (const auto& group_: sys_) {
         for (const auto& item: group_.second) {
