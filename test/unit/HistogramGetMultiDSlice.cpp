@@ -5,7 +5,7 @@
 
 TEST_CASE("Multi-Dimensional Histogram Slicing"){
     
-    // create a 4D histogram from random data
+    // create a 4D histogram
     AxisCollection axes; 
     axes.AddAxis(BinAxis("ax1", 0, 10, 5));
     axes.AddAxis(BinAxis("ax2", 0, 10, 5)); 
