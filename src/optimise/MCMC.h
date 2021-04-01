@@ -9,12 +9,14 @@
 class TestStatistic;
 class MCMC : public Optimiser{
  public:
-    MCMC(MCSampler& s_) : fSampler(s_),
+    MCMC(MCSampler& s_) : fMaxIter(100000), 
+                          fTestStatLogged(false),
+                          fFlipSign(false),
+                          fMaxVal(0),
+                          fCurrentVal(0.),
                           fSamples(this),
-                          fMaxIter(100000), 
-                          fMaxVal(0), fFlipSign(false), 
-                          fTestStatLogged(false), pTestStatistic(NULL),
-                          fCurrentVal(0.)
+                          pTestStatistic(NULL),
+                          fSampler(s_)
                           {}
     
     const FitResult& Optimise(TestStatistic*); 
