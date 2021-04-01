@@ -5,7 +5,7 @@
 
 class AutoCorrelationCalc{
  public:
- AutoCorrelationCalc(size_t nVals_) : fDiffs(std::vector<double>(nVals_, 0)),
+ AutoCorrelationCalc(std::size_t nVals_) : fDiffs(std::vector<double>(nVals_, 0)),
                                       fNorms(std::vector<double>(nVals_, 0)),
                                       fQLen(nVals_)
                                       {}
@@ -21,6 +21,6 @@ class AutoCorrelationCalc{
     std::deque<double>    fValues;
     std::vector<double>   fDiffs;
     std::vector<double>   fNorms;
-    size_t fQLen;
+    std::size_t fQLen;
 };
 #endif
