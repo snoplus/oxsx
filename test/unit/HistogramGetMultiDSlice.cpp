@@ -7,15 +7,16 @@ TEST_CASE("Multi-Dimensional Histogram Slicing"){
     
     // create a 4D histogram
     AxisCollection axes; 
-    axes.AddAxis(BinAxis("ax1", 0, 10, 5));
-    axes.AddAxis(BinAxis("ax2", 0, 10, 5)); 
-    axes.AddAxis(BinAxis("ax3", 0, 10, 5));
-    axes.AddAxis(BinAxis("ax4", 0, 10, 5)); 
+    axes.AddAxis(BinAxis("ax1", 0, 10, 3));
+    axes.AddAxis(BinAxis("ax2", 0, 10, 3)); 
+    axes.AddAxis(BinAxis("ax3", 0, 10, 3));
+    axes.AddAxis(BinAxis("ax4", 0, 10, 3)); 
 
     Histogram origHistogram(axes); 
     // fill the histogram bins with values --> probably a horrible method! 
     for (size_t i = 0; i < origHistogram.GetNBins(); i++){
         origHistogram.SetBinContent(i, i);
+        //std::cout << "Filling bin " << i << "with value " << i << std::endl; 
     }
 
     // get the original histogram axis 
@@ -27,9 +28,9 @@ TEST_CASE("Multi-Dimensional Histogram Slicing"){
     SECTION("1D Slice"){
         // slice over 3 axes to yield 1D slice 
         std::map<std::string, size_t> fixedBins; 
-        fixedBins["ax1"] = 1;
-        fixedBins["ax2"] = 4;
-        fixedBins["ax3"] = 3;
+        fixedBins["ax1"] = 2;
+        fixedBins["ax2"] = 1;
+        fixedBins["ax3"] = 0;
         Histogram dim1 = origHistogram.GetSlice(fixedBins);
         
         // grab the axis & total bin number in slice for later testing  
@@ -41,12 +42,12 @@ TEST_CASE("Multi-Dimensional Histogram Slicing"){
         std::vector<std::vector<size_t> > localIdx; 
 
         // loop over the "free index", ie the axis not present in fixedBins
-        for(size_t ax4Bin = 0; ax4Bin < 5; ax4Bin++){
+        for(size_t ax4Bin = 0; ax4Bin < 3; ax4Bin++){
             std::vector<size_t> idx;
             // these are the constant bins - where the slice 'pathway' is defined 
-            idx.push_back(1); // idx of bin in ax1 
-            idx.push_back(4); // idx of bin in ax2 
-            idx.push_back(3); // idx of bin in ax3 
+            idx.push_back(2); // idx of bin in ax1 
+            idx.push_back(1); // idx of bin in ax2 
+            idx.push_back(0); // idx of bin in ax3 
 
             // everything in 4th axis is included - it is the free idx  
             idx.push_back(ax4Bin);
@@ -59,13 +60,15 @@ TEST_CASE("Multi-Dimensional Histogram Slicing"){
         for(size_t i = 0; i < localIdx.size(); i++){
             // convert from local to global (flat) idx 
             size_t globalIdx = origHistogram.FlattenIndices(localIdx.at(i)); 
-
+            std::cout << "globIdx = " << globalIdx << std::endl; 
             // get contents in origHistogram at that flattened idx and sum 
             sumOrig += origHistogram.GetBinContent(globalIdx); 
+            std::cout << "Bin content = " << origHistogram.GetBinContent(globalIdx) << std::endl;  
         }
-
+        std::cout << "new sum = " << sumSlice << std::endl; 
+        std::cout << "orig sum = " << sumOrig << std::endl;  
         REQUIRE(dim1.GetNDims() == 1); // check it's a 1D slice
-        REQUIRE(newAx.GetNBins() == origAx4.GetNBins()); // check sliced out axis is same as in original histogram  
+        REQUIRE(newAx.GetNBins() == origAx1.GetNBins()); // check sliced out axis is same as in original histogram  
         REQUIRE(sumSlice == sumOrig); // check total contents of slice is equal to sum of bin contents in 
                                       // sliced out original bins
     }  
@@ -74,7 +77,7 @@ TEST_CASE("Multi-Dimensional Histogram Slicing"){
         // slice over 2 axes to yield 2D slice 
         std::map<std::string, size_t> fixedBins; 
         fixedBins["ax1"] = 1;
-        fixedBins["ax2"] = 4;
+        fixedBins["ax2"] = 2;
         
         Histogram dim2 = origHistogram.GetSlice(fixedBins);
         BinAxis newAx1 = dim2.GetAxes().GetAxis(0);
@@ -85,14 +88,14 @@ TEST_CASE("Multi-Dimensional Histogram Slicing"){
         std::vector<std::vector<size_t> > localIdx; 
 
         // loop over the "free index", ie the axis not present in fixedBins
-        for(size_t ax4Bin = 0; ax4Bin < 5; ax4Bin++){
-            for(size_t ax3Bin = 0; ax3Bin < 5; ax3Bin++){
+        for(size_t ax3Bin = 0; ax3Bin < 3; ax3Bin++){
+            for(size_t ax4Bin = 0; ax4Bin < 3; ax4Bin++){
                 std::vector<size_t> idx;
                 // these are the constant bins - where the slice 'pathway' is defined 
                 idx.push_back(1); // idx of bin in ax1 
-                idx.push_back(4); // idx of bin in ax2 
+                idx.push_back(2); // idx of bin in ax2 
                  
-                // everything in 4th & 3rd axese are included - they are the free indexes  
+                // everything in 3rd & 4th axes are included - they are the free indexes  
                 idx.push_back(ax3Bin);
                 idx.push_back(ax4Bin);
                 localIdx.push_back(idx);   
@@ -131,9 +134,9 @@ TEST_CASE("Multi-Dimensional Histogram Slicing"){
         std::vector<std::vector<size_t> > localIdx; 
 
         // loop over the "free index", ie the axis not present in fixedBins
-        for(size_t ax4Bin = 0; ax4Bin < 5; ax4Bin++){
-            for(size_t ax3Bin = 0; ax3Bin < 5; ax3Bin++){
-                for(size_t ax2Bin = 0; ax2Bin < 5; ax2Bin++){
+        for(size_t ax4Bin = 0; ax4Bin < 3; ax4Bin++){
+            for(size_t ax3Bin = 0; ax3Bin < 3; ax3Bin++){
+                for(size_t ax2Bin = 0; ax2Bin < 3; ax2Bin++){
                     std::vector<size_t> idx;
                     // this is the constant bin idx - where the slice 'pathway' is defined 
                     idx.push_back(1); // idx of bin in ax1 

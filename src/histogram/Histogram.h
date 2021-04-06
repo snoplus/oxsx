@@ -67,5 +67,9 @@ class Histogram{
     std::vector<double> fBinContents;
     size_t fNBins;
     size_t fNDims;
+    void Recurse(size_t numFreeIdx, std::vector<size_t> binsEachAxis, std::vector<size_t> coords, std::vector<std::vector<size_t> > &localIdx, std::vector<size_t> free_ax) const;
+
+    //void Recurse(size_t numFreeIdx, std::vector<size_t> binsEachAxis, std::vector<size_t> coords, std::vector<std::vector<size_t> > vect) const; 
+
 };
 #endif
