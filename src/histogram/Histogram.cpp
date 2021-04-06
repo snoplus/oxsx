@@ -222,35 +222,31 @@ Histogram::Marginalise(const std::string& index_) const {
 
 void 
 Histogram::Recurse(size_t numFreeIdx, std::vector<size_t> binsEachAxis, std::vector<size_t> coords, std::vector<std::vector<size_t> > &localIdx, std::vector<size_t> free_ax) const{
-    // function used in GetSlice method to generate every possible combination 
-    // of local indicies using on numFreeIdx recursively nested for-loops.
+    /* Function finds every possible combination of free indexes for GetSlice method by creating N nested for loops.
+    
+       INPUTS: numFreeIdx, integer number of free idexes. This is the same as NDims of slice and number of nested 
+                           loops needed. 
+               binsEachAxis, integer number of bins. For each nested loop i, loop runs for binsEachAxis[i] times.
+               coords, vector of dimension equal to NDims of original Histogram. Holds latest combination of fixed and free
+                       axis idxs. 
+               localIdx, vector of vectors, stores every individual coords vector. To fill this is the ultiamte goal of Recurse
+                         function. 
+               free_ax, vector of integers, specifies the axis location of each free axis, so correct element in coords vector 
+                        is filled.   
+    */ 
 
     // check if at deepest level 
-    std::cout << "Inside recursive function! numFreeIdx is " << numFreeIdx << std::endl;
     if(numFreeIdx < 1){
-        // assign the current combination of indexes to vector
-        std::vector<size_t> current_idx; 
-        for(size_t idx = 0; idx < coords.size(); idx++){
-            //std::cout << "Assigning current coords to a vector" << std::endl;
-            current_idx.push_back(coords[idx]); 
-        }
-
-        // push this current coordinate vector to be saved with all the 
-        // others 
-        //std::cout << "Pushing current_idx to the giga list localIDx" << std::endl;
-        localIdx.push_back(current_idx); 
-        std::cout << "LocalIdx size (inside) " << localIdx.size() << std::endl;
-        //std::cout << current_idx[0] << current_idx[1] << current_idx[2] << current_idx[3] << std::endl;
+        // save the current coordinate combination  
+        localIdx.push_back(coords);
     } 
     else{
-        // need to go deeper! Begin this level's loop
-        //std::cout << "Going deeper!" << std::endl;
+        // need to go deeper! Begin this level's loop with loop variable running from 0 -> numBins in this axis
         for(size_t i = 0; i < binsEachAxis.at(numFreeIdx-1); i++){
-            // fill relevant idx 
-            //std::cout << "Inside a loop, filling coords element " << free_ax[numFreeIdx-1] << " with " << i << std::endl;
+            // fill relevant free idx 
             coords[free_ax[numFreeIdx-1]] = i; 
-            //std::cout << "FILLED" << std::endl; 
-            // go DEEPER 
+     
+            // go DEEPER and note subtracted 1 from numFreeIdx for next loop -> this gets the next freeAxis loop correctly
             Recurse(numFreeIdx-1, binsEachAxis, coords, localIdx, free_ax);
         }
     }
@@ -258,7 +254,18 @@ Histogram::Recurse(size_t numFreeIdx, std::vector<size_t> binsEachAxis, std::vec
 
 Histogram
 Histogram::GetSlice(const std::map<std::string,size_t>& fixedBins_) const{
-    
+    /* Function returns a slice of original N-dimensional histogram. Slices may be N-1 dimensional.
+       INPUTS: map, fixedBins_, which specifies the axis name and fixed index defining the slice 
+       
+       OUTPUT: Histogram, slice, the N-1 dimensional histogram slice. 
+
+       Function deals with fixed and "free" indexes to create slice. For each free index, a nested loop 
+       is performed to obtain every combination of axis indexes. This is achieved using recursive loop function, 
+       Recurse, defined above. Once every combination is found, these coordinates are transformed to global/flat 
+       bin index relative to original Histogram. Bin contents are found at that globalBin and added to the 
+       corresponding slice bin.   
+    */ 
+
     // all the axis names in the initial (pre sliced) histogram 
     const std::vector<std::string> allAxisNames = fAxes.GetAxisNames();
     
@@ -274,41 +281,38 @@ Histogram::GetSlice(const std::map<std::string,size_t>& fixedBins_) const{
     // want to support multidimensional slices 
     if (fixedBins_.size() >= fNDims)
         throw DimensionError("Histogram::GetSlice", fNDims -1, fixedBins_.size());
+ 
+    std::vector<std::string> newAxisNames; // collect names of axis present in slice (the "free" idxs) 
+    std::vector<size_t> newAxisIndexes;    // collect free axis idxs relative to original Histogram
+    std::vector<size_t> sliceIndices;      // collect the fixed axis idxs relative to original Histogram 
+    std::vector<bool> isFixed;             // for each axis, store boolean defining if fixed or free axis
 
-    // create vectors to hold the slicing idxs 
-    std::vector<std::string> newAxisNames; 
-    std::vector<size_t> newAxisIndexes;
-    std::vector<size_t> sliceIndices; 
-    std::vector<bool> all_bins; // is this axis a fixed bin?
-    for(std::vector<std::string>::const_iterator it = allAxisNames.begin(); it!=allAxisNames.end(); it++){
-        
-        // goes through entire fixedBins_ map and reaches end without finding axis in fixedBins 
+    // loop compares every axis in Histogram to those specified in fixedBins_
+    for(std::vector<std::string>::const_iterator it = allAxisNames.begin(); it!=allAxisNames.end(); it++){ 
         if(fixedBins_.find(*it) == fixedBins_.end()){
-	        // this is the axis we want to slice out! 
+	        // axis does not exist in fixedBins, thus it is a free idx to slice out
             newAxisNames.push_back(*it); 
             newAxisIndexes.push_back(fAxes.GetAxisIndex(*it));
             std::cout << "Free Index: " << *it << std::endl; 
-            all_bins.push_back(false);
+            isFixed.push_back(false);
 	    } else{
-	    // record the indices for the fixed bins in other dimensions
-	    //sliceIndices[fAxes.GetAxisIndex(*it)] = fixedBins_.at(*it);
-        sliceIndices.push_back(fAxes.GetAxisIndex(*it)); 
-        all_bins.push_back(true); 
-        std::cout << "Fixed Indices recorded in Axis " << *it << " with idx " << fixedBins_.at(*it) << std::endl; 
+            // axis exists in fixedBins, thus it is a fixed idx
+            sliceIndices.push_back(fAxes.GetAxisIndex(*it)); 
+            isFixed.push_back(true); 
+            std::cout << "Fixed Indices recorded in Axis " << *it << " with idx " << fixedBins_.at(*it) << std::endl; 
 	    }
     }
 
-    // new histogram loop 
+    // CREATING NEW SLICE HERE
     AxisCollection newAxes; 
-    std::vector<size_t> binsEachAxis;  
+    std::vector<size_t> binsEachAxis;           // vector stores number of bins in each free axis
 
-    // vector of vectors to store each local idx
-    std::vector<std::vector<size_t> > localIdx; 
+    std::vector<std::vector<size_t> > localIdx; // vector of vectors to store every combination of free and fixed idxs
 
-    // vector to store current local idx 
-    std::vector<size_t> coords(fNDims); 
+    
+    std::vector<size_t> coords(fNDims);         // vector stores latest combination of idxs
 
-    // creating the slice  
+    // creating the slice and populating binsEachAxis  
     for(size_t i = 0; i < newAxisNames.size(); i++){
         newAxes.AddAxis(fAxes.GetAxis(newAxisIndexes[i]));
         
@@ -319,64 +323,32 @@ Histogram::GetSlice(const std::map<std::string,size_t>& fixedBins_) const{
     }
     Histogram slice(newAxes);
     
-    // fill in the fixed bins 
-    std::cout << "all bins " << all_bins[0] << " " << all_bins[1] << " " << all_bins[2] << " " << all_bins[3] << std::endl;
+    // fill in the current combination vector with fixed bin values
+    std::cout << "isFixed " << isFixed[0] << " " << isFixed[1] << " " << isFixed[2] << " " << isFixed[3] << std::endl;
     for(size_t i = 0; i < fNDims; i++){
-        if(all_bins.at(i) == true){
+        if(isFixed.at(i) == true){
             std::cout << " Filling fixed bin idx " << i << " with " << fixedBins_.at(allAxisNames[i]) << std::endl;
             coords[i] = fixedBins_.at(allAxisNames[i]); 
         }
     }
     std::cout << "coords before: " << coords[0] << " " << coords[1] << " " << coords[2] << coords[3] << std::endl;  
+    
     // recursively fill localIdxs vector with N nested for loops, where N is number of free axis 
-    std::cout << "About to call recursive function!" << std::endl;
     Recurse(newAxisNames.size(), binsEachAxis, coords, localIdx, newAxisIndexes);
-    std::cout << "LocalIdx size (outside) " << localIdx.size() << std::endl;
+    std::cout << "Number of combinations found: " << localIdx.size() << std::endl;
     for(size_t i = 0; i < localIdx.size(); i++){
         std::vector<size_t> val = localIdx[i];
         std::cout << "saved value: " << val[0] << " " << val[1] << " " << val[2] << " " << val[3] << std::endl;
           
     }
-    // loop over the (now filled?) localIdxs
+    
+    // for every combination, obtain the global flat idx in original histogram  
     size_t bin = 0;   
     for(size_t idx = 0; idx < localIdx.size(); idx++){
-        // convert a given localIdx to globalIdx
         size_t oldGlobalBin = fAxes.FlattenIndices(localIdx.at(idx)); 
-        slice.AddBinContent(bin, fBinContents.at(oldGlobalBin)); 
+        slice.AddBinContent(bin, fBinContents.at(oldGlobalBin));      // fill the relevant slice bin with contents
         bin += 1; 
     } 
-    // // array holds the fNDims dimensional coordinates of every bin in slice in terms 
-    // // of original histogram   
-    // //size_t localIdx[slice.GetNBins()][allAxisNames.size()];
-    // std::vector<size_t> localIdx(fNDims); 
-    // // loop over each bin in slice
-    // //for(size_t bin = 0; bin < slice.GetNBins(); bin++){ 
-    //     // fill in the fixed indexes 
-        
-    //     for(size_t axFixIdx = 0; axFixIdx < sliceIndices.size(); axFixIdx++){
-    //         localIdx[sliceIndices[axFixIdx]] = fixedBins_.at(allAxisNames[sliceIndices[axFixIdx]]);   
-    //     }
-    //     // loop over the free idx in each dimension 
-    //     for(size_t freeBin = 0; freeBin < binsEachAxis[i]; freeBin++){
-    //         std::cout << "New Slice Bin! " << std::endl; 
-                
-    //         // set the free idx 
-    //         localIdx[newAxisIndexes[i]] = freeBin; 
-            
-    //         std::cout<< "localIdx = "; 
-    //         for(size_t j = 0; j < localIdx.size(); j++){
-    //             std::cout << localIdx[j] << " "; 
-    //         }
-    //         std::cout << "\n"; 
-                
-    //         // compute the global idx coodinates based on these local ones in 
-    //         // original histogram  
-    //         size_t oldGlobalBin = fAxes.FlattenIndices(localIdx);
-	//         slice.AddBinContent(bin, fBinContents.at(oldGlobalBin));
-    //         std::cout << "Added " << fBinContents.at(oldGlobalBin) << " to bin " << bin << std::endl; 
-            
-    //     }
-    //}
 
     return slice;
 }
