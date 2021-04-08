@@ -306,10 +306,7 @@ Histogram::GetSlice(const std::map<std::string,size_t>& fixedBins_) const{
     // CREATING NEW SLICE HERE
     AxisCollection newAxes; 
     std::vector<size_t> binsEachAxis;           // vector stores number of bins in each free axis
-
     std::vector<std::vector<size_t> > localIdx; // vector of vectors to store every combination of free and fixed idxs
-
-    
     std::vector<size_t> coords(fNDims);         // vector stores latest combination of idxs
 
     // creating the slice and populating binsEachAxis  
@@ -321,26 +318,19 @@ Histogram::GetSlice(const std::map<std::string,size_t>& fixedBins_) const{
         size_t bins = individualAxis.GetNBins();
         binsEachAxis.push_back(bins);
     }
+
     Histogram slice(newAxes);
     
     // fill in the current combination vector with fixed bin values
-    std::cout << "isFixed " << isFixed[0] << " " << isFixed[1] << " " << isFixed[2] << " " << isFixed[3] << std::endl;
     for(size_t i = 0; i < fNDims; i++){
         if(isFixed.at(i) == true){
-            std::cout << " Filling fixed bin idx " << i << " with " << fixedBins_.at(allAxisNames[i]) << std::endl;
             coords[i] = fixedBins_.at(allAxisNames[i]); 
         }
-    }
-    std::cout << "coords before: " << coords[0] << " " << coords[1] << " " << coords[2] << coords[3] << std::endl;  
+    } 
     
     // recursively fill localIdxs vector with N nested for loops, where N is number of free axis 
     Recurse(newAxisNames.size(), binsEachAxis, coords, localIdx, newAxisIndexes);
     std::cout << "Number of combinations found: " << localIdx.size() << std::endl;
-    for(size_t i = 0; i < localIdx.size(); i++){
-        std::vector<size_t> val = localIdx[i];
-        std::cout << "saved value: " << val[0] << " " << val[1] << " " << val[2] << " " << val[3] << std::endl;
-          
-    }
     
     // for every combination, obtain the global flat idx in original histogram  
     size_t bin = 0;   
