@@ -5,6 +5,8 @@
 #include <MCMCSamples.h>
 #include <MCSampler.h>
 #include <set>
+#include "TStopwatch.h"
+#include <TTree.h>
 
 class TestStatistic;
 class MCMC : public Optimiser{
@@ -45,11 +47,16 @@ class MCMC : public Optimiser{
     bool GetSaveFullHistogram() const;
     void SetSaveFullHistogram(bool);
 
+    bool GetSaveChain() const;
+    void SetSaveChain(bool);
+
     void SetHistogramAxes(const AxisCollection&);
     AxisCollection GetHistogramAxes() const;
 
     void SetInitialTrial(const ParameterDict&);
     ParameterDict GetInitialTrial() const;
+
+    TTree* GetChain() const;
 
     const MCMCSamples& GetSamples() const;
 
@@ -78,5 +85,12 @@ class MCMC : public Optimiser{
     MCSampler& fSampler;
     
     bool   StepAccepted(const ParameterDict& proposedStep_);
+
+    TTree *fChain;
+    bool fAccepted;
+    int fStepNumber;
+    double fStepTime;
+    TStopwatch stepClock;
+    bool fSaveChain;
 };
 #endif

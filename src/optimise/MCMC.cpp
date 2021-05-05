@@ -120,12 +120,25 @@ MCMC::SetSaveFullHistogram(bool b_){
     fSamples.SetSaveFullHistogram(b_);
 }
 
+bool
+MCMC::GetSaveChain() const{
+    return fSaveChain;
+}
+
+void
+MCMC::SetSaveChain(bool b_){
+    fSaveChain = b_;
+}
 
 void
 MCMC::SetInitialTrial(const ParameterDict& trial_){
     fInitialTrial = trial_;
 }
 
+TTree*
+MCMC::GetChain() const{
+  return fChain;
+}
 
 ParameterDict
 MCMC::GetInitialTrial() const{
@@ -168,6 +181,20 @@ MCMC::Optimise(TestStatistic* testStat_){
         }
     }
 
+    if(fSaveChain){
+      fChain = new TTree("posteriors", "Posterior_Distributions");
+      fChain->Branch("LogL", &fCurrentVal, "LogL/D");
+      fChain->Branch("Accepted", &fAccepted, "Accepted/O");
+      fChain->Branch("Step", &fStepNumber, "Step/I");
+      fChain->Branch("StepTime", &fStepTime, "StepTime/D");
+      for(ParameterDict::iterator it = fCurrentStep.begin(); it != fCurrentStep.end(); ++it){
+        char bit[40] = "";
+        strcat(bit, (it->first).c_str());
+        strcat(bit, "/D");
+        fChain->Branch((it->first).c_str(), &fCurrentStep[it->first], bit);
+      }
+    }
+
     std::cout << "MCMC::Initial Position @:" << std::endl;
     for(ParameterDict::iterator it = fCurrentStep.begin(); it != fCurrentStep.end(); ++it)
         std::cout << it->first << " : " << it->second << std::endl;
@@ -182,7 +209,8 @@ MCMC::Optimise(TestStatistic* testStat_){
     fMaxVal = fCurrentVal;
     
     // 2. Loop step through the space a fixed number of times
-    for(unsigned i = 0; i < fMaxIter; i++){      
+    for(unsigned i = 0; i < fMaxIter; i++){
+        stepClock.Start();
         if(!(i%100000) && i)
             std::cout << i << "  /  " << fMaxIter
                       << "\t" << fSamples.GetAcceptanceRate()
@@ -200,6 +228,13 @@ MCMC::Optimise(TestStatistic* testStat_){
 
         // d. log
         fSamples.Fill(fCurrentStep, fCurrentVal, accepted);
+	stepClock.Stop();
+	if(fSaveChain){
+	  fStepNumber = i;
+	  fAccepted = accepted;
+	  fStepTime = stepClock.RealTime();
+	  fChain->Fill();
+	}
     }
     std::cout << "MCMC:: acceptance rate = " << fSamples.GetAcceptanceRate()
               << std::endl;
