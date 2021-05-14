@@ -7,6 +7,8 @@
 #include <ContainerTools.hpp>
 #include <Rand.h>
 #include <iostream>
+#include <string>
+#include <algorithm>
 #include <math.h> //isinf
 
 void
@@ -181,23 +183,31 @@ MCMC::Optimise(TestStatistic* testStat_){
         }
     }
 
+    //Make tree for saving info for each step of mcmc
     if(fSaveChain){
+      int parameterNumber = 0;
       fChain = new TTree("posteriors", "Posterior_Distributions");
       fChain->Branch("LogL", &fCurrentVal, "LogL/D");
       fChain->Branch("Accepted", &fAccepted, "Accepted/O");
       fChain->Branch("Step", &fStepNumber, "Step/I");
       fChain->Branch("StepTime", &fStepTime, "StepTime/D");
+
+      parvals.reserve(fCurrentStep.size());
       for(ParameterDict::iterator it = fCurrentStep.begin(); it != fCurrentStep.end(); ++it){
-        char bit[40] = "";
-        strcat(bit, (it->first).c_str());
+	std::string bname = it->first;
+	if(bname.find("-") != std::string::npos)
+	  bname.replace(bname.find("-"), 1, "_");
+	char bit[40] = "";
+        strcat(bit, bname.c_str());
         strcat(bit, "/D");
-        fChain->Branch((it->first).c_str(), &fCurrentStep[it->first], bit);
+	fChain->Branch( bname.c_str(), &parvals[parameterNumber], bit); 
+	parameterNumber++;
       }
     }
 
     std::cout << "MCMC::Initial Position @:" << std::endl;
     for(ParameterDict::iterator it = fCurrentStep.begin(); it != fCurrentStep.end(); ++it)
-        std::cout << it->first << " : " << it->second << std::endl;
+          std::cout << it->first << " : " << it->second << std::endl;
     std::cout << std::endl;
 
     pTestStatistic->SetParameters(fCurrentStep);
@@ -218,8 +228,6 @@ MCMC::Optimise(TestStatistic* testStat_){
                       << "\t" << fSamples.GetAutoCorrelations()[10]
                       << "\t" << fSamples.GetAutoCorrelations()[100]
                       << std::endl;
-
-
         // b. Propose a new step according
         ParameterDict proposedStep = fSampler.Draw(fCurrentStep);
 
@@ -228,8 +236,16 @@ MCMC::Optimise(TestStatistic* testStat_){
 
         // d. log
         fSamples.Fill(fCurrentStep, fCurrentVal, accepted);
+
 	stepClock.Stop();
+
+	//save info for each step in chain
 	if(fSaveChain){
+	  int parameterNumber = 0;
+	  for(ParameterDict::iterator it = fCurrentStep.begin(); it != fCurrentStep.end(); ++it){
+	    parvals[parameterNumber] = fCurrentStep[it->first];
+	    parameterNumber++;
+	  }
 	  fStepNumber = i;
 	  fAccepted = accepted;
 	  fStepTime = stepClock.RealTime();

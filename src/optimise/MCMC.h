@@ -92,5 +92,6 @@ class MCMC : public Optimiser{
     double fStepTime;
     TStopwatch stepClock;
     bool fSaveChain;
+    std::vector<double> parvals;
 };
 #endif
