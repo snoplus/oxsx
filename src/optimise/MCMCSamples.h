@@ -8,10 +8,9 @@
 class MCMC;
 class MCMCSamples{
  public:
-    MCMCSamples(MCMC* p_) : fSaveFullHistogram(false), fAcceptedSteps(0), fTotalSteps(0),
-                            fBurnIn(1000), fThinFactor(1), fInitialised(false), fMCMC(p_),
-                            fAutoCorrelator(1000)
-                            {}
+    MCMCSamples(MCMC* p_) : fAutoCorrelator(1000), fMCMC(p_), fInitialised(false),
+                            fBurnIn(1000), fThinFactor(1), fSaveFullHistogram(false),
+                            fAcceptedSteps(0), fTotalSteps(0) {}
 
 
     int  GetBurnIn() const;

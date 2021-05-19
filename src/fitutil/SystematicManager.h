@@ -34,10 +34,10 @@ class SystematicManager{
 
     const std::set<std::string> GetGroupNames() const;
     
-    const size_t GetNSystematics() const;
-    const size_t GetNGroups() const;
+    size_t GetNSystematics() const;
+    size_t GetNGroups() const;
 
-    const size_t GetNSystematicsInGroup(const std::string& name_) const;
+    size_t GetNSystematicsInGroup(const std::string& name_) const;
 
     const std::vector<std::string> GetSystematicsNamesInGroup(const std::string& name) const;
 
@@ -62,6 +62,6 @@ class SystematicManager{
     std::map<std::string,std::vector<std::string> > fEDGroups;
     void UniqueSystematics(const std::vector<std::string>&);
     void checkAllOtherGroups(const Systematic* syss_);
-    const size_t CountNSystematics() const;
+    size_t CountNSystematics() const;
 };
 #endif

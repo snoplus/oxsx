@@ -5,7 +5,7 @@ class MCSampler{
  public:
     virtual ~MCSampler() {}
     virtual ParameterDict Draw(const ParameterDict& currentStep_) = 0;
-    virtual double CorrectAccParam(double in_) = 0;
+    virtual double CorrectAccParam() = 0;
 };
 
 #endif

@@ -51,7 +51,6 @@ GridSearch::Optimise(TestStatistic* testStat_){
     ParameterDict setParams = testStat_ -> GetParameters();
     
     // check initialisation
-    size_t nParams = testStat_ -> GetParameterCount();
     if( !HasSameKeys(fStepSizes, fMaxima)
         || !HasSameKeys(fStepSizes, fMinima)
         )

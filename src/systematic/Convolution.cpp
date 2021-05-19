@@ -29,8 +29,6 @@ Convolution::Construct(){
     if(!fCachedCompatibleBins)
         CacheCompatibleBins();
 
-    size_t nBins = fAxes.GetNBins();
-    size_t nDims = fAxes.GetNDimensions();
     const AxisCollection& axes = fAxes;
 
     // Work out the transition probabilitites within this sub set of the bins

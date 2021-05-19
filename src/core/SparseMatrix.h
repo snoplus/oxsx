@@ -16,7 +16,7 @@ class BinnedPhysDist;
 class SparseMatrix{
  public:
     SparseMatrix() : fNRows(0), fNCols(0) {}
-    SparseMatrix(int rows_, int cols_);
+    SparseMatrix(size_t rows_, size_t cols_);
     std::vector<double> operator() (const std::vector<double>& input_) const;
 
     void   SetComponent(size_t row_, size_t column_, double val_);
@@ -38,7 +38,7 @@ class SparseMatrix{
 
  private:
     arma::sp_mat fArmaMat;
-    int fNRows;
-    int fNCols;
+    size_t fNRows;
+    size_t fNCols;
 };
 #endif

@@ -75,6 +75,6 @@ HamiltonianSampler<StatType>::KineticEnergy(const ParameterDict& momenta_) const
 
 template<typename StatType>
 double
-HamiltonianSampler<StatType>::CorrectAccParam(double in_){
+HamiltonianSampler<StatType>::CorrectAccParam(){
     return fCorr;
 }

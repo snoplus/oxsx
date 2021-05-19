@@ -111,7 +111,7 @@ BinnedEDShrinker::ShrinkDist(const BinnedED& dist_) const{
             }
 
             // bins in the upper buffer have i > number of bins in axis j. Do the same
-            if (offsetIndex >= newAxes.GetAxis(j).GetNBins()){
+            if (offsetIndex >= static_cast<int>(newAxes.GetAxis(j).GetNBins())){
                 offsetIndex = newAxes.GetAxis(j).GetNBins() - 1;
 
                 if (!fUsingOverflows)

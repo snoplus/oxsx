@@ -40,7 +40,7 @@ class Ploy : public Function{
             return parameters.at("grad")*vals_[0]+parameters.at("offset");
         }
 
-        int GetNDims() const{
+        size_t GetNDims() const{
             return 1;
         }
 

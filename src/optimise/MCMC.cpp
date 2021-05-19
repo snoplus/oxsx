@@ -234,7 +234,7 @@ MCMC::StepAccepted(const ParameterDict& proposedStep_){
 
     long double acceptanceParam = 0;
     if(fTestStatLogged)
-        acceptanceParam = exp(proposedVal - fCurrentVal + fSampler.CorrectAccParam(acceptanceParam));
+        acceptanceParam = exp(proposedVal - fCurrentVal + fSampler.CorrectAccParam());
     else
         acceptanceParam = proposedVal/fCurrentVal;
 

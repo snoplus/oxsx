@@ -13,7 +13,7 @@ using ContainerTools::ToString;
 GaussianFitter::GaussianFitter(Gaussian* gaus, const size_t& nDims_){
     fOrignalFunc = gaus; 
     std::stringstream ss;
-    for (int i = 0; i <nDims_; ++i) {
+    for (size_t i = 0; i <nDims_; ++i) {
         ss << "means" << "_" << i;
         fMeansNames.push_back(ss.str());
         ss.str("");
@@ -28,10 +28,10 @@ GaussianFitter::GaussianFitter(Gaussian* gaus, const std::vector<std::string>& m
         throw OXSXException(Formatter()<<"GaussianFitter:: #meanName != #stdDevNames");
     fOrignalFunc = gaus;
     std::stringstream ss;
-    for (int i = 0; i < meanNames_.size(); ++i)
-        fMeansNames.push_back(meanNames_.at(i));
-    for (int i = 0; i <stdDevNames_.size(); ++i)
-        fStdDevsNames.push_back(stdDevNames_.at(i));
+    for (const auto& mean_name: meanNames_)
+        fMeansNames.push_back(mean_name);
+    for (const auto& stdDev_name: stdDevNames_)
+        fStdDevsNames.push_back(stdDev_name);
 }
 
 void
@@ -132,7 +132,7 @@ GaussianFitter::GetParameterCount() const{
 std::set<std::string>
 GaussianFitter::GetParameterNames() const{
     std::set<std::string> names;
-    for (int i = 0; i < fMeansNames.size(); ++i){
+    for (size_t i = 0; i < fMeansNames.size(); ++i){
         names.insert(fMeansNames.at(i));
         names.insert(fStdDevsNames.at(i));
     }

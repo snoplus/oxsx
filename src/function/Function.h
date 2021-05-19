@@ -10,6 +10,6 @@ class Function : public FitComponent{
     virtual Function* Clone() const = 0;
 
     virtual double operator()(const std::vector<double>& vals_) const = 0;
-    virtual int GetNDims() const = 0;
+    virtual size_t GetNDims() const = 0;
 };
 #endif
