@@ -7,8 +7,6 @@
 #include <ContainerTools.hpp>
 #include <Rand.h>
 #include <iostream>
-#include <string>
-#include <algorithm>
 #include <math.h> //isinf
 
 void
