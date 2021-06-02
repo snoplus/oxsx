@@ -5,8 +5,6 @@
 #include <MCMCSamples.h>
 #include <MCSampler.h>
 #include <set>
-#include "TStopwatch.h"
-#include <TTree.h>
 
 class TestStatistic;
 class MCMC : public Optimiser{
