@@ -113,7 +113,7 @@ MCMCSamples::InitialiseHistograms(){
 	std::string bname = tempname; 
 	if(bname.find("-") != std::string::npos)
             bname.replace(bname.find("-"), 1, "_");
-	std::string bit = bname + "/D";
+        std::string bit = bname + "/D";
         fChain->Branch( bname.c_str(), &parvals[parameterNumber], bit.c_str());
         parameterNumber++;
         }
