@@ -236,7 +236,7 @@ MCMC::StepAccepted(const ParameterDict& proposedStep_){
     if(fFlipSign){
         proposedVal = -proposedVal;
     }    
-   
+
     if(fCurrentVal > fMaxVal){
         fMaxVal = fCurrentVal;
         fBestFit = fCurrentStep;
