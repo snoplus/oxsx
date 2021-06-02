@@ -4,6 +4,8 @@
 #include <Histogram.h>
 #include <ParameterDict.h>
 #include <AutoCorrelationCalc.h>
+#include "TStopwatch.h"
+#include <TTree.h>
 
 class MCMC;
 class MCMCSamples{
@@ -26,8 +28,13 @@ class MCMCSamples{
     bool GetSaveFullHistogram() const;
     void SetSaveFullHistogram(bool);
 
+    bool GetSaveChain() const;
+    void SetSaveChain(bool);
+
     double   GetRejectionRate() const;
     double   GetAcceptanceRate() const;
+
+    TTree* GetChain() const;
 
     void Fill(const ParameterDict&, double val_, bool accepted_);
 
@@ -62,6 +69,15 @@ class MCMCSamples{
 
     Histogram fHist;
     std::vector< std::vector<double> > fSample;
+
+    TTree *fChain;
+    bool fAccepted;
+    double fCurrentVal;
+    int fStepNumber;
+    double fStepTime;
+    TStopwatch stepClock;
+    bool fSaveChain;
+    std::vector<double> parvals;
 
 };
 

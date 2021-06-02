@@ -14,6 +14,16 @@ MCMCSamples::GetSaveFullHistogram() const{
     return fSaveFullHistogram;
 }
 
+bool
+MCMCSamples::GetSaveChain() const{
+  return fSaveChain;
+}
+
+void
+MCMCSamples::SetSaveChain(bool b_){
+  fSaveChain = b_;
+}
+
 void
 MCMCSamples::FillProjections(const ParameterDict& params_){
     // 1D
@@ -86,6 +96,32 @@ MCMCSamples::InitialiseHistograms(){
         f1DProjections = HistTools::MakeAllHists(histAxes, paramNames);
     }
 
+    if(fSaveChain){
+      stepClock.Start();
+      int parameterNumber = 0;
+      fChain = new TTree("posteriors", "Posterior_Distributions");
+      fChain->Branch("LogL", &fCurrentVal, "LogL/D");
+      fChain->Branch("Accepted", &fAccepted, "Accepted/O");
+      fChain->Branch("Step", &fStepNumber, "Step/I");
+      fChain->Branch("StepTime", &fStepTime, "StepTime/D");
+
+      parvals.reserve(paramNames.size());
+      for(std::set<std::string>::iterator it =  paramNames.begin();
+	  it != paramNames.end(); ++it){
+	//Strip out "-" from parameter names
+	const std::string& tempname = *it;
+	std::string bname = tempname; 
+	if(bname.find("-") != std::string::npos)
+          bname.replace(bname.find("-"), 1, "_");
+        char bit[40] = "";
+        strcat(bit, bname.c_str());
+        strcat(bit, "/D");
+        fChain->Branch( bname.c_str(), &parvals[parameterNumber], bit);
+        parameterNumber++;
+      }
+    }
+
+
     fInitialised = true;
 }
 
@@ -107,7 +143,22 @@ MCMCSamples::Fill(const ParameterDict& params_, double val_, bool accepted_){
     if(accepted_)
         fAcceptedSteps++;
     
+    if(fSaveChain){
+      int parameterNumber = 0;
+      for( ParameterDict::const_iterator it = params_.begin(); it != params_.end(); ++it){
+	parvals[parameterNumber] = it->second;
+	parameterNumber++;
+      }
+      fCurrentVal = val_;
+      fStepNumber = fTotalSteps;
+      fAccepted = accepted_;
+      fStepTime = stepClock.RealTime();
+      stepClock.Start();
+      fChain->Fill();      
+    }
+
     fTotalSteps++;
+
 }
 
 
@@ -125,6 +176,11 @@ MCMCSamples::Get2DProjections() const{
 const Histogram&
 MCMCSamples::GetHistogram() const{
     return fHist;   
+}
+
+TTree*
+MCMCSamples::GetChain() const{
+  return fChain;
 }
 
 const std::vector< std::vector<double> >&

@@ -130,16 +130,12 @@ MCMC::GetSaveChain() const{
 void
 MCMC::SetSaveChain(bool b_){
     fSaveChain = b_;
+    fSamples.SetSaveChain(fSaveChain);
 }
 
 void
 MCMC::SetInitialTrial(const ParameterDict& trial_){
     fInitialTrial = trial_;
-}
-
-TTree*
-MCMC::GetChain() const{
-  return fChain;
 }
 
 ParameterDict
@@ -183,27 +179,6 @@ MCMC::Optimise(TestStatistic* testStat_){
         }
     }
 
-    //Make tree for saving info for each step of mcmc
-    if(fSaveChain){
-      int parameterNumber = 0;
-      fChain = new TTree("posteriors", "Posterior_Distributions");
-      fChain->Branch("LogL", &fCurrentVal, "LogL/D");
-      fChain->Branch("Accepted", &fAccepted, "Accepted/O");
-      fChain->Branch("Step", &fStepNumber, "Step/I");
-      fChain->Branch("StepTime", &fStepTime, "StepTime/D");
-
-      parvals.reserve(fCurrentStep.size());
-      for(ParameterDict::iterator it = fCurrentStep.begin(); it != fCurrentStep.end(); ++it){
-	std::string bname = it->first;
-	if(bname.find("-") != std::string::npos)
-	  bname.replace(bname.find("-"), 1, "_");
-	char bit[40] = "";
-        strcat(bit, bname.c_str());
-        strcat(bit, "/D");
-	fChain->Branch( bname.c_str(), &parvals[parameterNumber], bit); 
-	parameterNumber++;
-      }
-    }
 
     std::cout << "MCMC::Initial Position @:" << std::endl;
     for(ParameterDict::iterator it = fCurrentStep.begin(); it != fCurrentStep.end(); ++it)
@@ -220,7 +195,7 @@ MCMC::Optimise(TestStatistic* testStat_){
     
     // 2. Loop step through the space a fixed number of times
     for(unsigned i = 0; i < fMaxIter; i++){
-        stepClock.Start();
+
         if(!(i%100000) && i)
             std::cout << i << "  /  " << fMaxIter
                       << "\t" << fSamples.GetAcceptanceRate()
@@ -237,20 +212,6 @@ MCMC::Optimise(TestStatistic* testStat_){
         // d. log
         fSamples.Fill(fCurrentStep, fCurrentVal, accepted);
 
-	stepClock.Stop();
-
-	//save info for each step in chain
-	if(fSaveChain){
-	  int parameterNumber = 0;
-	  for(ParameterDict::iterator it = fCurrentStep.begin(); it != fCurrentStep.end(); ++it){
-	    parvals[parameterNumber] = fCurrentStep[it->first];
-	    parameterNumber++;
-	  }
-	  fStepNumber = i;
-	  fAccepted = accepted;
-	  fStepTime = stepClock.RealTime();
-	  fChain->Fill();
-	}
     }
     std::cout << "MCMC:: acceptance rate = " << fSamples.GetAcceptanceRate()
               << std::endl;

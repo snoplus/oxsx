@@ -56,8 +56,6 @@ class MCMC : public Optimiser{
     void SetInitialTrial(const ParameterDict&);
     ParameterDict GetInitialTrial() const;
 
-    TTree* GetChain() const;
-
     const MCMCSamples& GetSamples() const;
 
  private:
@@ -86,12 +84,7 @@ class MCMC : public Optimiser{
     
     bool   StepAccepted(const ParameterDict& proposedStep_);
 
-    TTree *fChain;
-    bool fAccepted;
-    int fStepNumber;
-    double fStepTime;
-    TStopwatch stepClock;
     bool fSaveChain;
-    std::vector<double> parvals;
+
 };
 #endif
