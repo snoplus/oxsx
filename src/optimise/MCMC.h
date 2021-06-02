@@ -83,8 +83,6 @@ class MCMC : public Optimiser{
     MCSampler& fSampler;
     
     bool   StepAccepted(const ParameterDict& proposedStep_);
-
     bool fSaveChain;
-
 };
 #endif

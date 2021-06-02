@@ -121,7 +121,6 @@ MCMCSamples::InitialiseHistograms(){
       }
     }
 
-
     fInitialised = true;
 }
 
@@ -158,7 +157,6 @@ MCMCSamples::Fill(const ParameterDict& params_, double val_, bool accepted_){
     }
 
     fTotalSteps++;
-
 }
 
 

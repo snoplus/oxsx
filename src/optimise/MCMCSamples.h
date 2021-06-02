@@ -78,7 +78,6 @@ class MCMCSamples{
     TStopwatch stepClock;
     bool fSaveChain;
     std::vector<double> parvals;
-
 };
 
 #endif

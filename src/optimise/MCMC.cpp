@@ -138,6 +138,7 @@ MCMC::SetInitialTrial(const ParameterDict& trial_){
     fInitialTrial = trial_;
 }
 
+
 ParameterDict
 MCMC::GetInitialTrial() const{
     return fInitialTrial;
@@ -179,10 +180,9 @@ MCMC::Optimise(TestStatistic* testStat_){
         }
     }
 
-
     std::cout << "MCMC::Initial Position @:" << std::endl;
     for(ParameterDict::iterator it = fCurrentStep.begin(); it != fCurrentStep.end(); ++it)
-          std::cout << it->first << " : " << it->second << std::endl;
+        std::cout << it->first << " : " << it->second << std::endl;
     std::cout << std::endl;
 
     pTestStatistic->SetParameters(fCurrentStep);
@@ -195,7 +195,6 @@ MCMC::Optimise(TestStatistic* testStat_){
     
     // 2. Loop step through the space a fixed number of times
     for(unsigned i = 0; i < fMaxIter; i++){
-
         if(!(i%100000) && i)
             std::cout << i << "  /  " << fMaxIter
                       << "\t" << fSamples.GetAcceptanceRate()
@@ -203,6 +202,8 @@ MCMC::Optimise(TestStatistic* testStat_){
                       << "\t" << fSamples.GetAutoCorrelations()[10]
                       << "\t" << fSamples.GetAutoCorrelations()[100]
                       << std::endl;
+
+
         // b. Propose a new step according
         ParameterDict proposedStep = fSampler.Draw(fCurrentStep);
 
@@ -211,7 +212,6 @@ MCMC::Optimise(TestStatistic* testStat_){
 
         // d. log
         fSamples.Fill(fCurrentStep, fCurrentVal, accepted);
-
     }
     std::cout << "MCMC:: acceptance rate = " << fSamples.GetAcceptanceRate()
               << std::endl;
