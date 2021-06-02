@@ -14,7 +14,8 @@ class MCMC : public Optimiser{
                           fMaxIter(100000), 
                           fMaxVal(0), fFlipSign(false), 
                           fTestStatLogged(false), pTestStatistic(NULL),
-                          fCurrentVal(0.)
+                          fCurrentVal(0.),
+                          fSaveChain(false)
                           {}
     
     const FitResult& Optimise(TestStatistic*); 
