@@ -55,25 +55,6 @@ ROOTMultiPlot::Construct(){
   if(!fHists.size())
     return;
 
-  // Setsizes
-  double maxX = 0;
-  double minX = 0;
-
-  for(size_t i = 0; i < fHists.size(); i++){
-    TAxis* axis = fHists[i].GetXaxis();
-    double xUp  = axis -> GetBinLowEdge(axis -> GetFirst());
-    double xLow = axis -> GetBinUpEdge(axis  -> GetLast());
-
-    if(xUp > maxX || !i)
-      maxX = xUp;
-    if(xLow < minX || !i)
-      maxX = xUp;
-  }
-  double span = maxX - minX;
-  for(size_t i = 0; i < fHists.size(); i++){
-    //      fHists[i].GetXaxis() -> SetRangeUser(minX, maxX);
-  }
-
   // draw with legend
   fCanvas.Clear();
   fLegend.Clear();

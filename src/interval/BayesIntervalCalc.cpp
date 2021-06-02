@@ -24,8 +24,7 @@ BayesIntervalCalc::UpperBound(Histogram posterior_, double cl_){
 
     // Integrate from the minimum to x until the total probability exceeds cl_
     // find the first bin <b> for which the integral  <0>-><b> > cl
-    int    critBin  = 0;
-    double integral = 0;
+    size_t critBin  = 0;
     double sum = 0;
     while(sum < cl_){
         sum = 0;              
@@ -51,7 +50,7 @@ BayesIntervalCalc::OneSidedUpperInterval(double expectedCounts_, int observedCou
 }
 
 double 
-BayesIntervalCalc::UpperBound(double expectedCounts_, int observedCounts_, double cl_, double tolerance_, double startValue_){
+BayesIntervalCalc::UpperBound(double expectedCounts_, int observedCounts_, double cl_, double tolerance_){
     double currentCL = 0;
     double limit = 0;
     while(std::abs(currentCL - cl_) > tolerance_){

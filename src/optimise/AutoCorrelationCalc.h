@@ -5,10 +5,10 @@
 
 class AutoCorrelationCalc{
  public:
- AutoCorrelationCalc(int nVals_) : fQLen(nVals_),
-                                   fDiffs(std::vector<double>(nVals_, 0)),
-                                   fNorms(std::vector<double>(nVals_, 0))
-                                   {}
+ AutoCorrelationCalc(std::size_t nVals_) : fDiffs(std::vector<double>(nVals_, 0)),
+                                      fNorms(std::vector<double>(nVals_, 0)),
+                                      fQLen(nVals_)
+                                      {}
 
     void Fill(double);
     double Mean() const;
@@ -21,6 +21,6 @@ class AutoCorrelationCalc{
     std::deque<double>    fValues;
     std::vector<double>   fDiffs;
     std::vector<double>   fNorms;
-    int fQLen;
+    std::size_t fQLen;
 };
 #endif

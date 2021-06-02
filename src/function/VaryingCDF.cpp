@@ -112,25 +112,18 @@ VaryingCDF::SetParameter(const std::string& name_, double value_){
 double 
 VaryingCDF::GetParameter(const std::string& name_) const{
     //This returns parameters of the parameter functions that have been defined.
-    size_t changed = 0;
-    double holder=0;
-    for (std::map<std::string,Function*>::const_iterator function = fFunctions.begin(); function != fFunctions.end(); ++function) {
+    for (const auto& function : fFunctions) {
         try {
-            holder = function->second->GetParameter(name_);
-            changed = 1;
-        }catch(const NotFoundError& e_) {
-            ;
-        }
-        return holder;
+            return function.second->GetParameter(name_);
+        }catch(const NotFoundError& e_) {}
     }
-    if (changed !=1){
-            std::vector<std::string> functionNames;
-            for (std::map<std::string,Function*>::const_iterator function = fFunctions.begin(); function != fFunctions.end(); ++function) {
-                functionNames.push_back(function->second->GetName());
-            }
-            throw NotFoundError(Formatter() << "VaryingCDF:: Parameter : " << name_ <<" not found in fFunctions available. Functions available: "
-                    << ToString(functionNames)<<" Parameters available : "<<ToString(GetParameterNames()) ); 
+    // Parameter couldn't be found, so throw exception.
+    std::vector<std::string> functionNames;
+    for (const auto& function : fFunctions) {
+        functionNames.push_back(function.second->GetName());
     }
+    throw NotFoundError(Formatter() << "VaryingCDF:: Parameter : " << name_ <<" not found in fFunctions available. Functions available: "
+            << ToString(functionNames)<<" Parameters available : "<<ToString(GetParameterNames()) );
 }
 
 void

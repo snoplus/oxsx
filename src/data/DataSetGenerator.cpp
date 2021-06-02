@@ -86,7 +86,7 @@ DataSetGenerator::PoissonFluctuatedDataSet(std::vector<int>* eventsTaken_){
     dataSet.Reserve(eventsNeeded);
 
     for(size_t i = 0; i < fDataSets.size(); i++){
-        int counts = Rand::Poisson(fExpectedRates.at(i));
+        size_t counts = Rand::Poisson(fExpectedRates.at(i));
 
         if(fBootstraps.at(i))
             RandomDrawsWithReplacement(i, counts, dataSet);
@@ -152,7 +152,7 @@ DataSetGenerator::Reset(){
 }
 
 void
-DataSetGenerator::RandomDrawsNoReplacement(size_t handleIndex_, int nEvents_,
+DataSetGenerator::RandomDrawsNoReplacement(size_t handleIndex_, size_t nEvents_,
                                            OXSXDataSet& outData_
                                            ){
 
@@ -178,19 +178,15 @@ DataSetGenerator::RandomDrawsNoReplacement(size_t handleIndex_, int nEvents_,
   size_t draw  = -1; // the random draw 
 
   outData_.Reserve(outData_.GetNEntries() + nEvents_);
-
-  int oneTenth = nEvents_/10;
-
   for(size_t i = 0; i < nEvents_; i++){
-    if(oneTenth && !(i % oneTenth))
-      std::cout << i << "/" << nEvents_ << "   (  " << 10 * i/oneTenth << " %)" << std::endl;
+    if(!(i%10000))
+      std::cout << i << "/" << nEvents_ << std::endl;
 
-    if (max==-999)
+    if (max==static_cast<size_t>(-999))
       max = eventIndices.size() -1;
     // draw
     draw = Rand::Shoot(max);
 
-     // swap
     cache = eventIndices[draw];
     eventIndices[draw] = eventIndices[max];
     eventIndices[max]  = cache;
@@ -208,7 +204,7 @@ DataSetGenerator::RandomDrawsNoReplacement(size_t handleIndex_, int nEvents_,
 
 
 void
-DataSetGenerator::RandomDrawsWithReplacement(size_t handleIndex_, int nEvents_, 
+DataSetGenerator::RandomDrawsWithReplacement(size_t handleIndex_, size_t nEvents_, 
 					     OXSXDataSet& outData_
 					     ){
 
@@ -234,7 +230,7 @@ DataSetGenerator::RandomDrawsWithReplacement(size_t handleIndex_, int nEvents_,
       std::cout << i << "/" << nEvents_ << std::endl;
 
 
-    if (max==-999)
+    if (max==static_cast<size_t>(-999))
       max = eventIndices.size() -1;
 
     // draw
@@ -279,7 +275,7 @@ DataSetGenerator::ClearDataSets(){
 }
 
 void
-DataSetGenerator::SequentialDrawsNoReplacement(size_t handleIndex_, int nEvents_, OXSXDataSet& data_){
+DataSetGenerator::SequentialDrawsNoReplacement(size_t handleIndex_, size_t nEvents_, OXSXDataSet& data_){
   std::vector<size_t>& eventIndices = fEventIndicies[handleIndex_];
   size_t& max = fMaxs[handleIndex_];
   DataSet* origData = fDataSets.at(handleIndex_);
@@ -307,12 +303,12 @@ DataSetGenerator::SequentialDrawsNoReplacement(size_t handleIndex_, int nEvents_
   size_t cache = -1;
   //data_.Reserve(data_.GetNEntries() + nEvents_);
 
-  int oneTenth = nEvents_/10;
+  size_t oneTenth = nEvents_/10;
   for(size_t i = 0; i < nEvents_; i++){
     if(oneTenth && !(i % oneTenth))
       std::cout << i << "/" << nEvents_ << "   (  " << 10 * i /oneTenth << " %)" << std::endl;
         
-    if (max==-999)
+    if (max==static_cast<size_t>(-999))
         max = eventIndices.size() -1;
 
     // draw --> always take the first one 
@@ -353,10 +349,10 @@ DataSetGenerator::AllRemainingEvents(size_t iDS_, int* eventsTaken_){
   *eventsTaken_ = 0;
 
   size_t nEvents = fMaxs.at(iDS_);
-  if (nEvents==-999) 
+  if (nEvents==static_cast<size_t>(-999)) 
     nEvents = (fDataSets.at(iDS_) -> GetNEntries()) - 1;
   
-  if (nEvents==-1)
+  if (nEvents==static_cast<size_t>(-1))
     return ds; //in case all events drawn and not replaced
   
   const std::vector<size_t>& eventIndices = fEventIndicies[iDS_];

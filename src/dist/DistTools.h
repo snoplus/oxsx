@@ -18,7 +18,7 @@ class DistTools{
     static Histogram ToHist(const TH2D&);
     static TH1D      ToTH1D(const BinnedED&,  const bool widthCorrect_ = false);
     static TH1D      ToTH1D(const Histogram&, const bool widthCorrect_ = false);
-    static TH2D      ToTH2D(const Histogram&, const bool widthCorrect_ = false);
-    static TH2D      ToTH2D(const BinnedED&,  const bool widthCorrect_ = false);
+    static TH2D      ToTH2D(const Histogram&);
+    static TH2D      ToTH2D(const BinnedED&);
 };
 #endif

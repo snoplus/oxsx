@@ -78,7 +78,7 @@ DistTools::ToTH1D(const Histogram& histo_, const bool widthCorrect_){
 }
 
 TH2D
-DistTools::ToTH2D(const Histogram& histo_, const bool widthCorrect_){
+DistTools::ToTH2D(const Histogram& histo_){
     if(histo_.GetNDims() != 2)
         throw DimensionError("Only a 2D pdf can be represented by a TH2D");
     
@@ -110,7 +110,7 @@ DistTools::ToTH2D(const Histogram& histo_, const bool widthCorrect_){
 }
 
 TH2D
-DistTools::ToTH2D(const BinnedED& pdf_, const bool widthCorrect_){
+DistTools::ToTH2D(const BinnedED& pdf_){
     if(pdf_.GetNDims() != 2)
         throw DimensionError("Only a 2D pdf can be represented by a TH2D");
     

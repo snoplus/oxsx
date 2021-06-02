@@ -7,7 +7,7 @@
 class BoxCut : public Cut{
  public:
     BoxCut(const std::string& name_,  const std::string& obs_, double lower_, double upper_) 
-      : fUpperLim(upper_), fLowerLim(lower_), fObs(obs_), fName(name_) {}
+      : fName(name_), fObs(obs_), fUpperLim(upper_), fLowerLim(lower_) {}
 
     virtual Cut* Clone() const;
 

@@ -52,11 +52,11 @@ ChiSquare::RegisterFitComponents(){
     //Because the limits are set by name you only need to make sure you add the systematic once.
     const std::map<std::string, std::vector<Systematic*> > sys_ = fSystematicManager.GetSystematicsGroup();
     std::vector<std::string> alreadyAdded;
-    for (std::map<std::string, std::vector<Systematic*> >::const_iterator group_ = sys_.begin(); group_ !=sys_.end(); ++group_) {
-        for (int i = 0; i < group_->second.size(); ++i) {
-            if( std::find( alreadyAdded.begin(),alreadyAdded.end(),group_->second.at(i)->GetName() ) == alreadyAdded.end() ){
-                fComponentManager.AddComponent( group_->second.at(i) );
-                alreadyAdded.push_back( group_->second.at(i)->GetName() );
+    for (const auto& group_: sys_) {
+        for (const auto& item: group_.second) {
+            if( std::find( alreadyAdded.begin(), alreadyAdded.end(), item->GetName() ) == alreadyAdded.end() ){
+                fComponentManager.AddComponent( item );
+                alreadyAdded.push_back( item->GetName() );
             }
         }
     }
@@ -79,7 +79,7 @@ ChiSquare::GetParameters() const{
     return fComponentManager.GetParameters();
 }
 
-int 
+size_t 
 ChiSquare::GetParameterCount() const{
     return fComponentManager.GetTotalParameterCount();
 }

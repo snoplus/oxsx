@@ -46,9 +46,9 @@ class DataSetGenerator{
     std::vector<double>      fExpectedRates;
     std::vector<std::vector<size_t> > fEventIndicies;
     std::vector<size_t>      fMaxs;
-    void                     RandomDrawsNoReplacement(size_t handleIndex_, int nEvents_, OXSXDataSet& data_);
-    void                     SequentialDrawsNoReplacement(size_t handleIndex_, int nEvents_, OXSXDataSet& data_);
-    void                     RandomDrawsWithReplacement(size_t handleIndex_, int nEvents_, OXSXDataSet& data_);
+    void                     RandomDrawsNoReplacement(size_t handleIndex_, size_t nEvents_, OXSXDataSet& data_);
+    void                     SequentialDrawsNoReplacement(size_t handleIndex_, size_t nEvents_, OXSXDataSet& data_);
+    void                     RandomDrawsWithReplacement(size_t handleIndex_, size_t nEvents_, OXSXDataSet& data_);
     std::vector<bool>        fBootstraps;
     CutCollection            fCuts;
 };

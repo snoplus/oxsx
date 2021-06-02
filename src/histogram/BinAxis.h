@@ -49,7 +49,7 @@ class BinAxis{
 	bool operator!=(const BinAxis& other_) const;
 
  private:
-    int    fNBins;
+    size_t fNBins;
     double fMin;
     double fMax;
 

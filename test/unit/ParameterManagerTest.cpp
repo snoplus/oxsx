@@ -29,10 +29,10 @@ TEST_CASE("Do parameters register correctly?"){
         ParameterDict testP;
         testP["double"] = 0;
         testP["double2"] = 0;        
-        for(int i = 0; i < listParams.size(); i++)
+        for(size_t i = 0; i < listParams.size(); i++)
             testP[Formatter() << "list_" << i] = 0;
 
-        for(int i = 0; i < vecParams.size(); i++)
+        for(size_t i = 0; i < vecParams.size(); i++)
             testP[Formatter() << "container_" << i] = 0;
 
         paramMan.SetParameters(testP);
@@ -73,10 +73,10 @@ TEST_CASE("Do parameters register correctly?"){
         testP["double"] = 5;
         testP["double2"] = 5;
 
-        for(int i = 0; i < listParams.size(); i++)
+        for(size_t i = 0; i < listParams.size(); i++)
             testP[Formatter() << "list_" << i] = 20;
 
-        for(int i = 0; i < vecParams.size(); i++)
+        for(size_t i = 0; i < vecParams.size(); i++)
             testP[Formatter() << "container_" << i] = 10;
 
 

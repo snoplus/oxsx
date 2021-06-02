@@ -44,14 +44,12 @@ BinnedNLLH::Evaluate(){
 
     // Extended LH correction
     const std::vector<double>& normalisations = fPdfManager.GetNormalisations();
-    for(size_t i = 0; i < normalisations.size(); i++)
-        nLogLH += normalisations.at(i);
+    for(const auto& normalisation: normalisations) { nLogLH += normalisation; }
             
     // Constraints
-    for(std::map<std::string, QuadraticConstraint>::iterator it = fConstraints.begin();
-        it != fConstraints.end(); ++it)
-        nLogLH += it->second.Evaluate(fComponentManager.GetParameter(it->first));
-   
+    for(const auto& constraint: fConstraints) {
+        nLogLH += constraint.second.Evaluate(fComponentManager.GetParameter(constraint.first));
+    }
     return nLogLH;
 }
 
@@ -69,14 +67,12 @@ void
 BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& sys_){
     if (pdfs.size() != sys_.size())
        throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
-    for (int i = 0; i < pdfs.size(); ++i)
-        AddPdf( pdfs.at(i), sys_.at(i) );
+    for (size_t i = 0; i < pdfs.size(); ++i) { AddPdf( pdfs.at(i), sys_.at(i) ); }
 }
 
 void
 BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs){
-    for (int i = 0; i < pdfs.size(); ++i)
-        AddPdf(pdfs.at(i));
+    for (const auto& pdf: pdfs) { AddPdf(pdf); }
 }
 
 void
@@ -157,8 +153,7 @@ BinnedNLLH::GetBufferAsOverflow() const{
 
 void
 BinnedNLLH::AddSystematics(const std::vector<Systematic*> systematics_){
-    for(size_t i = 0; i < systematics_.size(); i++)
-        AddSystematic(systematics_.at(i));
+    for(const auto& systematic: systematics_) { AddSystematic(systematic); }
 }
 
 void
@@ -226,11 +221,11 @@ BinnedNLLH::RegisterFitComponents(){
     //Because the limits are set by name they can be added in any order.
     const std::map<std::string, std::vector<Systematic*> > sys_ = fSystematicManager.GetSystematicsGroup();
     std::vector<std::string> alreadyAdded;
-    for (std::map<std::string, std::vector<Systematic*> >::const_iterator group_ = sys_.begin(); group_ !=sys_.end(); ++group_) {
-        for (int i = 0; i < group_->second.size(); ++i) {
-            if( std::find( alreadyAdded.begin() , alreadyAdded.end() , group_->second.at(i)->GetName() ) == alreadyAdded.end() ){
-                fComponentManager.AddComponent( group_->second.at(i) );
-                alreadyAdded.push_back( group_->second.at(i)->GetName() );
+    for (const auto& group_: sys_) {
+        for (const auto& item: group_.second) {
+            if( std::find( alreadyAdded.begin() , alreadyAdded.end() , item->GetName() ) == alreadyAdded.end() ){
+                fComponentManager.AddComponent(item);
+                alreadyAdded.push_back( item->GetName() );
             }
         }//End of group
     }//End of groups
@@ -252,7 +247,7 @@ BinnedNLLH::GetParameters() const{
     return fComponentManager.GetParameters();
 }
 
-int
+size_t
 BinnedNLLH::GetParameterCount() const{
     return fComponentManager.GetTotalParameterCount();
 }
