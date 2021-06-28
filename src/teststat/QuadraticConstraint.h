@@ -1,6 +1,7 @@
 /***********************************************************************************************/
 /* A quadratic constraint on a fit parameter, for log likelihood and Chi-Square tests this is  */
 /* equivlent to a gaussian contraint.                                                          */
+/* If a second width is given, asymmetric errors are used.                                     */
 /***********************************************************************************************/
 #ifndef __OXSX_QUADRATIC_CONSTRAINT__
 #define __OXSX_QUADRATIC_CONSTRAINT__
@@ -24,7 +25,7 @@ class QuadraticConstraint{
     
  private:
     double fMean;
-    double fWidth;
+    double fWidth; //Used as both symmetric width, or asymmetric upper width. 
     double fWidth_lo;
     bool is_asym;
 };
