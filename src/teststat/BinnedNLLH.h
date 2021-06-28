@@ -28,6 +28,7 @@ class BinnedNLLH : public TestStatistic{
     void   AddSystematics(const std::vector<Systematic*>, const std::vector<std::string>&);
 
     void   SetConstraint(const std::string& paramName_, double mean_, double sigma_);
+    void   SetConstraint(const std::string& paramName_, double mean_, double sigma_lo_, double sigma_hi_);
     
     void SetNormalisations(const std::vector<double>& norms_);
     std::vector<double> GetNormalisations() const;
