@@ -120,6 +120,16 @@ MCMC::SetSaveFullHistogram(bool b_){
     fSamples.SetSaveFullHistogram(b_);
 }
 
+bool
+MCMC::GetSaveChain() const{
+    return fSaveChain;
+}
+
+void
+MCMC::SetSaveChain(bool b_){
+    fSaveChain = b_;
+    fSamples.SetSaveChain(fSaveChain);
+}
 
 void
 MCMC::SetInitialTrial(const ParameterDict& trial_){
@@ -182,7 +192,7 @@ MCMC::Optimise(TestStatistic* testStat_){
     fMaxVal = fCurrentVal;
     
     // 2. Loop step through the space a fixed number of times
-    for(unsigned i = 0; i < fMaxIter; i++){      
+    for(unsigned i = 0; i < fMaxIter; i++){
         if(!(i%100000) && i)
             std::cout << i << "  /  " << fMaxIter
                       << "\t" << fSamples.GetAcceptanceRate()
@@ -226,7 +236,7 @@ MCMC::StepAccepted(const ParameterDict& proposedStep_){
     if(fFlipSign){
         proposedVal = -proposedVal;
     }    
-   
+
     if(fCurrentVal > fMaxVal){
         fMaxVal = fCurrentVal;
         fBestFit = fCurrentStep;

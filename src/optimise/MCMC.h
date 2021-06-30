@@ -47,6 +47,9 @@ class MCMC : public Optimiser{
     bool GetSaveFullHistogram() const;
     void SetSaveFullHistogram(bool);
 
+    bool GetSaveChain() const;
+    void SetSaveChain(bool);
+
     void SetHistogramAxes(const AxisCollection&);
     AxisCollection GetHistogramAxes() const;
 
@@ -80,5 +83,6 @@ class MCMC : public Optimiser{
     MCSampler& fSampler;
     
     bool   StepAccepted(const ParameterDict& proposedStep_);
+    bool fSaveChain;
 };
 #endif

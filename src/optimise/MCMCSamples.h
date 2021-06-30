@@ -4,13 +4,17 @@
 #include <Histogram.h>
 #include <ParameterDict.h>
 #include <AutoCorrelationCalc.h>
+#include "TStopwatch.h"
+#include <TTree.h>
 
 class MCMC;
 class MCMCSamples{
  public:
-    MCMCSamples(MCMC* p_) : fAutoCorrelator(1000), fMCMC(p_), fInitialised(false),
-                            fBurnIn(1000), fThinFactor(1), fSaveFullHistogram(false),
-                            fAcceptedSteps(0), fTotalSteps(0) {}
+    MCMCSamples(MCMC* p_) : fSaveFullHistogram(false), fAcceptedSteps(0), fTotalSteps(0),
+                            fBurnIn(1000), fThinFactor(1), fInitialised(false), fMCMC(p_),
+                            fAutoCorrelator(1000),
+                            fSaveChain(false)
+                            {}
 
 
     int  GetBurnIn() const;
@@ -25,8 +29,13 @@ class MCMCSamples{
     bool GetSaveFullHistogram() const;
     void SetSaveFullHistogram(bool);
 
+    bool GetSaveChain() const;
+    void SetSaveChain(bool);
+
     double   GetRejectionRate() const;
     double   GetAcceptanceRate() const;
+
+    TTree* GetChain() const;
 
     void Fill(const ParameterDict&, double val_, bool accepted_);
 
@@ -62,6 +71,14 @@ class MCMCSamples{
     Histogram fHist;
     std::vector< std::vector<double> > fSample;
 
+    TTree *fChain;
+    bool fAccepted;
+    double fCurrentVal;
+    int fStepNumber;
+    double fStepTime;
+    TStopwatch stepClock;
+    bool fSaveChain;
+    std::vector<double> parvals;
 };
 
 #endif
