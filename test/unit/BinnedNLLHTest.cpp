@@ -66,4 +66,32 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
         lh.SetParameters(params);
         REQUIRE(lh.Evaluate() == Approx(sumNorm + sumLogProb + constraint));
     }
+    SECTION("Correct Probability with asymmetric constraint"){
+        lh.SetConstraint("b", 5, 1, 2);
+
+        double sumLogProb = -log(prob1 + prob2 + prob3);
+        double sumNorm    = 3;
+        double constraint = 2;
+
+        ParameterDict params;
+        params["a"] = 1;
+        params["b"] = 1;
+        params["c"] = 1;
+        lh.SetParameters(params);
+        REQUIRE(lh.Evaluate() == Approx(sumNorm + sumLogProb + constraint));
+    }
+    SECTION("Correct Probability with asymmetric constraint 2"){
+        lh.SetConstraint("b", -3, 1, 2);
+
+        double sumLogProb = -log(prob1 + prob2 + prob3);
+        double sumNorm    = 3;
+        double constraint = 8;
+
+        ParameterDict params;
+        params["a"] = 1;
+        params["b"] = 1;
+        params["c"] = 1;
+        lh.SetParameters(params);
+        REQUIRE(lh.Evaluate() == Approx(sumNorm + sumLogProb + constraint));
+    }
 }
