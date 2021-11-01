@@ -49,7 +49,6 @@ BinnedNLLH::Evaluate(){
     for(const auto& constraint: fConstraints) {
         nLogLH += constraint.second.Evaluate(fComponentManager.GetParameter(constraint.first));
     }
-
     return nLogLH;
 }
 
