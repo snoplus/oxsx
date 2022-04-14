@@ -9,8 +9,8 @@ build your analysis code efficiently.
   - [1.2. ObsSet](#12-obsset)
   - [1.3. DataSet](#13-dataset)
     - [1.3.1. OXSXDataSet](#131-oxsxdataset)
-    - [ROOTNtuple](#rootntuple)
-    - [LazyOXSXDataSet](#lazyoxsxdataset)
+    - [1.3.2. ROOTNtuple](#132-rootntuple)
+    - [1.3.3. LazyOXSXDataSet](#133-lazyoxsxdataset)
 
 ## 1. Objects for storing data
 ### 1.1. Event
@@ -72,16 +72,56 @@ In addition to `GetEntry(i)`, one can also add an event to the dataset by
 with the `+` operator overload. One can reserve memory for n events by 
 `Reserve(n)`.
 
-#### ROOTNtuple
+#### 1.3.2. ROOTNtuple
 
 A `DataSet` object derived from a ROOT `TNtuple` object that is stored in a
 file. When the object is created, the `TNtuple` object is loaded. No adding
 events afterwards is then possible.
 
-#### LazyOXSXDataSet
+#### 1.3.3. LazyOXSXDataSet
 
 A fancy version of `OXSXDataSet`; so fancy I'm not sure anyone uses this.
 You create the object with a filename pointing to some data that is stored
 within a `.H5` file (more on this in the IO section). Getting data happens
-as usual with `GetEntry(i)`.
+as usual with `GetEntry(i)`. There's some shenanigans with a static list of
+these objects stored, leading to the functionality where if you have multiple
+of these objects at once I'm pretty sure only one can have data loaded at a time.
 
+# Histograms, etc.
+Histograms are really useful in Particle Physics analyses! But to describe & use
+them in the most general terms, we'll first have to create some other objects 
+that will help us.
+## BinAxis
+
+`BinAxis` is just a class that stores the bin edges for some variable. It can be
+set up in two ways: either with equal bin widths, or unequal widths. In the
+latter case, the user must specify the bin edges. The axis must come along with
+a name (e.g. "energy"), and can also have an optional name to be used for pretty LaTeX formatting ("E_{reco}", for example).
+
+You can do most of the usual things you would expect for a binned axis with this
+object. You will hopefully not have to interact too much with this class, other
+than to set up axes for any histogramming you do.
+
+## AxisCollection
+
+As the name suggests, this class holds a number of `BinAxis` objects. To
+actually create one with the binning you want, first create an empty 
+`AxisCollection` object, and then use either `AddAxis()` or `AddAxes()` as
+appropriate.
+
+Technically, you can call a bunch of methods with this class. Most of them you'll
+never need to call yourself. Like `BinAxis` and `ObsSet`, `AxisCollection` objects mostly have to be set up at the beginning of your code, and then never really
+have to be touched.
+
+## Histogram
+
+This class stores an N-dimensional histogram, the binning of which is defined
+by the `AxisCollection` object you give it.
+
+Like a ROOT `TH1`, the `Fill()` method is used to add data to the histogram 
+(you can add values one-by-one, or give a whole vector of them at once), which
+can be weighted. You can also modify the values of the bins directly through
+`SetBinContent()`.
+
+This class has a whole bunch of nice things you can do with it! You can normalise,
+scale, and get the Integral of the histogram; 
