@@ -25,6 +25,10 @@ build your analysis code efficiently.
     - [ConditionalPDF](#conditionalpdf)
       - [JumpPDF](#jumppdf)
       - [VaryingCDF](#varyingcdf)
+  - [EventDistribution](#eventdistribution)
+    - [AnalyticED](#analyticed)
+    - [BinnedED](#binneded)
+    - [CompositeED](#compositeed)
 - [4. Random number generation: Rand](#4-random-number-generation-rand)
 
 # 1. Objects for storing data
@@ -141,7 +145,9 @@ can be weighted. You can also modify the values of the bins directly through
 This class has a whole bunch of nice things you can do with it! You can normalise,
 scale, and get the integral of the histogram; get a slice of the histogram or 
 marginalise over certain axes. You can also add, multiply, or divide two histograms
-together.
+together. One other useful method is `AddPadding()`: this adds a tiny non-zero
+value to all bins with zero in them. This comes in handy when calculating
+likelihoods, as this will prevent the code from breaking entirely.
 
 # 3. PDFs & Event Distributions
 Okay, so we have classes for storing raw event information, and one for a
@@ -218,6 +224,52 @@ As a bonus, you can obtain the cumulative density function by `Cdf()`.
 **TODO**
 #### VaryingCDF
 **TODO**
+
+## EventDistribution
+`EventDistribution` is an abstract base class, whose derived classes describe
+the expected distributions of events under a set of observables. A typical
+physics analysis might involve comparison/fitting of an `EventDistribution`
+expected from theory/MC, to an observed `DataSet` object.
+
+The virtual methods any `EventDistribution` object can perform include 
+calculating the probability that a given `Event` object arises from the event
+distribution; the total integral of the event distribution; and a `Normalise()`
+method which will scale the event distribution so that the integral is 1.
+Finally, the event distribution has a name that can be set/gotten.
+
+Note: it is this class that Particle Physicists typically refer to as "PDFs".
+We're often using that terminology fast and loose, given that true PDFs must
+have a total normalisation of 1 by definition. Because of this, actual
+mathematical PDFs are defined within the `PDF` class, separate from this class.
+### AnalyticED
+One possible event distribution is a purely analytic one, givne by `AnalyticED`.
+This class holds a `PDF` that holds the underlying shape of the distribution,
+along with a constant normalisation. It also has an `ObsSet` object, so that
+the observable quantities of interest can be defined distinct to the (possibly)
+larger set of variables within the PDF. On top of this, `AnalyticED` inherits 
+from `FitComponent`, with the parameters being defined within the `PDF` member.
+### BinnedED
+This is very much one of the most important classes in the whole of OXO! This
+is an N-dimensional binned event distribution. It holds a `Histogram` of the
+data for the distribution, along with an `ObsSet` that defines the subset of
+dimensions within the histogram that are actually observed. These objects are
+typically built from MC.
+
+With this class, you can basically do all the things you can with a `Histogram`
+object.
+
+### CompositeED
+Sometimes, you want to assume certain observables are independent of one another,
+and still build an event distribution from them. For example, you might observe
+an event's energy and radius, and instead of building a 2D `EventDistribution`
+object, if you think the two observables are fairly independent then you can make
+a 1Dx1D distribution instead. That's what the `CompositeED` class does: define
+an event distribution as the (outer) product of some set of `EventDistribution`
+objects.
+
+This class has been defined in such a way that you can combine both `BinnedED` 
+and `AnalyticED` objects, or even another `CompositeED` object!
+
 # 4. Random number generation: Rand
 Generating lots of random numbers is quite useful in a variety of
 places within a physics analysis. We have a single class, `Rand`,
