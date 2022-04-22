@@ -35,7 +35,8 @@ build your analysis code efficiently.
   - [4.2. BinnedEDGenerator](#42-binnededgenerator)
 - [5. Data type conversions & IO](#5-data-type-conversions--io)
   - [5.1. DistTools](#51-disttools)
-  - [5.2. IO](#52-io)
+  - [5.2. DistFiller](#52-distfiller)
+  - [5.3. IO](#53-io)
 
 # 1. Objects for storing data
 ## 1.1. Event
@@ -349,14 +350,22 @@ relevant `BinnedED` constructor.
 For the case of 1D/2D `BinnedED` or `Histogram` objects, one can convert them
 into ROOT `TH1D` or `TH2D` objects, as relevant.
 
-Note: there is currently no direct way I am aware of converting a `DataSet`
-object directly into a `BinnedED`; there probably should be! For now, one must
-create an empty `BinnedED` object with the `AxisCollection` & `ObsSet` one wants,
-and then loop over events in the `DataSet`, filling their information into the
-`BinnedED`. Of course, one cannot convert from a binned distribution back into
-a `DataSet`, as the event-by-event information has been lost.
+## 5.2. DistFiller
+Sometimes, you want to take a `DataSet` object you have, and generate
+a `BinnedED` object from the events. Well, the `DistFiller::FillDist(pdf, data)` 
+method does this! More precisely, the method will loop over events in the
+`DataSet` object, and fill their information to the `BinnedED` given. If one
+wants, a `CutCollection` and/or an `EventSystematicManager` can be given to apply
+systematics and/or cuts on the events before filling. A restriction can also be
+given on the number of events to fill to the `BinnedED`. Finally, one can
+optionally provide a `CutLog` to store information on the cuts performed. More
+information about how cuts and systematics work in OXO can be seen in Sections
+[]() and [](), respectively.
 
-## 5.2. IO
+Note: one cannot convert from a binned distribution back into a `DataSet`, as the 
+event-by-event information has been lost.
+
+## 5.3. IO
 `IO` is another static utility class, this time handling saving/loading stuff
 to/from files. If one wants to save a `DataSet` object to file, one can use
 the `SaveDataSet()` method. Depending on the file extension given as part of
