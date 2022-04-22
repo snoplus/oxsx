@@ -33,6 +33,9 @@ build your analysis code efficiently.
 - [4. Random number generation](#4-random-number-generation)
   - [4.1. DataSetGenerator](#41-datasetgenerator)
   - [4.2. BinnedEDGenerator](#42-binnededgenerator)
+- [5. Data type conversions & IO](#5-data-type-conversions--io)
+  - [5.1. DistTools](#51-disttools)
+  - [5.2. IO](#52-io)
 
 # 1. Objects for storing data
 ## 1.1. Event
@@ -329,3 +332,44 @@ and `PoissonFluctuatedED()` can generate binned event distributions as one would
 expect. Becuase we are just dealing with binned histograms here, there is no need
 for the additional stuff that `DataSetGenerator` has: bootstrapping, the sequential
 flag, etc. are all not present here.
+
+# 5. Data type conversions & IO
+We've now introduced a bunch of OXO types that can handle data; it would be nice
+to be able to both convert between them, as well as save/load them from disk.
+
+## 5.1. DistTools
+`DistTools` is a static utility class, that allows one to readily convert between
+certain varieties of event distribution object.
+
+`ToHist()` will take in a ROOT `TH1D` or `TH1D` object, or a `PDF` &
+`AxisCollection` pair, and convert them to a native OXO `Histogram` object. From
+this, one can then easily convert the `Histogram` into a `BinnedED` by using the
+relevant `BinnedED` constructor.
+
+For the case of 1D/2D `BinnedED` or `Histogram` objects, one can convert them
+into ROOT `TH1D` or `TH2D` objects, as relevant.
+
+Note: there is currently no direct way I am aware of converting a `DataSet`
+object directly into a `BinnedED`; there probably should be! For now, one must
+create an empty `BinnedED` object with the `AxisCollection` & `ObsSet` one wants,
+and then loop over events in the `DataSet`, filling their information into the
+`BinnedED`. Of course, one cannot convert from a binned distribution back into
+a `DataSet`, as the event-by-event information has been lost.
+
+## 5.2. IO
+`IO` is another static utility class, this time handling saving/loading stuff
+to/from files. If one wants to save a `DataSet` object to file, one can use
+the `SaveDataSet()` method. Depending on the file extension given as part of
+the output file path, the data will either be saved in an HDF5 file (`.h5`), or
+as a `TNtuple` object within a ROOT file (`.root`). One can also directly call
+the `SaveDataSetH5()` or `SaveDataSetROOT()` methods as relevant. The same is
+true for `Histogram` objects via `SaveHistogram()`; note that saving a histogram
+to a ROOT file is only possible if it is 1D/2D as they get saved to `TH1D`/`TH2D`
+objects, as appropriate. [Note: `TH3D` objects exist! We should probably allow 
+for them.]
+
+One can similarly load `.h5` files that contain a dataset/histogram via
+`LoadDataSet()`/`LoadHistogram()`. For `.root` files, a `TNtuple` object can be
+loaded in directly via OXO's `ROOTNtuple` class; ROOT histogram objects must be
+loaded in using the standard ROOT `TFile` approach, and then converted into a
+`Histogram` via `DistTools::ToHist()` (described above).
