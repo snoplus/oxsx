@@ -22,14 +22,17 @@ build your analysis code efficiently.
       - [3.2.1.1. Heaviside](#3211-heaviside)
       - [3.2.1.2. PDF](#3212-pdf)
         - [3.2.1.2.1. Gaussian](#32121-gaussian)
-    - [ConditionalPDF](#conditionalpdf)
-      - [JumpPDF](#jumppdf)
-      - [VaryingCDF](#varyingcdf)
-  - [EventDistribution](#eventdistribution)
-    - [AnalyticED](#analyticed)
-    - [BinnedED](#binneded)
-    - [CompositeED](#compositeed)
-- [4. Random number generation: Rand](#4-random-number-generation-rand)
+    - [3.2.2. ConditionalPDF](#322-conditionalpdf)
+      - [3.2.2.1. JumpPDF](#3221-jumppdf)
+      - [3.2.2.2. VaryingCDF](#3222-varyingcdf)
+  - [3.3. EventDistribution](#33-eventdistribution)
+    - [3.3.1. AnalyticED](#331-analyticed)
+    - [3.3.2. BinnedED](#332-binneded)
+    - [3.3.3. CompositeED](#333-compositeed)
+    - [3.3.4. SpectralFitDist](#334-spectralfitdist)
+- [4. Random number generation](#4-random-number-generation)
+  - [4.1. DataSetGenerator](#41-datasetgenerator)
+  - [4.2. BinnedEDGenerator](#42-binnededgenerator)
 
 # 1. Objects for storing data
 ## 1.1. Event
@@ -217,15 +220,15 @@ even integrate within some (possibly high-dimensional) rectangular region.
 
 As a bonus, you can obtain the cumulative density function by `Cdf()`.
 
-### ConditionalPDF
+### 3.2.2. ConditionalPDF
 **TODO**
 
-#### JumpPDF
+#### 3.2.2.1. JumpPDF
 **TODO**
-#### VaryingCDF
+#### 3.2.2.2. VaryingCDF
 **TODO**
 
-## EventDistribution
+## 3.3. EventDistribution
 `EventDistribution` is an abstract base class, whose derived classes describe
 the expected distributions of events under a set of observables. A typical
 physics analysis might involve comparison/fitting of an `EventDistribution`
@@ -241,14 +244,14 @@ Note: it is this class that Particle Physicists typically refer to as "PDFs".
 We're often using that terminology fast and loose, given that true PDFs must
 have a total normalisation of 1 by definition. Because of this, actual
 mathematical PDFs are defined within the `PDF` class, separate from this class.
-### AnalyticED
+### 3.3.1. AnalyticED
 One possible event distribution is a purely analytic one, givne by `AnalyticED`.
 This class holds a `PDF` that holds the underlying shape of the distribution,
 along with a constant normalisation. It also has an `ObsSet` object, so that
 the observable quantities of interest can be defined distinct to the (possibly)
 larger set of variables within the PDF. On top of this, `AnalyticED` inherits 
 from `FitComponent`, with the parameters being defined within the `PDF` member.
-### BinnedED
+### 3.3.2. BinnedED
 This is very much one of the most important classes in the whole of OXO! This
 is an N-dimensional binned event distribution. It holds a `Histogram` of the
 data for the distribution, along with an `ObsSet` that defines the subset of
@@ -258,7 +261,7 @@ typically built from MC.
 With this class, you can basically do all the things you can with a `Histogram`
 object.
 
-### CompositeED
+### 3.3.3. CompositeED
 Sometimes, you want to assume certain observables are independent of one another,
 and still build an event distribution from them. For example, you might observe
 an event's energy and radius, and instead of building a 2D `EventDistribution`
@@ -270,10 +273,59 @@ objects.
 This class has been defined in such a way that you can combine both `BinnedED` 
 and `AnalyticED` objects, or even another `CompositeED` object!
 
-# 4. Random number generation: Rand
+### 3.3.4. SpectralFitDist
+Unlike `AnalyticED`, `BinnedED` doesn't inherit from `FitComponent`. However,
+you might want the functionality of a binned event distribution, with named
+parameters for the dimensions of the underlying `Histogram`. Well, that's
+what `SpectralFitDist` does!
+
+# 4. Random number generation
 Generating lots of random numbers is quite useful in a variety of
 places within a physics analysis. We have a single class, `Rand`,
 with a bunch of static methods that act as a central place within
 OXO for random number generation. There's nothing fancy here, just
 a wrapper for ROOT's `TRandom3` class. You can generate random
 numbers for a small number of standard distributions: uniform, Gaussian, and Poisson.
+
+Now, with random number generation, we can generate fake datasets and event
+distributions. Here are two (similar) classes that handle this:
+
+## 4.1. DataSetGenerator
+You have a whole bunch of data (e.g. MC events), and would like to generate a 
+pretend sample of data, particularly useful for sensitivity studies? Well, the
+`DataSetGenerator` class has you covered. Add `DataSet` objects along with their
+expected rates to the generator object. The `sequential` flag for each data set
+determines whether generation will use the events in each `DataSet` sequentially.
+If set to false, events are selected randomly. There is also a set of `bootstrap` flags, which if set to true for a given `DataSet` will draw randomly from the
+dataset with replacement: useful in a pinch if you need to have a fake dataset
+of size larger than your MC!
+
+There are two main modes of dataset generation: `ExpectedRatesDataSet()` and
+`PoissonFluctuatedDataSet()`. The former will create a data set where the number
+of events sampled from each `DataSet` will be equal (up to rounding) to the event
+rates given. The latter will have the number of events sampled from each `DataSet`
+instead as a Poisson fluctuation on the event rate: this is the most "realistic"
+kind of fake data set. Note that in both modes, the output `OXSXDataSet` object
+has events ordered by `DataSet` type - e.g. if a dataset was generated from
+`DataSet` objects A and B, the generated dataset would have a number of A-type
+events followed by a number of B-types.Both methods also have an optional parameter
+which outputs by reference a vector of the number of events actually simulated
+per type.
+
+There are two other, more brute-force forms of dataset generation. The first is
+`AllValidEvents()`, which just creates a `DataSet` from all of the events given,
+ignoring the event rates. `AllRemainingEvents(i)`, as the name suggests, gets
+back the events not used for previous event generation from the ith `DataSet`.
+
+Finally, one can also provide cuts on what can be generated by `SetCuts()` or
+`AddCut()`; the event rates the user gives then correspond to the event rates
+foreach dataset *before* cuts. More on cuts in OXO [here]().
+## 4.2. BinnedEDGenerator
+The `BinnedEDGenerator` works very much like `DataSetGenerator`, except the input
+and output objects are no longer `DataSets` which contain sets of `Event` objects,
+but instead `BinnedED` objects. After giving the `BinnedED` objects and rates for
+each event type via `SetPdfs()` and `SetRates()` respectively, `ExpectedRatesED()`
+and `PoissonFluctuatedED()` can generate binned event distributions as one would
+expect. Becuase we are just dealing with binned histograms here, there is no need
+for the additional stuff that `DataSetGenerator` has: bootstrapping, the sequential
+flag, etc. are all not present here.
