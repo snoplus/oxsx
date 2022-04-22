@@ -44,6 +44,10 @@ build your analysis code efficiently.
     - [6.1.3. BoxCut](#613-boxcut)
   - [6.2. CutCollection](#62-cutcollection)
   - [6.3. CutLog](#63-cutlog)
+- [Systematics](#systematics)
+  - [EventSystematic](#eventsystematic)
+    - [EventShift](#eventshift)
+  - [EventScale](#eventscale)
 
 # 1. Objects for storing data
 ## 1.1. Event
@@ -456,7 +460,8 @@ creates a new `DataSet` object that takes the data from some original `DataSet`
 that passes all the cuts within a `CutCollection`. Here's a function that does
 just that:
 ```
-void get_data_passed_cuts(const ROOTNtuple& ntuple, const CutCollection& cuts, CutLog& cut_log, OXSXDataSet& cut_data) {
+void get_data_passed_cuts(const ROOTNtuple& ntuple, const CutCollection& cuts, 
+                          CutLog& cut_log, OXSXDataSet& cut_data) {
     /*
      * Iterate over events in the ntuple. If an event passes cuts,
      * add to the cut_data object, and note in cut_log.
@@ -467,3 +472,40 @@ void get_data_passed_cuts(const ROOTNtuple& ntuple, const CutCollection& cuts, C
     }
 }
 ```
+
+# Systematics
+Consideration of systematic effects is a major part of Particle Physics analyses
+(and a real pain, to boot!). Fortunately, OXO allows for the handling of
+systematics. There are in fact two entirely separate varieties of systematic
+considered: ones applied to individual `Events` (and hence `DataSets`), versus
+those applied to `BinnedED` objects.
+
+## EventSystematic
+Let's consider systematics applied to events first: these all are derived from
+the `EventSystematic` abstract base class. To be useful, one must first set the
+observables upon which the systematic can affect, via `SetOutObservables()`.
+Sometimes, the systematic also needs to know about the values of other
+variables that aren't modified themselves: this can be set with
+`SetInObservables()`.
+
+The defining method of this class is the evaluation method, `sys(event)`. This
+outputs a new `Event` object that has applied the systematic upon the input
+`Event`. Note that `EventSystematic` derives from `FitComponent`, so is
+able to handle any number of abstract parameters that could be needed to define
+the systematic.
+
+### EventShift
+`EventShift` is probably the simplest kind of systematic to apply. After
+defining the observable to be shifted with `SetOutObservables()`, and setting
+the shift with `SetParameter()` (technically one can also do this with 
+`SetShift()`, but using `SetParameter()` allows the whole `FitComponent` to
+work nicely - useful if doing fits), then one can apply the shift to an event
+by evaluation. this will apply `x' = x + a`, where `x` and `x'` are the 
+observable of interested before and after the transformation, and `a` is the
+shift parameter.
+
+## EventScale
+`EventScale` acts just like `EventShift`, except now the defining 
+transformation is `x' = a*x`, using the notation defined above.
+
+##
