@@ -44,10 +44,17 @@ build your analysis code efficiently.
     - [6.1.3. BoxCut](#613-boxcut)
   - [6.2. CutCollection](#62-cutcollection)
   - [6.3. CutLog](#63-cutlog)
-- [Systematics](#systematics)
-  - [EventSystematic](#eventsystematic)
-    - [EventShift](#eventshift)
-  - [EventScale](#eventscale)
+- [7. Systematics](#7-systematics)
+  - [7.1. EventSystematic](#71-eventsystematic)
+    - [7.1.1. EventShift](#711-eventshift)
+    - [7.1.2. EventScale](#712-eventscale)
+    - [7.1.3. EventConvolution](#713-eventconvolution)
+    - [7.1.4. EventReconvolution](#714-eventreconvolution)
+  - [7.2. Systematic](#72-systematic)
+    - [7.2.1. Scale](#721-scale)
+    - [7.2.2. Convolution](#722-convolution)
+- [Managers](#managers)
+  - [ParameterManager](#parametermanager)
 
 # 1. Objects for storing data
 ## 1.1. Event
@@ -188,7 +195,7 @@ them. Anything derived from this class have some set of named parameters, each
 of which is a double.
 
 Any `FitComponent`-derived object can have parameters set & gotten (via a 
-`ParameterDict` is you like!), and renamed. The object also has its own name
+`ParameterDict` if you like!), and renamed. The object also has its own name
 that can be changed.
 
 ### 3.2.1. Function
@@ -473,14 +480,14 @@ void get_data_passed_cuts(const ROOTNtuple& ntuple, const CutCollection& cuts,
 }
 ```
 
-# Systematics
+# 7. Systematics
 Consideration of systematic effects is a major part of Particle Physics analyses
 (and a real pain, to boot!). Fortunately, OXO allows for the handling of
 systematics. There are in fact two entirely separate varieties of systematic
 considered: ones applied to individual `Events` (and hence `DataSets`), versus
 those applied to `BinnedED` objects.
 
-## EventSystematic
+## 7.1. EventSystematic
 Let's consider systematics applied to events first: these all are derived from
 the `EventSystematic` abstract base class. To be useful, one must first set the
 observables upon which the systematic can affect, via `SetOutObservables()`.
@@ -494,7 +501,7 @@ outputs a new `Event` object that has applied the systematic upon the input
 able to handle any number of abstract parameters that could be needed to define
 the systematic.
 
-### EventShift
+### 7.1.1. EventShift
 `EventShift` is probably the simplest kind of systematic to apply. After
 defining the observable to be shifted with `SetOutObservables()`, and setting
 the shift with `SetParameter()` (technically one can also do this with 
@@ -504,8 +511,54 @@ by evaluation. this will apply `x' = x + a`, where `x` and `x'` are the
 observable of interested before and after the transformation, and `a` is the
 shift parameter.
 
-## EventScale
+### 7.1.2. EventScale
 `EventScale` acts just like `EventShift`, except now the defining 
 transformation is `x' = a*x`, using the notation defined above.
 
-##
+### 7.1.3. EventConvolution
+TODO
+
+### 7.1.4. EventReconvolution
+TODO
+
+## 7.2. Systematic
+Unlike `EventSystematic`, the `Systematic` class is for manipulating a binned
+event distribution instead of a set of events themselves. It, too is an abstract
+base class which derives from `FitComponent`, so abstract paramters can be stored
+within it.
+
+Critically, we can describe a general transformation of a binned event distribution
+due to some systematic effect by a linear transformation. As a result, a systematic
+can be represented by a matrix (the "detector response matrix") that acts on the
+`BinnedED` to produce a modified event distribution. In OXO, we use a `SparseMatrix`
+class that is a wrapper for `Armadillo`'s `arma::sp_mat` class.
+
+This response gets constructed via the `Construct()` method, which defines the 
+particular kind of systematic. Any time the underlying parameters that define
+the systematic get changed, this method must be called once again. The evalution
+operator (`operator(binned_ed)`) can then be used to determine what impact the
+detector response matrix has on the event distribution.
+
+There are two sets of observables considered by this class: firstly, the full 
+set of observables needed to describe an event distribution; and secondly the
+observable(s) that the systematic actually acts upon.These can be defined by
+the `SetDistributionObs()` and `SetTransformationObs()` methods, respectively.
+
+### 7.2.1. Scale
+The `Scale` systematic works like `EventScale`, except now of course the impact
+of scaling a parameter on an event distribution will be approximate because the
+distribution is binned.
+
+### 7.2.2. Convolution
+TODO
+
+# Managers
+In most full-blooded analyses, there are often numerous distributions, 
+systematics, parameters, and fittable components, all flying around. It's 
+critical to keep track of them all, especially if one is trying to perform a 
+fit! That's what OXO's managers are for. Unlike most of the other classes,
+these all have to do different-enough things that they don't derive from some
+fundamental class; I group them here anyway as they share the same broad idea
+of managing objects within OXO. These managers get used regularly within fitting.
+
+## ParameterManager
