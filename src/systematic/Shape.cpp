@@ -37,22 +37,21 @@ Shape::SetParameter(const std::string& name_, double value){
 double
 Shape::GetParameter(const std::string& name_) const{
    if(fParamDict.count(name_) == 0)
-        throw ParameterError("Shift: can't set " + name_);
+        throw ParameterError("Shift: parameter " + name_);
     return fParamDict.at(name_);
 }
 
 void
 Shape::SetParameters(const ParameterDict& pd_){
-    try{
-        fScaleFactor = pd_.at(fParamName);
-    }
-    catch(const std::out_of_range& e_){
-        throw ParameterError("Set dictionary is missing " + fParamName + ". I did contain: \n" + ContainerTools::ToString(ContainerTools::GetKeys(pd_)));
-    }
+    for (auto &&pair : pd_) {
+        try{ fParamDict[pair.first] = pair.second; }
+        catch(const std::out_of_range& e_){
+            throw ParameterError("Shift: can't set");
+        }
+    }   
 }
 
-std::set<std::string>
-Shape::GetParameterNames() const {
+std::set<std::string> Shape::GetParameterNames() const {
     std::set<std::string> set;
     for (auto &&pair : fParamDict) {
         set.insert(pair.first);
