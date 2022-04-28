@@ -19,7 +19,8 @@ typedef std::function<double(const ParameterDict&,
 
 class Shape : public Systematic{
 public:
-    Shape(const std::string& name_) : fShapeFunc(), fParamDict(), fName(name_) {}
+    Shape(const std::string& name_) : fShapeFunc(), fParamDict(), fName(name_),
+                                      fCachedBinMapping(false) {}
 
     void SetShapeFunction(ShapeFunction& shape_func, std::vector<std::string>& param_names);
 
@@ -42,6 +43,12 @@ private:
     ShapeFunction fShapeFunc;
     ParameterDict fParamDict;
     std::string fName;
+
+    AxisCollection fTransAxes;
+    std::vector<size_t> fDistTransBinMapping;
+    bool fCachedBinMapping;
+
+    void CacheBinMapping();
 };
 
 #endif
