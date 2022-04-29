@@ -1,8 +1,8 @@
 #include <Shape.h>
 #include <Exceptions.h>
 
-void Shape::SetShapeFunction(ShapeFunction& shape_func,
-                             std::vector<std::string>& param_names) {
+void Shape::SetShapeFunction(const ShapeFunction& shape_func,
+                             const std::vector<std::string>& param_names) {
     /*
     * Setter for the shape function object; also the only way to add parameters
     * into the parameter dict: the FitComponent interface allows one to set 

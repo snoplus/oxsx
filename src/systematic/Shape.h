@@ -22,7 +22,8 @@ public:
     Shape(const std::string& name_) : fShapeFunc(), fParamDict(), fName(name_),
                                       fCachedBinMapping(false) {}
 
-    void SetShapeFunction(ShapeFunction& shape_func, std::vector<std::string>& param_names);
+    void SetShapeFunction(const ShapeFunction& shape_func,
+                          const std::vector<std::string>& param_names);
 
     void Construct();
 
