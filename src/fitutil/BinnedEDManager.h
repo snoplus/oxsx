@@ -14,13 +14,14 @@ class SystematicManager;
 class BinnedEDShrinker;
 class BinnedEDManager : public FitComponent{
  public:
-    BinnedEDManager() : fNPdfs(0), fName("norms") {}
+    BinnedEDManager() : fAllNormsFittable(true), fNPdfs(0), fName("norms") {}
 
-    void   AddPdf(const BinnedED&);
-    void   AddPdfs(const std::vector<BinnedED>&);
+    void   AddPdf(const BinnedED&, const bool norm_fittable=true);
+    void   AddPdfs(const std::vector<BinnedED>&,
+                   const std::vector<bool>* norms_fittable=nullptr);
 
-    double Probability(const Event&) const;
-    double BinProbability(size_t) const;
+    double Probability(const Event&);
+    double BinProbability(size_t);
     
     const std::vector<double>& GetNormalisations() const;
     void SetNormalisations(const std::vector<double>& normalisations_);
@@ -53,11 +54,15 @@ class BinnedEDManager : public FitComponent{
     std::vector<BinnedED>  fOriginalPdfs;
     std::vector<BinnedED>  fWorkingPdfs;
     std::vector<double>    fNormalisations;
+    std::vector<bool>      fAllowNormsFittable;
+    std::vector<double>    fFittableNorms;
+    bool                   fAllNormsFittable;
     int                    fNPdfs;
     size_t fNDims;
 
     std::string fName; // component name
 
     void RegisterParameters();
+    void ReassertNorms();
 };
 #endif

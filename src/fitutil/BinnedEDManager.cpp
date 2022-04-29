@@ -16,7 +16,10 @@ BinnedEDManager::GetNDims() const{
 }
 
 double 
-BinnedEDManager::Probability(const Event& data_) const{
+BinnedEDManager::Probability(const Event& data_) {
+    if (!fAllNormsFittable) {
+        ReassertNorms();
+    }
     double sum = 0;
 
     for(size_t i = 0; i < fWorkingPdfs.size(); i++){
@@ -27,7 +30,10 @@ BinnedEDManager::Probability(const Event& data_) const{
 }
 
 double
-BinnedEDManager::BinProbability(size_t bin_) const{
+BinnedEDManager::BinProbability(size_t bin_) {
+    if (!fAllNormsFittable) {
+        ReassertNorms();
+    }
     double sum = 0;
     try{
         for(size_t i = 0; i < fWorkingPdfs.size(); i++){
@@ -55,8 +61,17 @@ BinnedEDManager::ApplySystematics(const SystematicManager& sysMan_){
 
     if(!sysMan_.GetNSystematics())
         return;
-
-    sysMan_.DistortEDs(fOriginalPdfs,fWorkingPdfs);
+    if (fAllNormsFittable) {
+        sysMan_.DistortEDs(fOriginalPdfs,fWorkingPdfs);
+    } else {
+        std::vector<double> norms(fNormalisations.size(), 0);
+        sysMan_.DistortEDs(fOriginalPdfs,fWorkingPdfs, &norms);
+        for (size_t i = 0; i < norms.size(); i++) {
+            if (!fAllowNormsFittable.at(i)) {
+                fNormalisations[i] *= norms.at(i);
+            }
+        }
+    }
 }
 
 const BinnedED&
@@ -65,18 +80,30 @@ BinnedEDManager::GetOriginalPdf(size_t index_) const{
 }
 
 void
-BinnedEDManager::AddPdf(const BinnedED& pdf_){
+BinnedEDManager::AddPdf(const BinnedED& pdf_, const bool norm_fittable){
     fOriginalPdfs.push_back(pdf_);
     fWorkingPdfs.push_back(pdf_);
     fNPdfs++;
     fNormalisations.resize(fOriginalPdfs.size(), 0);
+    fAllowNormsFittable.push_back(norm_fittable);
+    if (norm_fittable) { fFittableNorms.push_back(0); }
+    else { fAllNormsFittable = false; }
     RegisterParameters();
 }
 
 void 
-BinnedEDManager::AddPdfs(const std::vector<BinnedED>& pdfs_){
+BinnedEDManager::AddPdfs(const std::vector<BinnedED>& pdfs_,
+                         const std::vector<bool>* norms_fittable){
+    if(norms_fittable != nullptr && pdfs_.size() != norms_fittable->size()) {
+        throw LogicError("BinnedEDManager: number of norm_fittable bools doesn't the number of pdfs");
+    }
+
     for(size_t i = 0; i < pdfs_.size(); i++){
-        AddPdf(pdfs_.at(i));
+        if (norms_fittable != nullptr) {
+            AddPdf(pdfs_.at(i), norms_fittable->at(i));
+        } else {
+            AddPdf(pdfs_.at(i));
+        }
     }
     RegisterParameters();
 }
@@ -155,7 +182,33 @@ void
 BinnedEDManager::RegisterParameters(){
     fParameterManager.Clear();
     std::vector<std::string> parameterNames;
-    for(size_t i = 0; i < fOriginalPdfs.size(); i++)
-        parameterNames.push_back(fOriginalPdfs.at(i).GetName());
-    fParameterManager.AddContainer(fNormalisations, parameterNames);
+    if (fAllNormsFittable) {
+        for(size_t i = 0; i < fOriginalPdfs.size(); i++) {
+            parameterNames.push_back(fOriginalPdfs.at(i).GetName());
+        }
+        fParameterManager.AddContainer(fNormalisations, parameterNames);
+    } else {
+        for(size_t i = 0; i < fOriginalPdfs.size(); i++) {
+        if (fAllowNormsFittable.at(i)) {
+            parameterNames.push_back(fOriginalPdfs.at(i).GetName());
+        }
+    }
+    fParameterManager.AddContainer(fFittableNorms, parameterNames);
+    }
 }    
+
+void BinnedEDManager::ReassertNorms() {
+    /*
+    * Normalisations that are fittable might have been changed 
+    * in fFittableNorms, but not in fNormalisations!
+    * This method corrects any changes that may have occured,
+    * so that both vectors are consistent.
+    */
+    size_t j = 0;
+    for (size_t i = 0; i < fNormalisations.size(); i++) {
+        if (fAllowNormsFittable.at(i)) {
+            fNormalisations[i] = fFittableNorms.at(j);
+            j++;
+        }
+    }
+}
