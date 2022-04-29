@@ -29,7 +29,7 @@ void Shape::Construct() {
     // If haven't already, generate mapping from full pdf bin IDs
     //--> transforming subspace bin IDs 
     if (!fCachedBinMapping) { CacheBinMapping(); }
-    // Loop over bins in the transforation subspace, and get the user-defined 
+    // Loop over bins in the transformation subspace, and get the user-defined 
     // shape scale factors at each bin centre.
     std::vector<double> bin_centres(fTransAxes.GetNDimensions());
     std::vector<double> shape_vals;
@@ -42,7 +42,7 @@ void Shape::Construct() {
             throw ValueError("User-defined shape function returned negative value: "
                                 + std::to_string(scale));
         }
-        shape_vals[bin] = scale;
+        shape_vals.push_back(scale);
     }
 
     // Finally, construct the full response matrix by setting the diagonal

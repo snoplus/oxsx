@@ -141,7 +141,9 @@ SystematicManager::AddDist(const BinnedED& pdf, const std::string& syss_){
 }
 
 void
-SystematicManager::DistortEDs(std::vector<BinnedED>& OrignalEDs_,std::vector<BinnedED>& WorkingEDs_) const {
+SystematicManager::DistortEDs(const std::vector<BinnedED>& OrignalEDs_,
+                              std::vector<BinnedED>& WorkingEDs_,
+                              std::vector<double>* norms) const {
     for(size_t j = 0; j < WorkingEDs_.size(); j++){
         const std::string name = OrignalEDs_.at(j).GetName();
 
@@ -185,6 +187,9 @@ SystematicManager::DistortEDs(std::vector<BinnedED>& OrignalEDs_,std::vector<Bin
               WorkingEDs_[j].SetBinContents(
                   GetTotalResponse(groupName).operator()(OrignalEDs_.at(j).GetBinContents()));
             }
+        }
+        if (norms != nullptr) {
+            norms->operator[](j) = WorkingEDs_.at(j).Integral();
         }
     }
 }

@@ -21,7 +21,7 @@ class Systematic : public FitComponent{
     virtual ~Systematic()  {}
 
     BinnedED 
-    operator()(const BinnedED& pdf_) const;
+    operator()(const BinnedED& pdf_, double* norm=nullptr) const;
         
     void SetResponse(const SparseMatrix& responseMatrix_);
     const SparseMatrix& GetResponse() const;

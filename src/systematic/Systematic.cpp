@@ -4,11 +4,16 @@
 #include <iostream>
 
 BinnedED 
-Systematic::operator() (const BinnedED& pdf_) const{
+Systematic::operator() (const BinnedED& pdf_, double* norm) const{
     try{
         BinnedED afterSmear = pdf_;
         afterSmear.SetBinContents(fResponse(pdf_.GetBinContents()));
-        afterSmear.Normalise();
+        if (norm != nullptr) {
+            *norm = afterSmear.Integral();
+            afterSmear.Scale(1./(*norm));
+        } else {
+            afterSmear.Normalise();
+        }
         return afterSmear;
     }
     catch(const DimensionError& e_){

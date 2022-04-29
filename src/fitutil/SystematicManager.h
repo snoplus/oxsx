@@ -50,7 +50,9 @@ class SystematicManager{
 
     const SparseMatrix& GetTotalResponse(const std::string& groupName_ = "" ) const;
 
-    void DistortEDs(std::vector<BinnedED>& OrigEDs,std::vector<BinnedED>& WorkingEDs) const;
+    void DistortEDs(const std::vector<BinnedED>& OrigEDs,
+                    std::vector<BinnedED>& WorkingEDs,
+                    std::vector<double>* norms=nullptr) const;
 
     void Construct();
     
