@@ -23,7 +23,13 @@ BinnedEDManager::Probability(const Event& data_) {
     double sum = 0;
 
     for(size_t i = 0; i < fWorkingPdfs.size(); i++){
-        sum += fNormalisations.at(i) * fWorkingPdfs[i].Probability(data_);
+        if (fAllowNormsFittable.at(i)) {
+            sum += fNormalisations.at(i) * fWorkingPdfs[i].Probability(data_);
+        } else {
+            // In case where we don't auto-normalise the pdf,
+            // the normalisation is held within the pdf itself!
+            sum += fWorkingPdfs.at(i).Probability(data_);
+        }
     }
 
     return sum;
@@ -37,7 +43,13 @@ BinnedEDManager::BinProbability(size_t bin_) {
     double sum = 0;
     try{
         for(size_t i = 0; i < fWorkingPdfs.size(); i++){
-            sum += fNormalisations.at(i) * fWorkingPdfs.at(i).GetBinContent(bin_);
+            if (fAllowNormsFittable.at(i)) {
+                sum += fNormalisations.at(i) * fWorkingPdfs.at(i).GetBinContent(bin_);
+            } else {
+                // In case where we don't auto-normalise the pdf,
+                // the normalisation is held within the pdf itself!
+                sum += fWorkingPdfs.at(i).GetBinContent(bin_);
+            }
         }
     }
     catch(const std::out_of_range&){
@@ -95,7 +107,7 @@ void
 BinnedEDManager::AddPdfs(const std::vector<BinnedED>& pdfs_,
                          const std::vector<bool>* norms_fittable){
     if(norms_fittable != nullptr && pdfs_.size() != norms_fittable->size()) {
-        throw LogicError("BinnedEDManager: number of norm_fittable bools doesn't the number of pdfs");
+        throw DimensionError("BinnedEDManager: number of norm_fittable bools doesn't the number of pdfs");
     }
 
     for(size_t i = 0; i < pdfs_.size(); i++){

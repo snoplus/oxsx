@@ -1,6 +1,10 @@
 #include <catch.hpp>
 #include <Shape.h>
 #include <ParameterDict.h>
+#include <Gaussian.h>
+#include <DistTools.h>
+#include <BinnedNLLH.h>
+#include <OXSXDataSet.h>
 
 double linear_func(const ParameterDict& params, const std::vector<double>& obs_vals) {
     /*
@@ -69,5 +73,45 @@ TEST_CASE("Shape") {
                 REQUIRE( response_matrix.GetComponent(i, j) == scale );
             }
         }
+    }
+
+    SECTION("Check interface with BinnedNLLH") {
+        const Gaussian gauss_sig({0, 30}, {3, 20}, "signal");
+        const Gaussian gauss_back({5, 40}, {10, 5}, "background");
+
+        BinnedED pdf_sig("signal", DistTools::ToHist(gauss_sig, axes));
+        BinnedED pdf_back("back", DistTools::ToHist(gauss_back, axes));
+
+        const std::vector<std::string> observables {"obs0", "obs1"};
+        pdf_sig.SetObservables(observables);
+        pdf_back.SetObservables(observables);
+
+        BinnedNLLH lh;
+        lh.AddSystematic(&shape_sys, "shape_group");
+        lh.AddPdf(pdf_sig, {"shape_group"}, false);
+        lh.AddPdf(pdf_back);
+
+        const std::vector<double> test_point {0, 30};
+        const size_t central_bin = pdf_sig.FindBin(test_point);
+        double shape_norm_factor;
+        const BinnedED pdf_sig_mod = shape_sys(pdf_sig, &shape_norm_factor);
+        const double prob_sig = pdf_sig_mod.GetBinContent(central_bin)*shape_norm_factor;
+        const double prob_back = pdf_back.GetBinContent(central_bin);
+
+        OXSXDataSet data;
+        data.AddEntry(Event(test_point));
+        data.SetObservableNames(observables);
+        lh.SetDataSet(&data);
+
+        lh.RegisterFitComponents();
+        
+        lh.SetParameters({{"back", 1}, {"a", 1}, {"b", 1000}});
+        lh.SetNormalisations({1, 1});
+        const double lh_val = lh.Evaluate();
+
+        const double sum_log_prob = -log(prob_back + prob_sig);
+        const double sum_norm = shape_norm_factor + 1.;
+
+        REQUIRE(lh_val == Approx(sum_log_prob + sum_norm));
     }
 }

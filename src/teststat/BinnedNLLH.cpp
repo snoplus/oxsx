@@ -39,7 +39,7 @@ BinnedNLLH::Evaluate(){
         double prob = fPdfManager.BinProbability(i);
         if(!prob)
             throw std::runtime_error(Formatter() << "BinnedNLLH::Encountered zero probability bin! #" << i);
-        nLogLH -= fDataDist.GetBinContent(i) *  log(prob);        
+        nLogLH -= fDataDist.GetBinContent(i) *  log(prob);
     }
 
     // Extended LH correction
@@ -64,26 +64,48 @@ BinnedNLLH::BinData(){
 }
 
 void
-BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& sys_){
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs,
+                    const std::vector<std::vector<std::string> >& sys_,
+                    const std::vector<bool>* norms_fittable){
     if (pdfs.size() != sys_.size())
-       throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
-    for (size_t i = 0; i < pdfs.size(); ++i) { AddPdf( pdfs.at(i), sys_.at(i) ); }
+        throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
+    if(norms_fittable != nullptr && pdfs.size() != norms_fittable->size()) {
+        throw DimensionError("BinnedNLLH: number of norm_fittable bools doesn't the number of pdfs");
+    }
+    for (size_t i = 0; i < pdfs.size(); ++i) {
+        if (norms_fittable == nullptr) {
+            AddPdf( pdfs.at(i), sys_.at(i) );
+        } else {
+            AddPdf( pdfs.at(i), sys_.at(i), norms_fittable->at(i) );
+        }
+    }
 }
 
 void
-BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs){
-    for (const auto& pdf: pdfs) { AddPdf(pdf); }
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs,
+                    const std::vector<bool>* norms_fittable){
+    if(norms_fittable != nullptr && pdfs.size() != norms_fittable->size()) {
+        throw DimensionError("BinnedNLLH: number of norm_fittable bools doesn't the number of pdfs");
+    }
+    for(size_t i = 0; i < pdfs.size(); i++){
+        if (norms_fittable != nullptr) {
+            AddPdf(pdfs.at(i), norms_fittable->at(i));
+        } else {
+            AddPdf(pdfs.at(i));
+        }
+    }
 }
 
 void
-BinnedNLLH::AddPdf(const BinnedED& pdf_, const std::vector<std::string>& syss_){
-    fPdfManager.AddPdf(pdf_);
+BinnedNLLH::AddPdf(const BinnedED& pdf_, const std::vector<std::string>& syss_,
+                   const bool norm_fittable){
+    fPdfManager.AddPdf(pdf_, norm_fittable);
     fSystematicManager.AddDist(pdf_,syss_);
 }
 
 void
-BinnedNLLH::AddPdf(const BinnedED& pdf_){
-    fPdfManager.AddPdf(pdf_);
+BinnedNLLH::AddPdf(const BinnedED& pdf_, const bool norm_fittable){
+    fPdfManager.AddPdf(pdf_, norm_fittable);
     fSystematicManager.AddDist(pdf_,"");
 }
 

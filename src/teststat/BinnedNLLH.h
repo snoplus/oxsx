@@ -20,7 +20,7 @@ class BinnedNLLH : public TestStatistic{
     void   SetPdfManager(const BinnedEDManager&);
     void   SetSystematicManager(const SystematicManager&);
 
-    void   AddPdf(const BinnedED&);
+    void   AddPdf(const BinnedED&, const bool norm_fittable=true);
     void   AddSystematic(Systematic* sys_);
     void   AddSystematic(Systematic* sys_, const std::string& group_ );
 
@@ -44,9 +44,9 @@ class BinnedNLLH : public TestStatistic{
     void SetBuffer(const std::string& dim_, unsigned lower_, unsigned upper_);
     std::pair<unsigned, unsigned> GetBuffer(const std::string& dim_) const;
 
-    void AddPdf(const BinnedED& pdf, const std::vector<std::string>& syss_);
-    void AddPdfs(const std::vector<BinnedED>& pdfs);
-    void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& syss_);
+    void AddPdf(const BinnedED& pdf, const std::vector<std::string>& syss_, const bool norm_fittable=true);
+    void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<bool>* norms_fittable=nullptr);
+    void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& syss_, const std::vector<bool>* norms_fittable=nullptr);
 
     void SetBufferAsOverflow(bool b_); // true by default
     bool GetBufferAsOverflow() const;
