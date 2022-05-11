@@ -94,9 +94,12 @@ TEST_CASE("Shape") {
         const std::vector<double> test_point {0, 30};
         const size_t central_bin = pdf_sig.FindBin(test_point);
         double shape_norm_factor;
-        const BinnedED pdf_sig_mod = shape_sys(pdf_sig, &shape_norm_factor);
-        const double prob_sig = pdf_sig_mod.GetBinContent(central_bin)*shape_norm_factor;
-        const double prob_back = pdf_back.GetBinContent(central_bin);
+        BinnedED pdf_sig_mod = shape_sys(pdf_sig, &shape_norm_factor);
+        double prob_sig = pdf_sig_mod.GetBinContent(central_bin)*shape_norm_factor;
+        double prob_back = pdf_back.GetBinContent(central_bin);
+
+        double sum_log_prob = -log(prob_back + prob_sig);
+        double sum_norm = shape_norm_factor + 1.;
 
         OXSXDataSet data;
         data.AddEntry(Event(test_point));
@@ -106,12 +109,20 @@ TEST_CASE("Shape") {
         lh.RegisterFitComponents();
         
         lh.SetParameters({{"back", 1}, {"a", 1}, {"b", 1000}});
-        lh.SetNormalisations({1, 1});
-        const double lh_val = lh.Evaluate();
 
-        const double sum_log_prob = -log(prob_back + prob_sig);
-        const double sum_norm = shape_norm_factor + 1.;
+        REQUIRE(lh.Evaluate() == Approx(sum_log_prob + sum_norm));
 
-        REQUIRE(lh_val == Approx(sum_log_prob + sum_norm));
+        // Now change params, and check if lh can still handle it!
+        lh.SetParameters({{"back", 2}, {"a", 1}, {"b", 500}});
+        auto shape_sys_2(shape_sys);
+        shape_sys_2.SetParameters({{"a", 1}, {"b", 500}});
+        shape_sys_2.Construct();
+        pdf_sig_mod = shape_sys_2(pdf_sig, &shape_norm_factor);
+        prob_sig = pdf_sig_mod.GetBinContent(central_bin)*shape_norm_factor;
+        prob_back = pdf_back.GetBinContent(central_bin)*2.;
+        sum_log_prob = -log(prob_back + prob_sig);
+        sum_norm = shape_norm_factor + 2.;
+
+        REQUIRE(lh.Evaluate() == Approx(sum_log_prob + sum_norm));
     }
 }

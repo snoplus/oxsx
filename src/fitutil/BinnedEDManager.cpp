@@ -80,7 +80,7 @@ BinnedEDManager::ApplySystematics(const SystematicManager& sysMan_){
         sysMan_.DistortEDs(fOriginalPdfs,fWorkingPdfs, &norms);
         for (size_t i = 0; i < norms.size(); i++) {
             if (!fAllowNormsFittable.at(i)) {
-                fNormalisations[i] *= norms.at(i);
+                fNormalisations[i] = norms.at(i);
             }
         }
     }
