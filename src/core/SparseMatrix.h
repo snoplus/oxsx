@@ -22,8 +22,8 @@ class SparseMatrix{
     void   SetComponent(size_t row_, size_t column_, double val_);
     double GetComponent(size_t row_, size_t column_) const;
 
-    void   SetComponents(const std::vector<unsigned>& rowIndices_,
-                         const std::vector<unsigned>& colIndices_,
+    void   SetComponents(const std::vector<long long unsigned int>& rowIndices_,
+                         const std::vector<long long unsigned int>& colIndices_,
                        const std::vector<double>& values_);
 
     SparseMatrix operator*=(const SparseMatrix& other_);
