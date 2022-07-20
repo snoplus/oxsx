@@ -33,6 +33,7 @@ class BinnedEDShrinker{
     // Pairs of lower/upper buffer sizes in number of bins, keyed by diminension to shrink
     std::map<std::string, std::pair<unsigned, unsigned> > fBuffers;
     std::vector<int> fBinVec;
+    std::vector<int> fUseContent; // Use content from this bin after shrinking? False for bins in buffer region if fUsingOverflows is false
     bool fUsingOverflows; // false at initialisation
     AxisCollection fNewAxes;
 

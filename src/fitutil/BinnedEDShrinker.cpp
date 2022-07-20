@@ -86,7 +86,7 @@ BinnedEDShrinker::SetBinMap(const BinnedED& dist_ ) {
 
   // bin by bin of old pdf
   for(size_t i = 0; i < dist_.GetNBins(); i++){
-
+    fUseContent.push_back(true);
     // work out the index of this bin in the new shrunk pdf.
     for(size_t j = 0; j < nDims; j++){
       std::string axisName = axes.GetAxis(j).GetName();
@@ -98,10 +98,16 @@ BinnedEDShrinker::SetBinMap(const BinnedED& dist_ ) {
       // bins in the lower buffer have negative index. Put in first bin in fit region or ignore
       if (offsetIndex < 0){
 	offsetIndex = 0;
+	// If not using overflows, flag this bin as not having it's contents included
+	if(!fUsingOverflows)
+	  fUseContent.at(i) = false;
       }
       // bins in the upper buffer have i > number of bins in axis j. Do the same
       if (offsetIndex >= fNewAxes.GetAxis(j).GetNBins()){
-	offsetIndex = fNewAxes.GetAxis(j).GetNBins() - 1;
+        offsetIndex = fNewAxes.GetAxis(j).GetNBins() - 1;
+	// If not using overflows, flag this bin as not having it's contents included
+	if(!fUsingOverflows)
+	  fUseContent.at(i) = false;
       }
 
       newIndices[j] = offsetIndex;
@@ -137,7 +143,9 @@ BinnedEDShrinker::ShrinkDist(const BinnedED& dist_) const{
 	continue;
 
       newBin = fBinVec.at(i);
-      newDist.AddBinContent(newBin, content);
+      // Check if binn has been flagged to not use it's content
+      if(fUseContent.at(i))
+	newDist.AddBinContent(newBin, content);
       }
     return newDist;
 }
