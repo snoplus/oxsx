@@ -9,7 +9,6 @@
 #ifndef __OXSX_SPARSE_MATRIX__
 #define __OXSX_SPARSE_MATRIX__
 #include <AxisCollection.h>
-#define ARMA_DONT_USE_CXX11
 #include <armadillo>
 class BinnedPhysDist;
 
