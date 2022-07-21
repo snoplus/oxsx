@@ -103,7 +103,7 @@ BinnedEDShrinker::SetBinMap(const BinnedED& dist_ ) {
 	  fUseContent.at(i) = false;
       }
       // bins in the upper buffer have i > number of bins in axis j. Do the same
-      if (offsetIndex >= fNewAxes.GetAxis(j).GetNBins()){
+      if ((unsigned)offsetIndex >= fNewAxes.GetAxis(j).GetNBins()){
         offsetIndex = fNewAxes.GetAxis(j).GetNBins() - 1;
 	// If not using overflows, flag this bin as not having it's contents included
 	if(!fUsingOverflows)
