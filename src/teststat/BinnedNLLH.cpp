@@ -18,13 +18,12 @@ BinnedNLLH::Evaluate(){
         BinData();
     
     if(!fAlreadyShrunk){
-        fDataDist = fPdfShrinker.ShrinkDist(fDataDist);
+        fPdfShrinker.SetBinMap(fDataDist);
+        fDataDist = fPdfShrinker.ShrinkDist(fDataDist);	
         fAlreadyShrunk = true;
     }
 
-
-    // Construct systematics 
-    fSystematicManager.Construct(); 
+    fSystematicManager.Construct();
     // Apply systematics
     fPdfManager.ApplySystematics(fSystematicManager);
 
@@ -45,7 +44,7 @@ BinnedNLLH::Evaluate(){
     // Extended LH correction
     const std::vector<double>& normalisations = fPdfManager.GetNormalisations();
     for(const auto& normalisation: normalisations) { nLogLH += normalisation; }
-            
+
     // Constraints
     for(const auto& constraint: fConstraints) {
         nLogLH += constraint.second.Evaluate(fComponentManager.GetParameter(constraint.first));

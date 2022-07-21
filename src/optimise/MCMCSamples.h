@@ -50,21 +50,21 @@ class MCMCSamples{
     std::vector<double> GetAutoCorrelations();
 
  private:
-    AutoCorrelationCalc fAutoCorrelator;
-    MCMC*   fMCMC;
-    bool    fInitialised;
-    int     fBurnIn;
-    int     fThinFactor;
-    void    InitialiseHistograms();
-    void    FillProjections(const ParameterDict&);
-    
     // results
     bool      fSaveFullHistogram;
     AxisCollection fHistogramAxes;
 
     int fAcceptedSteps;
     int fTotalSteps;
-
+    
+    int     fBurnIn;
+    int     fThinFactor;
+    bool    fInitialised;
+    MCMC*   fMCMC;
+    AutoCorrelationCalc fAutoCorrelator;
+    void    InitialiseHistograms();
+    void    FillProjections(const ParameterDict&);
+    
     std::map<std::string, Histogram>           f1DProjections;
     std::map<std::string, Histogram>           f2DProjections;
 

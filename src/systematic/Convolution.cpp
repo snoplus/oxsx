@@ -38,12 +38,12 @@ Convolution::Construct(){
 
     DenseMatrix subMap(fSubMapAxes.GetNBins(), fSubMapAxes.GetNBins());
 
-    for (size_t origBin = 0; origBin < fSubMapAxes.GetNBins(); origBin++){
+    for (long long unsigned int origBin = 0; origBin < fSubMapAxes.GetNBins(); origBin++){
         // get the centre of the bin. Need to offset by this for a convolution
         fSubMapAxes.GetBinCentres(origBin, binCentres);
 
         // loop over the bins it can be smeared into 
-        for(size_t destBin = 0; destBin < fSubMapAxes.GetNBins(); destBin++){
+        for(long long unsigned int destBin = 0; destBin < fSubMapAxes.GetNBins(); destBin++){
             fSubMapAxes.GetBinLowEdges(destBin, lowEdges);
             fSubMapAxes.GetBinHighEdges(destBin, highEdges);
             
@@ -54,8 +54,8 @@ Convolution::Construct(){
     // Now expand to the full size matrix. Elements are zero by default
     // compatible bins are cached, values must match the smaller matrix above
     size_t destBin = -1;
-    std::vector<unsigned> nonZeroRowIndices;
-    std::vector<unsigned> nonZeroColIndices;
+    std::vector<long long unsigned int> nonZeroRowIndices;
+    std::vector<long long unsigned int> nonZeroColIndices;
     std::vector<double> values;
     nonZeroRowIndices.reserve(fCompatibleBins.at(0).size());
     nonZeroColIndices.reserve(fCompatibleBins.at(0).size());

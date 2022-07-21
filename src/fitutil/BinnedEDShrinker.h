@@ -20,6 +20,7 @@ class BinnedEDShrinker{
                        const unsigned upperBuff_) const;
     BinnedED ShrinkDist(const BinnedED& dist_) const;
     
+    void SetBinMap(const BinnedED& dist_);
     void SetBuffer(const std::string& dim_, unsigned lowerBuf_, unsigned upperBuf_);
     std::pair<unsigned, unsigned> GetBuffer(const std::string&) const;
     
@@ -30,7 +31,11 @@ class BinnedEDShrinker{
 
  private:
     // Pairs of lower/upper buffer sizes in number of bins, keyed by diminension to shrink
-    std::map<std::string, std::pair<unsigned, unsigned> > fBuffers; 
+    std::map<std::string, std::pair<unsigned, unsigned> > fBuffers;
+    std::vector<int> fBinVec;
+    std::vector<int> fUseContent; // Use content from this bin after shrinking? False for bins in buffer region if fUsingOverflows is false
     bool fUsingOverflows; // false at initialisation
+    AxisCollection fNewAxes;
+
 };
 #endif
