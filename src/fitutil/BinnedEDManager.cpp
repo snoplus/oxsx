@@ -224,3 +224,17 @@ void BinnedEDManager::ReassertNorms() {
         }
     }
 }
+
+void BinnedEDManager::AssertDimensions(const std::vector<std::string>& observables) {
+    /*
+     * Check whether each PDF in the manager actually has dimensions
+     * matching that of the input vector.
+     * Whenever this is not the case, the given PDF is marginalised onto
+     * the input vector's axes.
+     */
+    for (auto &working_pdf : fWorkingPdfs) {
+        if (working_pdf.GetObservables() != observables) {
+            working_pdf = working_pdf.Marginalise(observables);
+        }
+    }
+}

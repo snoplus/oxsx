@@ -33,6 +33,7 @@ class BinnedEDManager : public FitComponent{
     unsigned GetNPdfs() const;
     size_t   GetNDims() const;
     
+    void AssertDimensions(const std::vector<std::string>& observables);
 
     // Make a fittable component - i.e. rescale the binned pdfs inside to fit
     void   SetParameter(const std::string& name_, double value);

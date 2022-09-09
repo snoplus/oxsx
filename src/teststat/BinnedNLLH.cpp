@@ -26,7 +26,8 @@ BinnedNLLH::Evaluate(){
     fSystematicManager.Construct();
     // Apply systematics
     fPdfManager.ApplySystematics(fSystematicManager);
-
+    //
+    fPdfManager.AssertDimensions(fDataDist.GetObservables());
     // Apply Shrinking
     fPdfManager.ApplyShrink(fPdfShrinker);
 
