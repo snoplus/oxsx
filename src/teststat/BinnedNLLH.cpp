@@ -190,7 +190,7 @@ BinnedNLLH::SetConstraint(const std::string& paramName_, double mean_, double si
 
 void
 BinnedNLLH::SetConstraint(const std::string& paramName_, double mean_, double sigma_lo_, double sigma_hi_) {
-    fConstraints[paramName_] = QuadraticConstraint(mean_, sigma_lo_, sigma_hi_);
+    fConstraints[paramName_] = QuadraticConstraint(mean_, sigma_hi_, sigma_lo_);
 }
 
 
