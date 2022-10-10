@@ -102,8 +102,8 @@ SparseMatrix::SetToIdentity(){
 
 // FIXME: unsigned vs. size_t
 void 
-SparseMatrix::SetComponents(const std::vector<unsigned>& rowIndices_,
-                          const std::vector<unsigned>& colIndices_,
+SparseMatrix::SetComponents(const std::vector<long long unsigned int>& rowIndices_,
+                          const std::vector<long long unsigned int>& colIndices_,
                           const std::vector<double>& values_){
     if(rowIndices_.size() != values_.size() || colIndices_.size() != values_.size())
         throw DimensionError("SparseMatrix::SetComponent() #values != #locations");

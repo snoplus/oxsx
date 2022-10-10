@@ -43,7 +43,9 @@ TEST_CASE("Shrinking a 1D pdf"){
     SECTION("With overflow bins"){
         shrinker.SetUsingOverflows(true);
 
+        shrinker.SetBinMap(inputDist);
         BinnedED shrunkPdf = shrinker.ShrinkDist(inputDist);
+
         REQUIRE(shrunkPdf.GetNBins() == inputDist.GetNBins() - 5 - 3);
 
         // check the over flow bins and the middle bin
@@ -52,11 +54,12 @@ TEST_CASE("Shrinking a 1D pdf"){
         // 94 is already there, then add 99, 98, 97, 96, 95 buffer bins = 579
         REQUIRE(shrunkPdf.GetBinContent(shrunkPdf.GetNBins() - 1) == 579); 
         REQUIRE(shrunkPdf.GetBinContent(50) == 53); // just gets offset by 3
-       
+
     }
     
     SECTION("With truncation"){
         shrinker.SetUsingOverflows(false);
+        shrinker.SetBinMap(inputDist);
         BinnedED shrunkPdf = shrinker.ShrinkDist(inputDist);
         REQUIRE(shrunkPdf.GetNBins() == inputDist.GetNBins() - 5 - 3);
 
@@ -94,6 +97,7 @@ TEST_CASE("2D pdf, only have buffer in one direction"){
     
     SECTION("With Overflow bins"){
         shrinker.SetUsingOverflows(true);
+        shrinker.SetBinMap(inputDist);
         BinnedED shrunk = shrinker.ShrinkDist(inputDist);
 
         REQUIRE(shrunk.GetAxes().GetAxis(0).GetNBins() == inputDist.GetAxes().GetAxis(0).GetNBins());

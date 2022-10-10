@@ -18,13 +18,12 @@ BinnedNLLH::Evaluate(){
         BinData();
     
     if(!fAlreadyShrunk){
-        fDataDist = fPdfShrinker.ShrinkDist(fDataDist);
+        fPdfShrinker.SetBinMap(fDataDist);
+        fDataDist = fPdfShrinker.ShrinkDist(fDataDist);	
         fAlreadyShrunk = true;
     }
 
-
-    // Construct systematics 
-    fSystematicManager.Construct(); 
+    fSystematicManager.Construct();
     // Apply systematics
     fPdfManager.ApplySystematics(fSystematicManager);
 

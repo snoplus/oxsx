@@ -143,8 +143,8 @@ MCMCSamples::Fill(const ParameterDict& params_, double val_, bool accepted_){
     if(fSaveChain){
         int parameterNumber = 0;
         for( ParameterDict::const_iterator it = params_.begin(); it != params_.end(); ++it){
-	parvals[parameterNumber] = it->second;
-	parameterNumber++;
+	  parvals[parameterNumber] = it->second;
+	  parameterNumber++;
         }
         fCurrentVal = val_;
         fStepNumber = fTotalSteps;
