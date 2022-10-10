@@ -32,6 +32,7 @@ BinnedNLLH::Evaluate(){
     fPdfManager.ApplyShrink(fPdfShrinker);
 
     // loop over bins and calculate the likelihood
+    if (fDebugMode) { std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"; }
     double nLogLH = 0;
     for(size_t i = 0; i < fDataDist.GetNBins(); i++){
         if(!fDataDist.GetBinContent(i))
@@ -39,10 +40,13 @@ BinnedNLLH::Evaluate(){
         double prob = fPdfManager.BinProbability(i);
         if(!prob)
             throw std::runtime_error(Formatter() << "BinnedNLLH::Encountered zero probability bin! #" << i);
-        nLogLH -= fDataDist.GetBinContent(i) *  log(prob);        
+        nLogLH -= fDataDist.GetBinContent(i) *  log(prob);
+        if (fDebugMode) {
+            std::cout << "Bin i, MC bin probability: " << prob << ", data bin probability: ";
+            std::cout << fDataDist.GetBinContent(i) << std::endl;
+        }
     }
     if (fDebugMode) {
-        std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         std::cout << "NLLH after summing over bins only: " << nLogLH << std::endl;
         std::cout << "Normalisations: ";
     }
