@@ -41,7 +41,7 @@ BinnedNLLH::Evaluate(){
             throw std::runtime_error(Formatter() << "BinnedNLLH::Encountered zero probability bin! #" << i);
         nLogLH -= fDataDist.GetBinContent(i) *  log(prob);
         if (fDebugMode) {
-            std::cout << "Bin i, MC bin probability: " << prob << ", data bin probability: ";
+            std::cout << "Bin " << i << ", MC bin probability: " << prob << ", data bin probability: ";
             std::cout << fDataDist.GetBinContent(i) << std::endl;
         }
     }
