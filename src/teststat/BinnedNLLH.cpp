@@ -26,7 +26,7 @@ BinnedNLLH::Evaluate(){
     fSystematicManager.Construct();
     // Apply systematics
     fPdfManager.ApplySystematics(fSystematicManager);
-    //
+    // Marginalise pdfs back to observable dimensions only, if necessary
     fPdfManager.AssertDimensions(fDataDist.GetObservables());
     // Apply Shrinking
     fPdfManager.ApplyShrink(fPdfShrinker);
