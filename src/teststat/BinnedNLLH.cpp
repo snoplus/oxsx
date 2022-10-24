@@ -35,10 +35,6 @@ BinnedNLLH::Evaluate(){
     // loop over bins and calculate the likelihood
     double nLogLH = 0;
 
-    double betaPen    = 0;
-    double sumLogProb = 0;
-    double sumNorm    = 0;
-
     for(size_t i = 0; i < fDataDist.GetNBins(); i++){
 
         double prob = fPdfManager.BinProbability(i);
@@ -81,9 +77,6 @@ BinnedNLLH::Evaluate(){
 	  penalty = (beta-1)*(beta-1)/(2*sigma2);
 	}
 
-	betaPen += penalty;
-	sumLogProb -= fDataDist.GetBinContent(i) *  log(newProb);
-	sumNorm += newProb;
 	// LogL = mu_i - data * log(update MC) + Beta Penalty + Norm Correction
 	nLogLH = nLogLH - fDataDist.GetBinContent(i) *  log(newProb) + penalty + newProb;
 
