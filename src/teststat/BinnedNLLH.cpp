@@ -31,6 +31,7 @@ BinnedNLLH::Evaluate(){
     fPdfManager.ApplyShrink(fPdfShrinker);
 
     // loop over bins and calculate the likelihood
+    if (fDebugMode) { std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"; }
     double nLogLH = 0;
     for(size_t i = 0; i < fDataDist.GetNBins(); i++){
         if(!fDataDist.GetBinContent(i))
@@ -38,16 +39,35 @@ BinnedNLLH::Evaluate(){
         double prob = fPdfManager.BinProbability(i);
         if(!prob)
             throw std::runtime_error(Formatter() << "BinnedNLLH::Encountered zero probability bin! #" << i);
-        nLogLH -= fDataDist.GetBinContent(i) *  log(prob);        
+        nLogLH -= fDataDist.GetBinContent(i) *  log(prob);
+        if (fDebugMode) {
+            std::cout << "Bin " << i << ", MC bin probability: " << prob << ", data bin probability: ";
+            std::cout << fDataDist.GetBinContent(i) << std::endl;
+        }
     }
-
+    if (fDebugMode) {
+        std::cout << "NLLH after summing over bins only: " << nLogLH << std::endl;
+        std::cout << "Normalisations: ";
+    }
     // Extended LH correction
     const std::vector<double>& normalisations = fPdfManager.GetNormalisations();
-    for(const auto& normalisation: normalisations) { nLogLH += normalisation; }
-
+    for(const auto& normalisation: normalisations) {
+        nLogLH += normalisation;
+        if (fDebugMode) {
+            std::cout << normalisation << "\t";
+        }
+    }
+    if(fDebugMode) {
+        std::cout << "\nNLLH after adding normalisations: " << nLogLH << std::endl;
+    }
     // Constraints
     for(const auto& constraint: fConstraints) {
-        nLogLH += constraint.second.Evaluate(fComponentManager.GetParameter(constraint.first));
+        const double con = constraint.second.Evaluate(fComponentManager.GetParameter(constraint.first));
+        nLogLH += con;
+        if (fDebugMode) { std::cout << "constraint: " << con << "\t"; }
+    }
+    if (fDebugMode) {
+        std::cout << "\nTotal NLLH: " << nLogLH << "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
     }
     return nLogLH;
 }
