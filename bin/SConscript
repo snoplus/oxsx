@@ -9,8 +9,8 @@ if not env.GetOption('clean'):
         libs      = " ".join(["-l" + x  for x in env["LIBS"]])
         if env["SYSTEM"] == "Darwin":
                 link_flags      = " -Wl," + ",".join(env["LINKFLAGS"])
-	else:
-		link_flags = " -Wl," + ",".join("-rpath,{0}".format(x) for x in env["RPATH"])
+        else:
+                link_flags = " -Wl," + ",".join("-rpath,{0}".format(x) for x in env["RPATH"])
         
 
         with open(os.path.join("compile.sh"), "w") as f:
