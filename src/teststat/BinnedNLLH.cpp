@@ -30,20 +30,64 @@ BinnedNLLH::Evaluate(){
     // Apply Shrinking
     fPdfManager.ApplyShrink(fPdfShrinker);
 
+    const std::vector<double>& normalisations = fPdfManager.GetNormalisations();
+
     // loop over bins and calculate the likelihood
     double nLogLH = 0;
+
+    double betaPen    = 0;
+    double sumLogProb = 0;
+    double sumNorm    = 0;
+
     for(size_t i = 0; i < fDataDist.GetNBins(); i++){
-        if(!fDataDist.GetBinContent(i))
-            continue;
+
         double prob = fPdfManager.BinProbability(i);
         if(!prob)
             throw std::runtime_error(Formatter() << "BinnedNLLH::Encountered zero probability bin! #" << i);
-        nLogLH -= fDataDist.GetBinContent(i) *  log(prob);        
-    }
 
-    // Extended LH correction
-    const std::vector<double>& normalisations = fPdfManager.GetNormalisations();
-    for(const auto& normalisation: normalisations) { nLogLH += normalisation; }
+	double newProb = prob;
+	double penalty = 0;
+
+	if(fUseBarlowBeeston){
+	  //Calculate MC Statistical uncertainty using Beeston Barlow: sqrt(sum(weights^2))/prob
+	  //Essentially solving Eqn 11 in https://arxiv.org/abs/1103.0354 for Beta
+
+	  //sigma = Sum[root(weight_int)] (sum is over interaction types)
+	  //weight_int = bincontent_int / generated_int 
+	  //bin_content_int = prob_int_bin * normalisation_int
+	  //sigma = Sum[root(prob_int_bin * normalisation_int / generated_int_bin)]
+	  //we care about sq of fractional bin uncertainty (total bin content is prob)
+	  //sigma2 = (sigma/bin_content_tot)^2
+	  //sigma2 = (Sum[root(prob_int_bin * normalisation_int / generated_int_bin)] / prob)^2
+	  //generated_int = GenRate_int * prob_int_bin
+	  //sigma2 = (Sum[normalisation_int / generated_int] / prob)^2
+
+	  double sigma2 = 0;
+	  for (unsigned int j=0; j<normalisations.size(); j++)
+	    sigma2 += ( normalisations.at(j) ) / ( (float)fGenRates.at(j) * prob * prob);
+
+	  //Eqn 11 in https://arxiv.org/abs/1103.0354 for Beta: beta^2 + (mu x sigma^2 - 1)beta - n x sigma^2   (prob is mu, the mc events in bin. n is data events in bin)
+
+	  //b in quadratic
+	  double b = prob*sigma2 - 1;
+	  //b^2-4ac in quadratic
+	  double det = b*b + 4*fDataDist.GetBinContent(i)*sigma2;
+	  //positive beta
+	  double beta = (-b + sqrt(det))/2;
+
+	  //and update mc bin content
+	  newProb = beta*prob;
+	  //get beta penalty term
+	  penalty = (beta-1)*(beta-1)/(2*sigma2);
+	}
+
+	betaPen += penalty;
+	sumLogProb -= fDataDist.GetBinContent(i) *  log(newProb);
+	sumNorm += newProb;
+	// LogL = mu_i - data * log(update MC) + Beta Penalty + Norm Correction
+	nLogLH = nLogLH - fDataDist.GetBinContent(i) *  log(newProb) + penalty + newProb;
+
+    }
 
     // Constraints
     for(const auto& constraint: fConstraints) {
@@ -129,6 +173,15 @@ BinnedNLLH::GetDataDist() const{
     return fDataDist;
 }
 
+void
+BinnedNLLH::SetGenRates(const std::vector<int>& nGen_){
+  fGenRates = nGen_;
+}
+
+void
+BinnedNLLH::SetBarlowBeeston(const bool useBarlowBeeston_){
+  fUseBarlowBeeston = useBarlowBeeston_;
+}
 
 void
 BinnedNLLH::SetBuffer(const std::string& dim_, unsigned lower_, unsigned upper_){

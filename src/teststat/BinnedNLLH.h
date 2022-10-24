@@ -38,6 +38,9 @@ class BinnedNLLH : public TestStatistic{
     void SetDataDist(const BinnedED&);
     BinnedED GetDataDist() const;
 
+    void SetGenRates(const std::vector<int>&);
+    void SetBarlowBeeston(const bool);
+
     void SetDataSet(DataSet*);
     DataSet* GetDataSet();
 
@@ -82,6 +85,8 @@ class BinnedNLLH : public TestStatistic{
     BinnedED         fDataDist;
     bool             fCalculatedDataDist;
     bool             fAlreadyShrunk;
-    ComponentManager fComponentManager;    
+    ComponentManager fComponentManager;
+    std::vector<int> fGenRates;
+    bool fUseBarlowBeeston;    
 };
 #endif
