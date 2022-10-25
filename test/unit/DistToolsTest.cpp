@@ -8,6 +8,7 @@
 #include <math.h>
 #include <iostream>
 #include <TH1D.h>
+#include <TH3D.h>
 
 TEST_CASE("Writing a 1D pdf to a root histogram", "[DistTools]"){
     BinAxis axis("test", -100, 100, 200);
@@ -146,5 +147,31 @@ TEST_CASE("Converting 2D gaussian to binned and marginalise", "[DistTools]"){
 
         //        (DistTools::ToTH1D(xProj)).SaveAs("x_proj.root");
         //        (DistTools::ToTH1D(yProj)).SaveAs("y_proj.root");
+    }
+}
+
+TEST_CASE("Converting 3D Gaussian to ROOT format and back", "[DistTools]") {
+    BinAxis axis1("ax1", -1000, 1000, 10);
+    BinAxis axis2("ax2", -1000, 1000, 10);
+    BinAxis axis3("ax3", -1000, 1000, 10);
+
+    AxisCollection axes;
+    axes.AddAxis(axis1);
+    axes.AddAxis(axis2);
+    axes.AddAxis(axis3);
+    
+    std::vector<double> means = {0, 10, -5};
+
+    std::vector<double> stDevs = {20, 30, 10};
+
+    Gaussian gaus(means, stDevs);
+    gaus.SetCdfCutOff(1E8); // max accuracy
+    BinnedED binnedGaus("bg", DistTools::ToHist(gaus, axes));
+
+    SECTION("Converting to ROOT format and back") {
+        const TH3D binnedGausRoot = DistTools::ToTH3D(binnedGaus);
+        const Histogram binnedGausAgain = DistTools::ToHist(binnedGausRoot);
+        REQUIRE(binnedGausAgain.GetNBins() == binnedGaus.GetNBins());
+        REQUIRE(binnedGausAgain.GetBinContents() == binnedGaus.GetBinContents());
     }
 }

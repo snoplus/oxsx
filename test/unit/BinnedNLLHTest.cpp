@@ -72,7 +72,7 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
 
         double sumLogProb = -log(prob1 + prob2 + prob3);
         double sumNorm    = 3;
-        double constraint = 2;
+        double constraint = 8;
 
         ParameterDict params;
         params["a"] = 1;
@@ -86,7 +86,7 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
 
         double sumLogProb = -log(prob1 + prob2 + prob3);
         double sumNorm    = 3;
-        double constraint = 8;
+        double constraint = 2;
 
         ParameterDict params;
         params["a"] = 1;
