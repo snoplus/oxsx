@@ -15,7 +15,7 @@
 class DataSet;
 class BinnedNLLH : public TestStatistic{
  public:
-    BinnedNLLH() : fDataSet(NULL), fSignalCutEfficiency(1), fCalculatedDataDist(false), fAlreadyShrunk(false) {}
+    BinnedNLLH() : fDataSet(NULL), fSignalCutEfficiency(1), fCalculatedDataDist(false), fAlreadyShrunk(false), fDebugMode(false) {}
 
     void   SetPdfManager(const BinnedEDManager&);
     void   SetSystematicManager(const SystematicManager&);
@@ -63,6 +63,9 @@ class BinnedNLLH : public TestStatistic{
     CutLog GetSignalCutLog() const;
     void   SetSignalCutLog(const CutLog&);
 
+    bool GetDebugMode() const { return fDebugMode; }
+    void SetDebugMode(bool mode) { fDebugMode = mode; }
+
     // Test statistic interface
     void RegisterFitComponents(); 
     void SetParameters(const ParameterDict&);
@@ -86,7 +89,10 @@ class BinnedNLLH : public TestStatistic{
     bool             fCalculatedDataDist;
     bool             fAlreadyShrunk;
     ComponentManager fComponentManager;
+
     std::vector<int> fGenRates;
     bool fUseBarlowBeeston;    
+    
+    bool fDebugMode;
 };
 #endif

@@ -33,6 +33,7 @@ BinnedNLLH::Evaluate(){
     const std::vector<double>& normalisations = fPdfManager.GetNormalisations();
 
     // loop over bins and calculate the likelihood
+    if (fDebugMode) { std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"; }
     double nLogLH = 0;
 
     for(size_t i = 0; i < fDataDist.GetNBins(); i++){
@@ -77,14 +78,28 @@ BinnedNLLH::Evaluate(){
 	  penalty = (beta-1)*(beta-1)/(2*sigma2);
 	}
 
+	if (fDebugMode) {
+	  std::cout << "Bin " << i << ", MC bin probability: " << prob << ", data bin probability: ";
+	  std::cout << fDataDist.GetBinContent(i) << std::endl;
+        }
+
 	// LogL = mu_i - data * log(update MC) + Beta Penalty + Norm Correction
 	nLogLH = nLogLH - fDataDist.GetBinContent(i) *  log(newProb) + penalty + newProb;
 
     }
 
+    if (fDebugMode) {
+        std::cout << "NLLH after summing over bins only: " << nLogLH << std::endl;
+    }
+
     // Constraints
     for(const auto& constraint: fConstraints) {
-        nLogLH += constraint.second.Evaluate(fComponentManager.GetParameter(constraint.first));
+        const double con = constraint.second.Evaluate(fComponentManager.GetParameter(constraint.first));
+        nLogLH += con;
+        if (fDebugMode) { std::cout << "constraint: " << con << "\t"; }
+    }
+    if (fDebugMode) {
+        std::cout << "\nTotal NLLH: " << nLogLH << "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
     }
     return nLogLH;
 }
