@@ -38,7 +38,6 @@ class BinnedNLLH : public TestStatistic{
     void SetDataDist(const BinnedED&);
     BinnedED GetDataDist() const;
 
-    void SetGenRates(const std::vector<int>&);
     void SetBarlowBeeston(const bool);
 
     void SetDataSet(DataSet*);
@@ -48,8 +47,12 @@ class BinnedNLLH : public TestStatistic{
     std::pair<unsigned, unsigned> GetBuffer(const std::string& dim_) const;
 
     void AddPdf(const BinnedED& pdf, const std::vector<std::string>& syss_);
+    void AddPdf(const BinnedED& pdf, const int& rate_);
+    void AddPdf(const BinnedED& pdf, const std::vector<std::string>& syss_, const int& rate_);
     void AddPdfs(const std::vector<BinnedED>& pdfs);
     void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& syss_);
+    void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<int>& rates_);
+    void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& syss_, const std::vector<int>& rates_);
 
     void SetBufferAsOverflow(bool b_); // true by default
     bool GetBufferAsOverflow() const;

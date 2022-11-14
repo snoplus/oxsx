@@ -94,11 +94,17 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
         lh.SetParameters(params);
         REQUIRE(lh.Evaluate() == Approx(sumNorm + sumLogProb + constraint));
     }
-    SECTION("Correct Probability with Barlow Beeston"){
-      std::vector<int> genRates(3, pow(10,6));
-      lh.SetGenRates(genRates);
-      lh.SetBarlowBeeston(true);
 
+    std::vector<int> genRates(3, pow(10,6));
+    BinnedNLLH lh2;
+    lh2.SetBarlowBeeston(true);
+    lh2.AddPdf(pdf1, genRates.at(0));
+    lh2.AddPdf(pdf2, genRates.at(1));
+    lh2.AddPdf(pdf3, genRates.at(2));
+    lh2.SetDataSet(&data);
+    lh2.RegisterFitComponents();
+
+    SECTION("Correct Probability with Barlow Beeston"){
       double betaPen    = 0;
       double sumLogProb = 0;
       double sumNorm    = 0;
@@ -129,15 +135,12 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
       params["a"] = 1;
       params["b"] = 1;
       params["c"] = 1;
-      lh.SetParameters(params);
-      REQUIRE(lh.Evaluate() == Approx(sumNorm + sumLogProb + betaPen));
+      lh2.SetParameters(params);
+      REQUIRE(lh2.Evaluate() == Approx(sumNorm + sumLogProb + betaPen));
     }
     SECTION("Correct Probability with Barlow Beeston and constraint"){
-      lh.SetConstraint("a", 3, 1);
-      std::vector<int> genRates(3, pow(10,6));
-      lh.SetGenRates(genRates);
-      lh.SetBarlowBeeston(true);
-
+      lh2.SetConstraint("a", 3, 1);
+    
       double betaPen    = 0;
       double sumLogProb = 0;
       double sumNorm    = 0;
@@ -169,14 +172,11 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
       params["a"] = 1;
       params["b"] = 1;
       params["c"] = 1;
-      lh.SetParameters(params);
-      REQUIRE(lh.Evaluate() == Approx(sumNorm + sumLogProb + betaPen + constraint));
+      lh2.SetParameters(params);
+      REQUIRE(lh2.Evaluate() == Approx(sumNorm + sumLogProb + betaPen + constraint));
     }
     SECTION("Correct probability with Barlow Beeston and asymmetric constraint"){
-      lh.SetConstraint("b", 5, 1, 2);
-      std::vector<int> genRates(3, pow(10,6));
-      lh.SetGenRates(genRates);
-      lh.SetBarlowBeeston(true);
+      lh2.SetConstraint("b", 5, 1, 2);
 
       double betaPen    = 0;
       double sumLogProb = 0;
@@ -209,14 +209,11 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
       params["a"] = 1;
       params["b"] = 1;
       params["c"] = 1;
-      lh.SetParameters(params);
-      REQUIRE(lh.Evaluate() == Approx(sumNorm + sumLogProb + betaPen + constraint));
+      lh2.SetParameters(params);
+      REQUIRE(lh2.Evaluate() == Approx(sumNorm + sumLogProb + betaPen + constraint));
     }
     SECTION("Correct Probability with Barlow Beeston and constraint 2"){
-      lh.SetConstraint("b", -3, 1, 2);
-      std::vector<int> genRates(3, pow(10,6));
-      lh.SetGenRates(genRates);
-      lh.SetBarlowBeeston(true);
+      lh2.SetConstraint("b", -3, 1, 2);
 
       double betaPen    = 0;
       double sumLogProb = 0;
@@ -249,7 +246,7 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
       params["a"] = 1;
       params["b"] = 1;
       params["c"] = 1;
-      lh.SetParameters(params);
-      REQUIRE(lh.Evaluate() == Approx(sumNorm + sumLogProb + betaPen + constraint));
+      lh2.SetParameters(params);
+      REQUIRE(lh2.Evaluate() == Approx(sumNorm + sumLogProb + betaPen + constraint));
     }
 }

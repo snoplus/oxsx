@@ -116,28 +116,62 @@ BinnedNLLH::BinData(){
 
 void
 BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& sys_){
+
+    if(fUseBarlowBeeston)
+      throw OXSXException(Formatter()<<"BinnedNLLH:: Must set generated rates if using Barlow-Beeston");
     if (pdfs.size() != sys_.size())
        throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
     for (size_t i = 0; i < pdfs.size(); ++i) { AddPdf( pdfs.at(i), sys_.at(i) ); }
 }
 
 void
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<int>& genrates_){
+  for (size_t i = 0; i < pdfs.size(); ++i) { AddPdf(pdfs.at(i), genrates_.at(i)); }
+}
+
+void
 BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs){
+  if(fUseBarlowBeeston)
+    throw OXSXException(Formatter()<<"BinnedNLLH:: Must set generated rates if using Barlow-Beeston");
     for (const auto& pdf: pdfs) { AddPdf(pdf); }
 }
 
 void
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& sys_, const std::vector<int>& genrates_){
+  if (pdfs.size() != sys_.size())
+    throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
+  for (size_t i = 0; i < pdfs.size(); ++i) { AddPdf( pdfs.at(i), sys_.at(i), genrates_.at(i) ); }
+}
+
+void
 BinnedNLLH::AddPdf(const BinnedED& pdf_, const std::vector<std::string>& syss_){
-    fPdfManager.AddPdf(pdf_);
-    fSystematicManager.AddDist(pdf_,syss_);
+  if(fUseBarlowBeeston)
+    throw OXSXException(Formatter()<<"BinnedNLLH:: Must set generated rates if using Barlow-Beeston");
+  fPdfManager.AddPdf(pdf_);
+  fSystematicManager.AddDist(pdf_,syss_);
+}
+
+void
+BinnedNLLH::AddPdf(const BinnedED& pdf_, const int& genrate_){
+  fPdfManager.AddPdf(pdf_);
+  fSystematicManager.AddDist(pdf_,"");
+  fGenRates.push_back(genrate_);
 }
 
 void
 BinnedNLLH::AddPdf(const BinnedED& pdf_){
-    fPdfManager.AddPdf(pdf_);
-    fSystematicManager.AddDist(pdf_,"");
+  if(fUseBarlowBeeston)
+    throw OXSXException(Formatter()<<"BinnedNLLH:: Must set generated rates if using Barlow-Beeston");
+  fPdfManager.AddPdf(pdf_);
+  fSystematicManager.AddDist(pdf_,"");
 }
 
+void
+BinnedNLLH::AddPdf(const BinnedED& pdf_, const std::vector<std::string>& syss_, const int& genrate_){
+  fPdfManager.AddPdf(pdf_);
+  fSystematicManager.AddDist(pdf_,syss_);
+  fGenRates.push_back(genrate_);
+}
 
 void
 BinnedNLLH::SetPdfManager(const BinnedEDManager& man_){
@@ -179,11 +213,6 @@ BinnedNLLH::SetDataDist(const BinnedED& binnedPdf_){
 BinnedED
 BinnedNLLH::GetDataDist() const{
     return fDataDist;
-}
-
-void
-BinnedNLLH::SetGenRates(const std::vector<int>& nGen_){
-  fGenRates = nGen_;
 }
 
 void
