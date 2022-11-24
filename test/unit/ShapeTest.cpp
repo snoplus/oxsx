@@ -81,6 +81,8 @@ TEST_CASE("Shape") {
 
         BinnedED pdf_sig("signal", DistTools::ToHist(gauss_sig, axes));
         BinnedED pdf_back("back", DistTools::ToHist(gauss_back, axes));
+        pdf_sig.Normalise();
+        pdf_back.Normalise();
 
         const std::vector<std::string> observables {"obs0", "obs1"};
         pdf_sig.SetObservables(observables);
@@ -88,14 +90,14 @@ TEST_CASE("Shape") {
 
         BinnedNLLH lh;
         lh.AddSystematic(&shape_sys, "shape_group");
-        lh.AddPdf(pdf_sig, {"shape_group"}, false);
+        lh.AddPdf(pdf_sig, {"shape_group"}, FALSE);
         lh.AddPdf(pdf_back);
 
         const std::vector<double> test_point {0, 30};
         const size_t central_bin = pdf_sig.FindBin(test_point);
         double shape_norm_factor;
         BinnedED pdf_sig_mod = shape_sys(pdf_sig, &shape_norm_factor);
-        double prob_sig = pdf_sig_mod.GetBinContent(central_bin)*shape_norm_factor;
+        double prob_sig = pdf_sig_mod.GetBinContent(central_bin);
         double prob_back = pdf_back.GetBinContent(central_bin);
 
         double sum_log_prob = -log(prob_back + prob_sig);
@@ -118,7 +120,7 @@ TEST_CASE("Shape") {
         shape_sys_2.SetParameters({{"a", 1}, {"b", 500}});
         shape_sys_2.Construct();
         pdf_sig_mod = shape_sys_2(pdf_sig, &shape_norm_factor);
-        prob_sig = pdf_sig_mod.GetBinContent(central_bin)*shape_norm_factor;
+        prob_sig = pdf_sig_mod.GetBinContent(central_bin);
         prob_back = pdf_back.GetBinContent(central_bin)*2.;
         sum_log_prob = -log(prob_back + prob_sig);
         sum_norm = shape_norm_factor + 2.;

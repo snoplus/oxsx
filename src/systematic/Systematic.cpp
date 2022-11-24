@@ -10,7 +10,6 @@ Systematic::operator() (const BinnedED& pdf_, double* norm) const{
         afterSmear.SetBinContents(fResponse(pdf_.GetBinContents()));
         if (norm != nullptr) {
             *norm = afterSmear.Integral();
-            afterSmear.Scale(1./(*norm));
         } else {
             afterSmear.Normalise();
         }
