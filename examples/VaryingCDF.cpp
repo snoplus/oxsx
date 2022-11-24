@@ -74,7 +74,7 @@ class Ploy : public Function{
             return parameters.at("grad")*sqrt(abs(vals_[0]))+parameters.at("offset");
         }
 
-        int GetNDims() const{
+        size_t GetNDims() const{
             return 1;
         }
 
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
 
     Gaussian gaus(20, 3);
     BinnedED pdf("pdf", DistTools::ToHist(gaus, axes));
-    pdf.SetObservables(0);
+    pdf.SetObservables({"axis1"});
 
     pdf.Scale(40000);
 

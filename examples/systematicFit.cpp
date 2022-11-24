@@ -77,10 +77,10 @@ fitWithSystematicsGroups(){
     BinnedED pdf4("b_data", DistTools::ToHist(gaus4, axes));
     BinnedED pdf2("b_mc", DistTools::ToHist(gaus3, axes));
 
-    pdf1.SetObservables(0);
-    pdf2.SetObservables(0);    
-    pdf3.SetObservables(0);
-    pdf4.SetObservables(0);
+    pdf1.SetObservables({"axis1"});
+    pdf2.SetObservables({"axis1"});    
+    pdf3.SetObservables({"axis1"});
+    pdf4.SetObservables({"axis1"});
 
     pdf1.Scale(100000);
     pdf2.Scale(100000);    
@@ -360,10 +360,10 @@ fitWithGlobalSystematics(){
     BinnedED pdf3 = scale->operator()(pdf1);
     BinnedED pdf4 = scale->operator()(pdf2);
 
-    pdf1.SetObservables(0);
-    pdf2.SetObservables(0);    
-    pdf3.SetObservables(0);
-    pdf4.SetObservables(0);
+    pdf1.SetObservables({"axis1"});
+    pdf2.SetObservables({"axis1"});    
+    pdf3.SetObservables({"axis1"});
+    pdf4.SetObservables({"axis1"});
 
     pdf1.Scale(100000);
     pdf2.Scale(100000);    
@@ -621,10 +621,10 @@ fitWithCombinedSystematics(){
     BinnedED pdf3 = conv_a->operator()(scale->operator()(pdf1));
     BinnedED pdf4 = conv_b->operator()(scale->operator()(pdf2));
 
-    pdf1.SetObservables(0);
-    pdf2.SetObservables(0);    
-    pdf3.SetObservables(0);
-    pdf4.SetObservables(0);
+    pdf1.SetObservables({"axis1"});
+    pdf2.SetObservables({"axis1"});    
+    pdf3.SetObservables({"axis1"});
+    pdf4.SetObservables({"axis1"});
 
     pdf1.Scale(100000);
     pdf2.Scale(100000);    

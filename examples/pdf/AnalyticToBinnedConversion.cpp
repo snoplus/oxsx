@@ -22,7 +22,7 @@ int main(){
 
     // 3. Dont forget to set the data representation if you want to use it
     // to calculate event probabilities
-    pdf.SetObservables(ObsSet(0));
+    pdf.SetObservables({"energy"});
 
     std::cout << pdf.Probability(Event(std::vector<double>(1, 2))) 
               << std::endl;   

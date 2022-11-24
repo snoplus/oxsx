@@ -12,14 +12,16 @@ The CutCollection object is used to FillPdfs or generate data sets, only taking 
 #include <iostream>
 
 int main(){
-    // cut if first observable is bigger than two i.e. a lower limit
-    LineCut lineCut(0, 2, "lower");
+    // Names for observables
+    const std::vector<std::string> observables = {"radius", "energy", "external_tag"};
+    // cut if radius is bigger than two i.e. a lower limit
+    LineCut lineCut("fv_cut", "radius", 2, "lower");
     
     // cut if second observable is between 5 and 10
-    BoxCut boxCut(1, 5, 10);
+    BoxCut boxCut("energy_cut", "energy", 5, 10);
 
     // cut if the third value is 1 exactly
-    BoolCut boolCut(2, 1);
+    BoolCut boolCut("external_cut", "external_tag", 1);
 
     // Combine the three cuts
     CutCollection combinedCuts;

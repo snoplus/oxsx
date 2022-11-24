@@ -46,7 +46,7 @@ int main(int argc, char *argv[]){
     ///////////////////// 
     Gaussian gausPdf(15, 0.5);
     BinnedED pdf1("a_mc", DistTools::ToHist(gausPdf, axes));
-    pdf1.SetObservables(0);
+    pdf1.SetObservables({"axis1"});
     pdf1.Scale(100000);
 
     pdf1.Normalise();
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]){
     /////////////////////////
     Gaussian gausData(20, 1.0);
     BinnedED pdf3("a_data", DistTools::ToHist(gausData, axes));
-    pdf3.SetObservables(0);
+    pdf3.SetObservables({"axis1"});
 
     std::vector<BinnedED> dataPdfs;
     dataPdfs.push_back(pdf3);
