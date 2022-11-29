@@ -131,7 +131,7 @@ class Ploy : public Function{
         ParameterDict parameters;
 };
 
-int main(int argc, char *argv[])
+int main()
 {
     AxisCollection axes;
     axes.AddAxis(BinAxis("axis1", 10, 30 ,200));

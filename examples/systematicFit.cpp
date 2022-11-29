@@ -48,7 +48,7 @@ void fitWithSystematicsGroups();
 void fitWithGlobalSystematics();
 void fitWithCombinedSystematics();
 
-int main(int argc, char *argv[]){
+int main(){
     // Using groups of systematics.
     fitWithSystematicsGroups();
     // Using global of systematics.
@@ -901,7 +901,7 @@ diffHist(TH1D * h1,TH1D * h2){
 void
 padPDFs(std::vector<BinnedED>& binnedEDList){
     std::cout<<"Padding Now"<<std::endl;
-    for(int i=0;i<binnedEDList.size();i++){
+    for(size_t i=0;i<binnedEDList.size();i++){
       binnedEDList.at(i).AddPadding();
     }
 }

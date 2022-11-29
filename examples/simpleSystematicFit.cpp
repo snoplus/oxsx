@@ -35,7 +35,7 @@
 
 TH1D* diffHist(TH1D * h1,TH1D * h2);
 
-int main(int argc, char *argv[]){
+int main(){
 
     Rand::SetSeed(0);
     AxisCollection axes;
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]){
 
     // Padding MC PDFs with small numbers
     std::cout<<"Padding MC Now"<<std::endl;
-    for(int i=0; i<mcPdfs.size(); i++){
+    for(size_t i=0; i<mcPdfs.size(); i++){
       mcPdfs.at(i).AddPadding();
     }
 
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]){
     
     // Padding data distributions with small numbers
     std::cout<<"Padding Data Now"<<std::endl;
-    for(int i=0; i<dataPdfs.size(); i++){
+    for(size_t i=0; i<dataPdfs.size(); i++){
       dataPdfs.at(i).AddPadding();
     }
 

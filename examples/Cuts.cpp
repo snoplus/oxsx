@@ -36,6 +36,7 @@ int main(){
     observations.push_back(1);
 
     Event fakeEvent(observations);
+    fakeEvent.SetObservableNames(&observables);
 
     // test it
     std::cout << "Event passes line cut " 
