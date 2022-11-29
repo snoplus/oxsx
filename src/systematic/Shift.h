@@ -5,10 +5,11 @@
 #define __OXSX_SHIFT__
 #include <Systematic.h>
 #include <string>
+#include <DenseMatrix.h>
 
 class Shift : public Systematic{
  public:
-    Shift(const std::string& name_) : fShift(1), fName(name_), fParamName("shift") {}
+    Shift(const std::string& name_) : fShift(1), fName(name_), fParamName("shift"), fCachedBinMapping(false) {}
     void   SetShift(double);
     double GetShift() const;
     
@@ -32,5 +33,13 @@ class Shift : public Systematic{
     double      fShift;
     std::string fName;
     std::string fParamName;
+
+    std::vector<size_t> fDistTransBinMapping;
+    DenseMatrix fMappingDistAndTrans;
+    bool fCachedBinMapping;
+
+    void CacheBinMapping();
+    double GetBinContribution(const BinAxis& shiftAxis, double shiftedLow,
+                                     double shiftedHigh, size_t bin_test);
 };
 #endif
