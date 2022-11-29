@@ -27,11 +27,14 @@ int main(){
    
     // Now test it out on some other fake objects
     AxisCollection axes;
-    axes.AddAxis(BinAxis("", 0, 10, 100));
+    axes.AddAxis(BinAxis("energy", 0, 30, 100));
+    axes.AddAxis(BinAxis("radius", 0, 6, 100));
     BinnedED pdf("", axes);
     pdf.SetObservables(observables);
 
-    Event event(std::vector<double> (20, 1));
+    Event event(std::vector<double>{20, 1});
+    event.SetObservableNames(&observables);
+    pdf.Fill(event);
     std::cout << "A " << dataRep2.GetNObservables() << "D representation\n"
               << "allows a " << pdf.GetNDims() << "D pdf\n"
               << "to act on an event with " 
