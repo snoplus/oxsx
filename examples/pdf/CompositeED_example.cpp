@@ -25,6 +25,7 @@ int main(){
     // 2d pdf will look at observables "E" and "r"
     // you can address these by names if they come from a data set
     std::vector<std::string> observables = {"E", "r"};
+    std::vector<std::string> observables_full = {"E", "r", "t"};
 
     pdf2d.SetObservables(ObsSet(observables));
 
@@ -45,7 +46,8 @@ int main(){
 
     std::cout << "Like any other pdf it can be normalised " << std::endl;
     
-    Event fakeEvent(std::vector<double>(10, 2));
+    Event fakeEvent(std::vector<double>{1, 2, 1});
+    fakeEvent.SetObservableNames(&observables_full);
 
     std::cout << "Calling probability on the composite pdf "
               << "gives you " 

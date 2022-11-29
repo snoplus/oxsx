@@ -31,7 +31,7 @@ int main(){
 
     //  every bin is assigned a unique ID
     std::cout << "bin (5, 5) is equivalent to bin #" 
-              << binnedED.FlattenIndices(std::vector<size_t>(5, 5))
+              << binnedED.FlattenIndices(std::vector<size_t>{5, 5})
               << std::endl;
 
     std::vector<size_t> binIndices = binnedED.UnpackIndices(505);
@@ -61,13 +61,14 @@ int main(){
     // the call to Probability automatically selects the right indices,
     // this allows different pdfs to operate on different observables
     Event fakeEvent(std::vector<double>(10,1));
+    fakeEvent.SetObservableNames(&observables);
     binnedED.Fill(fakeEvent);
     std::cout << binnedED.Probability(fakeEvent) << std::endl;
     
 
     // Marginalisation is possible, just pass the indices you would like to
     // _keep_. Here the options are 0 or 2 (think data representation)
-    BinnedED projection = binnedED.Marginalise(std::vector<std::string>{"obs0"});
+    BinnedED projection = binnedED.Marginalise(std::vector<std::string>{"axis name2"});
     std::cout << "the projection along observable 0 is " 
               << projection.GetNDims() << " dimensional"
               << std::endl;
