@@ -6,9 +6,9 @@
 #include <iostream>
 
 TEST_CASE("Binned NLLH, 3 rates no systematics"){
-    Gaussian gaus1(1, 10);
-    Gaussian gaus2(1, 20);
-    Gaussian gaus3(1, 30);
+    Gaussian gaus1(1, 5);
+    Gaussian gaus2(1, 8);
+    Gaussian gaus3(1, 10);
 
     AxisCollection axes;
     axes.AddAxis(BinAxis("axis1", -40, 40 , 200));
@@ -94,5 +94,160 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
         params["c"] = 1;
         lh.SetParameters(params);
         REQUIRE(lh.Evaluate() == Approx(sumNorm + sumLogProb + constraint));
+    }
+
+    std::vector<int> genRates(3, pow(10,6));
+    BinnedNLLH lh2;
+    lh2.SetBarlowBeeston(true);
+    lh2.AddPdf(pdf1, genRates.at(0));
+    lh2.AddPdf(pdf2, genRates.at(1));
+    lh2.AddPdf(pdf3, genRates.at(2));
+    lh2.SetDataSet(&data);
+    lh2.RegisterFitComponents();
+
+    SECTION("Correct Probability with Barlow Beeston"){
+      double betaPen    = 0;
+      double sumLogProb = 0;
+      double sumNorm    = 0;
+
+      for(unsigned int i=0; i<pdf1.GetNBins(); i++){
+
+	double binprob1 = pdf1.GetBinContent(i);
+	double binprob2 = pdf2.GetBinContent(i);
+	double binprob3 = pdf3.GetBinContent(i);	
+	double binprob  = binprob1 + binprob2 + binprob3;
+
+	double dat=0;
+	if(i==centralBin)
+	  dat = 1;
+
+	double sig1     = sqrt(1/(float)genRates.at(0));
+	double sig2     = sqrt(1/(float)genRates.at(1));
+	double sig3     = sqrt(1/(float)genRates.at(2));	
+	double sig      = sqrt(sig1*sig1 + sig2*sig2 + sig3*sig3)/binprob;
+	double beta     = (-(binprob*sig*sig - 1) + sqrt((binprob*sig*sig - 1)*(binprob*sig*sig - 1) + 4*dat*sig*sig))/2;
+
+	betaPen         += (beta-1)*(beta-1)/(2*sig*sig);
+	sumLogProb      += -dat*log(beta*(binprob));
+	sumNorm         += beta*(binprob);
+      }
+
+      ParameterDict params;
+      params["a"] = 1;
+      params["b"] = 1;
+      params["c"] = 1;
+      lh2.SetParameters(params);
+      REQUIRE(lh2.Evaluate() == Approx(sumNorm + sumLogProb + betaPen));
+    }
+    SECTION("Correct Probability with Barlow Beeston and constraint"){
+      lh2.SetConstraint("a", 3, 1);
+    
+      double betaPen    = 0;
+      double sumLogProb = 0;
+      double sumNorm    = 0;
+      double constraint = 2;
+
+      for(unsigned int i=0; i<pdf1.GetNBins(); i++){
+
+	double binprob1 = pdf1.GetBinContent(i);
+        double binprob2 = pdf2.GetBinContent(i);
+        double binprob3 = pdf3.GetBinContent(i);
+        double binprob  = binprob1 + binprob2 + binprob3;
+
+        double dat=0;
+        if(i==centralBin)
+          dat = 1;
+
+        double sig1     = sqrt(1/(float)genRates.at(0));
+        double sig2     = sqrt(1/(float)genRates.at(1));
+        double sig3     = sqrt(1/(float)genRates.at(2));
+        double sig      = sqrt(sig1*sig1 + sig2*sig2 + sig3*sig3)/binprob;
+        double beta     = (-(binprob*sig*sig - 1) + sqrt((binprob*sig*sig - 1)*(binprob*sig*sig - 1) + 4*dat*sig*sig))/2;
+
+        betaPen         += (beta-1)*(beta-1)/(2*sig*sig);
+        sumLogProb      += -dat*log(beta*(binprob));
+        sumNorm         += beta*(binprob);
+      }
+
+      ParameterDict params;
+      params["a"] = 1;
+      params["b"] = 1;
+      params["c"] = 1;
+      lh2.SetParameters(params);
+      REQUIRE(lh2.Evaluate() == Approx(sumNorm + sumLogProb + betaPen + constraint));
+    }
+    SECTION("Correct probability with Barlow Beeston and asymmetric constraint"){
+      lh2.SetConstraint("b", 5, 1, 2);
+
+      double betaPen    = 0;
+      double sumLogProb = 0;
+      double sumNorm    = 0;
+      double constraint = 8;
+
+      for(unsigned int i=0; i<pdf1.GetNBins(); i++){
+
+        double binprob1 = pdf1.GetBinContent(i);
+        double binprob2 = pdf2.GetBinContent(i);
+        double binprob3 = pdf3.GetBinContent(i);
+        double binprob  = binprob1 + binprob2 + binprob3;
+
+        double dat=0;
+        if(i==centralBin)
+          dat = 1;
+
+        double sig1     = sqrt(1/(float)genRates.at(0));
+        double sig2     = sqrt(1/(float)genRates.at(1));
+        double sig3     = sqrt(1/(float)genRates.at(2));
+        double sig      = sqrt(sig1*sig1 + sig2*sig2 + sig3*sig3)/binprob;
+        double beta     = (-(binprob*sig*sig - 1) + sqrt((binprob*sig*sig - 1)*(binprob*sig*sig - 1) + 4*dat*sig*sig))/2;
+
+        betaPen         += (beta-1)*(beta-1)/(2*sig*sig);
+        sumLogProb      += -dat*log(beta*(binprob));
+        sumNorm         += beta*(binprob);
+      }
+
+      ParameterDict params;
+      params["a"] = 1;
+      params["b"] = 1;
+      params["c"] = 1;
+      lh2.SetParameters(params);
+      REQUIRE(lh2.Evaluate() == Approx(sumNorm + sumLogProb + betaPen + constraint));
+    }
+    SECTION("Correct Probability with Barlow Beeston and constraint 2"){
+      lh2.SetConstraint("b", -3, 1, 2);
+
+      double betaPen    = 0;
+      double sumLogProb = 0;
+      double sumNorm    = 0;
+      double constraint = 2;
+
+      for(unsigned int i=0; i<pdf1.GetNBins(); i++){
+
+	double binprob1 = pdf1.GetBinContent(i);
+	double binprob2 = pdf2.GetBinContent(i);
+	double binprob3 = pdf3.GetBinContent(i);
+	double binprob  = binprob1 + binprob2 + binprob3;
+
+	double dat=0;
+	if(i==centralBin)
+          dat = 1;
+
+	double sig1     = sqrt(1/(float)genRates.at(0));
+	double sig2     = sqrt(1/(float)genRates.at(1));
+	double sig3     = sqrt(1/(float)genRates.at(2));
+	double sig      = sqrt(sig1*sig1 + sig2*sig2 + sig3*sig3)/binprob;
+	double beta     = (-(binprob*sig*sig - 1) + sqrt((binprob*sig*sig - 1)*(binprob*sig*sig - 1) + 4*dat*sig*sig))/2;
+
+	betaPen         += (beta-1)*(beta-1)/(2*sig*sig);
+	sumLogProb      += -dat*log(beta*(binprob));
+	sumNorm         += beta*(binprob);
+      }
+
+      ParameterDict params;
+      params["a"] = 1;
+      params["b"] = 1;
+      params["c"] = 1;
+      lh2.SetParameters(params);
+      REQUIRE(lh2.Evaluate() == Approx(sumNorm + sumLogProb + betaPen + constraint));
     }
 }

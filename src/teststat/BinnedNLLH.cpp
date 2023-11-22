@@ -32,36 +32,78 @@ BinnedNLLH::Evaluate(){
     // Apply Shrinking
     fPdfManager.ApplyShrink(fPdfShrinker);
 
+    const std::vector<double>& normalisations = fPdfManager.GetNormalisations();
+
     // loop over bins and calculate the likelihood
     if (fDebugMode) { std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"; }
     double nLogLH = 0;
+
     for(size_t i = 0; i < fDataDist.GetNBins(); i++){
-        if(!fDataDist.GetBinContent(i))
-            continue;
+
         double prob = fPdfManager.BinProbability(i);
         if(!prob)
             throw std::runtime_error(Formatter() << "BinnedNLLH::Encountered zero probability bin! #" << i);
-        nLogLH -= fDataDist.GetBinContent(i) *  log(prob);
-        if (fDebugMode) {
-            std::cout << "Bin " << i << ", MC bin probability: " << prob << ", data bin probability: ";
-            std::cout << fDataDist.GetBinContent(i) << std::endl;
+
+	double newProb = prob;
+	double penalty = 0;
+
+	if(fUseBarlowBeeston){
+	  //Calculate MC Statistical uncertainty using Beeston Barlow: sqrt(sum(weights^2))/prob
+	  //Essentially solving Eqn 11 in https://arxiv.org/abs/1103.0354 for Beta
+
+	  //sigma = Sum[root(weight_int)] (sum is over interaction types)
+	  //weight_int = bincontent_int / generated_int 
+	  //bin_content_int = prob_int_bin * normalisation_int
+	  //sigma = Sum[root(prob_int_bin * normalisation_int / generated_int_bin)]
+	  //we care about sq of fractional bin uncertainty (total bin content is prob)
+	  //sigma2 = (sigma/bin_content_tot)^2
+	  //sigma2 = (Sum[root(prob_int_bin * normalisation_int / generated_int_bin)] / prob)^2
+	  //generated_int = GenRate_int * prob_int_bin
+	  //sigma2 = (Sum[normalisation_int / generated_int] / prob)^2
+
+	  double sigma2 = 0;
+	  for (unsigned int j=0; j<normalisations.size(); j++)
+	    sigma2 += ( normalisations.at(j) ) / ( (double)fGenRates.at(j) * prob * prob);
+
+	  //Eqn 11 in https://arxiv.org/abs/1103.0354 for Beta: beta^2 + (mu x sigma^2 - 1)beta - n x sigma^2   (prob is mu, the mc events in bin. n is data events in bin)
+
+	  //b in quadratic
+	  double b = prob*sigma2 - 1;
+	  //b^2-4ac in quadratic
+	  double det = b*b + 4*fDataDist.GetBinContent(i)*sigma2;
+
+	  if(det<0.) {    // imaginary roots
+	    throw OXSXException(Formatter()<<"BinnedNLLH:: Negative determinant in beta calculation for Barlow-Beeston. Something has gone terribly wrong.");
+	  }
+
+	  double sign = (b >= 0) ? 1. : -1.;
+	  double q = -0.5*( b + sign*sqrt(det) );
+
+	  double x1 = q;
+	  double x2 = fDataDist.GetBinContent(i)*sigma2/q;
+
+	  double beta = (x1 > x2) ? x1 : x2;
+ 
+	  //and update mc bin content
+	  newProb = beta*prob;
+	  //get beta penalty term
+	  penalty = (beta-1)*(beta-1)/(2*sigma2);
+	}
+
+	if (fDebugMode) {
+	  std::cout << "Bin " << i << ", MC bin probability: " << prob << ", data bin probability: ";
+	  std::cout << fDataDist.GetBinContent(i) << std::endl;
         }
+
+	// LogL = mu_i - data * log(update MC) + Beta Penalty + Norm Correction
+	nLogLH = nLogLH - fDataDist.GetBinContent(i) *  log(newProb) + penalty + newProb;
+
     }
+
     if (fDebugMode) {
         std::cout << "NLLH after summing over bins only: " << nLogLH << std::endl;
-        std::cout << "Normalisations: ";
     }
-    // Extended LH correction
-    const std::vector<double>& normalisations = fPdfManager.GetNormalisations();
-    for(const auto& normalisation: normalisations) {
-        nLogLH += normalisation;
-        if (fDebugMode) {
-            std::cout << normalisation << "\t";
-        }
-    }
-    if(fDebugMode) {
-        std::cout << "\nNLLH after adding normalisations: " << nLogLH << std::endl;
-    }
+
     // Constraints
     for(const auto& constraint: fConstraints) {
         const double con = constraint.second.Evaluate(fComponentManager.GetParameter(constraint.first));
@@ -88,6 +130,10 @@ void
 BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs,
                     const std::vector<std::vector<std::string> >& sys_,
                     const std::vector<NormFittingStatus>* norm_fitting_statuses){
+                    
+    if(fUseBarlowBeeston)
+        throw OXSXException(Formatter()<<"BinnedNLLH:: Must set generated rates if using Barlow-Beeston");
+
     if (pdfs.size() != sys_.size())
         throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
     if(norm_fitting_statuses != nullptr && pdfs.size() != norm_fitting_statuses->size()) {
@@ -104,32 +150,91 @@ BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs,
 
 void
 BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs,
-                    const std::vector<NormFittingStatus>* norm_fitting_statuses){
+		    const std::vector<int>& genrates_,
+		    const std::vector<NormFittingStatus>* norm_fitting_statuses){
+
     if(norm_fitting_statuses != nullptr && pdfs.size() != norm_fitting_statuses->size()) {
         throw DimensionError("BinnedNLLH: number of norm_fittable bools doesn't the number of pdfs");
     }
     for(size_t i = 0; i < pdfs.size(); i++){
         if (norm_fitting_statuses != nullptr) {
-            AddPdf(pdfs.at(i), norm_fitting_statuses->at(i));
+            AddPdf(pdfs.at(i), genrates_.at(i), norm_fitting_statuses->at(i));
         } else {
-            AddPdf(pdfs.at(i));
+            AddPdf(pdfs.at(i), genrates_.at(i));
         }
     }
 }
 
 void
-BinnedNLLH::AddPdf(const BinnedED& pdf_, const std::vector<std::string>& syss_,
-                   const NormFittingStatus norm_fitting_status){
-    fPdfManager.AddPdf(pdf_, norm_fitting_status);
-    fSystematicManager.AddDist(pdf_,syss_);
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs,
+		    const std::vector<NormFittingStatus>* norm_fitting_statuses){
+  if(fUseBarlowBeeston)
+      throw OXSXException(Formatter()<<"BinnedNLLH:: Must set generated rates if using Barlow-Beeston");
+  if(norm_fitting_statuses != nullptr && pdfs.size() != norm_fitting_statuses->size()) {
+      throw DimensionError("BinnedNLLH: number of norm_fittable bools doesn't the number of pdfs");
+    }
+  for(size_t i = 0; i < pdfs.size(); i++){
+      if (norm_fitting_statuses != nullptr) {
+          AddPdf(pdfs.at(i), norm_fitting_statuses->at(i));
+        } else {
+              AddPdf(pdfs.at(i));
+        }
+    }
 }
 
 void
-BinnedNLLH::AddPdf(const BinnedED& pdf_, const NormFittingStatus norm_fitting_status){
-    fPdfManager.AddPdf(pdf_, norm_fitting_status);
-    fSystematicManager.AddDist(pdf_,"");
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs,
+		    const std::vector<std::vector<std::string> >& sys_,
+		    const std::vector<int>& genrates_,
+		    const std::vector<NormFittingStatus>* norm_fitting_statuses){
+  if (pdfs.size() != sys_.size())
+    throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
+  for(size_t i = 0; i < pdfs.size(); i++){
+      if (norm_fitting_statuses != nullptr) {
+          AddPdf(pdfs.at(i), genrates_.at(i), norm_fitting_statuses->at(i));
+        } else {
+              AddPdf(pdfs.at(i), genrates_.at(i));
+        }
+    }
 }
 
+void
+BinnedNLLH::AddPdf(const BinnedED& pdf_,
+		   const std::vector<std::string>& syss_,
+		   const NormFittingStatus norm_fitting_status){
+  if(fUseBarlowBeeston)
+    throw OXSXException(Formatter()<<"BinnedNLLH:: Must set generated rates if using Barlow-Beeston");
+  fPdfManager.AddPdf(pdf_, norm_fitting_status);
+  fSystematicManager.AddDist(pdf_,syss_);
+}
+
+void
+BinnedNLLH::AddPdf(const BinnedED& pdf_,
+		   const int& genrate_,
+		   const NormFittingStatus norm_fitting_status){
+  fPdfManager.AddPdf(pdf_, norm_fitting_status);
+  fSystematicManager.AddDist(pdf_,"");
+  fGenRates.push_back(genrate_);
+}
+
+void
+BinnedNLLH::AddPdf(const BinnedED& pdf_,
+		   const NormFittingStatus norm_fitting_status){
+  if(fUseBarlowBeeston)
+    throw OXSXException(Formatter()<<"BinnedNLLH:: Must set generated rates if using Barlow-Beeston");
+  fPdfManager.AddPdf(pdf_, norm_fitting_status);
+  fSystematicManager.AddDist(pdf_,"");
+}
+
+void
+BinnedNLLH::AddPdf(const BinnedED& pdf_,
+		   const std::vector<std::string>& syss_,
+		   const int& genrate_,
+		   const NormFittingStatus norm_fitting_status){
+  fPdfManager.AddPdf(pdf_, norm_fitting_status);
+  fSystematicManager.AddDist(pdf_,syss_);
+  fGenRates.push_back(genrate_);
+}
 
 void
 BinnedNLLH::SetPdfManager(const BinnedEDManager& man_){
@@ -173,6 +278,10 @@ BinnedNLLH::GetDataDist() const{
     return fDataDist;
 }
 
+void
+BinnedNLLH::SetBarlowBeeston(const bool useBarlowBeeston_){
+  fUseBarlowBeeston = useBarlowBeeston_;
+}
 
 void
 BinnedNLLH::SetBuffer(const std::string& dim_, unsigned lower_, unsigned upper_){

@@ -20,7 +20,6 @@ class BinnedNLLH : public TestStatistic{
     void   SetPdfManager(const BinnedEDManager&);
     void   SetSystematicManager(const SystematicManager&);
 
-    void   AddPdf(const BinnedED&, const NormFittingStatus norm_fitting_status=DIRECT);
     void   AddSystematic(Systematic* sys_);
     void   AddSystematic(Systematic* sys_, const std::string& group_ );
 
@@ -38,15 +37,23 @@ class BinnedNLLH : public TestStatistic{
     void SetDataDist(const BinnedED&);
     BinnedED GetDataDist() const;
 
+    void SetBarlowBeeston(const bool);
+
     void SetDataSet(DataSet*);
     DataSet* GetDataSet();
 
     void SetBuffer(const std::string& dim_, unsigned lower_, unsigned upper_);
     std::pair<unsigned, unsigned> GetBuffer(const std::string& dim_) const;
 
+
+    void AddPdf(const BinnedED& pdf, const NormFittingStatus norm_fitting_status=DIRECT);
     void AddPdf(const BinnedED& pdf, const std::vector<std::string>& syss_, const NormFittingStatus norm_fitting_status=DIRECT);
+    void AddPdf(const BinnedED& pdf, const int& rate_, const NormFittingStatus norm_fitting_status=DIRECT);
+    void AddPdf(const BinnedED& pdf, const std::vector<std::string>& syss_, const int& rate_, const NormFittingStatus norm_fitting_status=DIRECT);
     void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<NormFittingStatus>* norm_fitting_statuses=nullptr);
     void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& syss_, const std::vector<NormFittingStatus>* norm_fitting_statuses=nullptr);
+    void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<int>& rates_, const std::vector<NormFittingStatus>* norm_fitting_statuses=nullptr);
+    void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& syss_, const std::vector<int>& rates_, const std::vector<NormFittingStatus>* norm_fitting_statuses=nullptr);
 
     void SetBufferAsOverflow(bool b_); // true by default
     bool GetBufferAsOverflow() const;
@@ -86,6 +93,9 @@ class BinnedNLLH : public TestStatistic{
     bool             fCalculatedDataDist;
     bool             fAlreadyShrunk;
     ComponentManager fComponentManager;
+
+    std::vector<unsigned int> fGenRates;
+    bool fUseBarlowBeeston = false;
     
     bool fDebugMode;
 };
