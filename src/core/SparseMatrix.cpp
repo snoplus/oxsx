@@ -11,12 +11,12 @@ SparseMatrix::SparseMatrix(size_t rows_, size_t cols_){
 }
 
 void 
-SparseMatrix::PrintDense(const std::string& prefix_=""){
+SparseMatrix::PrintDense(const std::string& prefix_="") const{
     fArmaMat.print(prefix_);
 }
 
 void 
-SparseMatrix::Print(const std::string& prefix_=""){
+SparseMatrix::Print(const std::string& prefix_="") const{
     arma::mat B(fArmaMat);
     B.print(prefix_);
 

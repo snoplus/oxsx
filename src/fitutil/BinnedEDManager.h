@@ -12,15 +12,18 @@
 class Event;
 class SystematicManager;
 class BinnedEDShrinker;
+
+enum NormFittingStatus{ FALSE=0, DIRECT=1, INDIRECT=2 };
 class BinnedEDManager : public FitComponent{
  public:
-    BinnedEDManager() : fNPdfs(0), fName("norms") {}
+    BinnedEDManager() : fAllNormsDirFittable(true), fNPdfs(0), fName("norms") {}
 
-    void   AddPdf(const BinnedED&);
-    void   AddPdfs(const std::vector<BinnedED>&);
+    void   AddPdf(const BinnedED&, const NormFittingStatus norm_fitting_status=DIRECT);
+    void   AddPdfs(const std::vector<BinnedED>&,
+                   const std::vector<NormFittingStatus>* norm_fitting_statuses=nullptr);
 
-    double Probability(const Event&) const;
-    double BinProbability(size_t) const;
+    double Probability(const Event&);
+    double BinProbability(size_t);
     
     const std::vector<double>& GetNormalisations() const;
     void SetNormalisations(const std::vector<double>& normalisations_);
@@ -32,6 +35,8 @@ class BinnedEDManager : public FitComponent{
     unsigned GetNPdfs() const;
     size_t   GetNDims() const;
     
+    void AssertDimensions(const std::vector<std::string>& observables);
+    void ReassertNorms(bool calcing_binprob=false);
 
     // Make a fittable component - i.e. rescale the binned pdfs inside to fit
     void   SetParameter(const std::string& name_, double value);
@@ -49,11 +54,14 @@ class BinnedEDManager : public FitComponent{
 
 
  private:
-    ParameterManager       fParameterManager;
-    std::vector<BinnedED>  fOriginalPdfs;
-    std::vector<BinnedED>  fWorkingPdfs;
-    std::vector<double>    fNormalisations;
-    int                    fNPdfs;
+    ParameterManager                fParameterManager;
+    std::vector<BinnedED>           fOriginalPdfs;
+    std::vector<BinnedED>           fWorkingPdfs;
+    std::vector<double>             fNormalisations;
+    std::vector<NormFittingStatus>  fAllowNormsFittable;
+    std::vector<double>             fFittableNorms;
+    bool                            fAllNormsDirFittable;
+    int                             fNPdfs;
     size_t fNDims;
 
     std::string fName; // component name

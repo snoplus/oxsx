@@ -16,7 +16,8 @@ BinnedNLLH::Evaluate(){
     
     if (!fCalculatedDataDist)
         BinData();
-    
+    // Make sure that normalisation params in PDF Manager are setup correctly
+    fPdfManager.ReassertNorms();
     if(!fAlreadyShrunk){
         fPdfShrinker.SetBinMap(fDataDist);
         fDataDist = fPdfShrinker.ShrinkDist(fDataDist);	
@@ -26,7 +27,8 @@ BinnedNLLH::Evaluate(){
     fSystematicManager.Construct();
     // Apply systematics
     fPdfManager.ApplySystematics(fSystematicManager);
-
+    // Marginalise pdfs back to observable dimensions only, if necessary
+    fPdfManager.AssertDimensions(fDataDist.GetObservables());
     // Apply Shrinking
     fPdfManager.ApplyShrink(fPdfShrinker);
 
@@ -83,26 +85,48 @@ BinnedNLLH::BinData(){
 }
 
 void
-BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& sys_){
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs,
+                    const std::vector<std::vector<std::string> >& sys_,
+                    const std::vector<NormFittingStatus>* norm_fitting_statuses){
     if (pdfs.size() != sys_.size())
-       throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
-    for (size_t i = 0; i < pdfs.size(); ++i) { AddPdf( pdfs.at(i), sys_.at(i) ); }
+        throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
+    if(norm_fitting_statuses != nullptr && pdfs.size() != norm_fitting_statuses->size()) {
+        throw DimensionError("BinnedNLLH: number of norm_fittable bools doesn't the number of pdfs");
+    }
+    for (size_t i = 0; i < pdfs.size(); ++i) {
+        if (norm_fitting_statuses == nullptr) {
+            AddPdf( pdfs.at(i), sys_.at(i) );
+        } else {
+            AddPdf( pdfs.at(i), sys_.at(i), norm_fitting_statuses->at(i) );
+        }
+    }
 }
 
 void
-BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs){
-    for (const auto& pdf: pdfs) { AddPdf(pdf); }
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs,
+                    const std::vector<NormFittingStatus>* norm_fitting_statuses){
+    if(norm_fitting_statuses != nullptr && pdfs.size() != norm_fitting_statuses->size()) {
+        throw DimensionError("BinnedNLLH: number of norm_fittable bools doesn't the number of pdfs");
+    }
+    for(size_t i = 0; i < pdfs.size(); i++){
+        if (norm_fitting_statuses != nullptr) {
+            AddPdf(pdfs.at(i), norm_fitting_statuses->at(i));
+        } else {
+            AddPdf(pdfs.at(i));
+        }
+    }
 }
 
 void
-BinnedNLLH::AddPdf(const BinnedED& pdf_, const std::vector<std::string>& syss_){
-    fPdfManager.AddPdf(pdf_);
+BinnedNLLH::AddPdf(const BinnedED& pdf_, const std::vector<std::string>& syss_,
+                   const NormFittingStatus norm_fitting_status){
+    fPdfManager.AddPdf(pdf_, norm_fitting_status);
     fSystematicManager.AddDist(pdf_,syss_);
 }
 
 void
-BinnedNLLH::AddPdf(const BinnedED& pdf_){
-    fPdfManager.AddPdf(pdf_);
+BinnedNLLH::AddPdf(const BinnedED& pdf_, const NormFittingStatus norm_fitting_status){
+    fPdfManager.AddPdf(pdf_, norm_fitting_status);
     fSystematicManager.AddDist(pdf_,"");
 }
 

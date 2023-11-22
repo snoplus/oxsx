@@ -50,6 +50,7 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
         params["b"] = 1;
         params["c"] = 1;
         lh.SetParameters(params);
+        REQUIRE(lh.GetParameters() == params);
         REQUIRE(lh.Evaluate() == Approx(sumNorm + sumLogProb));
     }
     SECTION("Correct Probability with constraint"){
