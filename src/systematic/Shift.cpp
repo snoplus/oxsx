@@ -10,25 +10,25 @@ Shift::Construct(){
     if(fTransObs.GetNObservables() != 1)
         throw RepresentationError("Shift systematic must have a 1D representation!");
     if (!fAxes.GetNBins()) {
-        throw LogicError("Scale::Construct(): Tried to construct response matrix without an axis collection!");
+        throw LogicError("Shift::Construct(): Tried to construct response matrix without an axis collection!");
     }
 
     // If haven't already, generate mapping from full pdf bin IDs
     //--> transforming subspace bin IDs 
     if (!fCachedBinMapping) { CacheBinMapping(); }
 
-    // Loop over bins of the scaling axis, and get the user-defined 
-    // shape scale factors at each bin centre.
-    // the axis to scale
+    // Loop over bins of the shifting axis, and get the user-defined 
+    // shift values at each bin centre.
+    // the axis to shift
     const std::string&  shiftAxisName = fTransObs.GetNames().at(0);
     const BinAxis& shiftAxis          = fAxes.GetAxis(fDistObs.GetIndex(shiftAxisName));
-    // Each (pre-scaled) bin gets a mapping from (post-scaled) bins to non-zero values
+    // Each (pre-shifted) bin gets a mapping from (post-shifted) bins to non-zero values
     std::vector<std::map<size_t,double>> shift_vals(shiftAxis.GetNBins(), std::map<size_t,double>{});
     for (size_t bin = 0; bin < shiftAxis.GetNBins(); bin++) {
-        // First - work out edges of scaled bin interval along axis
+        // First - work out edges of shifted bin interval along axis
         const double shiftLow   = shiftAxis.GetBinLowEdge(bin)  + fShift;
         const double shiftHigh  = shiftAxis.GetBinHighEdge(bin) + fShift;
-        // Then - which unscaled bins do these edges lie in?
+        // Then - which unshifted bins do these edges lie in?
         const size_t shiftLowIndex = shiftAxis.FindBin(shiftLow);
         const size_t shiftHighIndex = shiftAxis.FindBin(shiftHigh);
         // Go through bins in this range, to find contribution to each
@@ -130,10 +130,10 @@ Shift::SetName(const std::string& name_){
 
 void Shift::CacheBinMapping() {
     /*
-    * Because this shape systematic might only require a subset of the
+    * Because this shift systematic might only require a subset of the
     * observables to be defined, but still need to act on the whole event
     * distribution, we need a way of mapping from the full event distribution
-    * to the subspace we actually want to calculate shape values over.
+    * to the subspace we actually want to calculate shift values over.
     */
     const size_t relativeIndex = fTransObs.GetRelativeIndices(fDistObs).at(0);
 
@@ -144,8 +144,8 @@ void Shift::CacheBinMapping() {
     }
     /*
      * Given a bin idx in the full axis collection (1), and another on the
-     * scaling axis (2), this matrix stores the bin idx of the bin with the
-     * same position as (1), excepting for the scaling axis, in which it takes
+     * shifting axis (2), this matrix stores the bin idx of the bin with the
+     * same position as (1), excepting for the shifting axis, in which it takes
      * (2)'s position.
     */
     const std::string&  shiftAxisName = fTransObs.GetNames().at(0);
@@ -170,14 +170,14 @@ void Shift::CacheBinMapping() {
 double Shift::GetBinContribution(const BinAxis& shiftAxis, double shiftedLow,
                                  double shiftedHigh, size_t bin_test) {
     /*
-     * Some logic to work out the fraction of the scaled bin interval
+     * Some logic to work out the fraction of the shifted bin interval
      * within a given test bin interval
      */
     const double shiftedWidth = shiftedHigh - shiftedLow;
     const double testLow  = shiftAxis.GetBinLowEdge(bin_test);
     const double testHigh = shiftAxis.GetBinHighEdge(bin_test);
-    // Guide:  | | = scaled bin interval, /  / = test bin interval
-    // Is it in the scale region at all?
+    // Guide:  | | = shifted bin interval, /  / = test bin interval
+    // Is it in the shift region at all?
     // |   |   /   /        OR    /  /   |  |
     if (testLow > shiftedHigh || testHigh < shiftedLow) {
         return 0.;
@@ -188,18 +188,18 @@ double Shift::GetBinContribution(const BinAxis& shiftAxis, double shiftedLow,
 
         if (includedFromBelow) {
             if (includedFromAbove) {
-                // |  /   /  | : test fully inside scaled bin
+                // |  /   /  | : test fully inside shifted bin
                 return (testHigh - testLow)/shiftedWidth;
             } else {
-                // |  /   |  / : scaled hangs off low end of test only
+                // |  /   |  / : shifted hangs off low end of test only
                 return (shiftedHigh - testLow)/shiftedWidth;
             }
         } else {
             if (includedFromAbove) {
-                // /  |   /  | : scaled hangs off of high end only
+                // /  |   /  | : shifted hangs off of high end only
                 return (testHigh - shiftedLow)/shiftedWidth;
             } else {
-                // /  |   |  / : scaled fully within test bin
+                // /  |   |  / : shifted fully within test bin
                 return 1;
             }
         }
