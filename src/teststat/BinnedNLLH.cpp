@@ -63,7 +63,7 @@ BinnedNLLH::Evaluate(){
 
 	  double sigma2 = 0;
 	  for (unsigned int j=0; j<normalisations.size(); j++)
-	    sigma2 += ( normalisations.at(j) ) / ( (float)fGenRates.at(j) * prob * prob);
+	    sigma2 += ( normalisations.at(j) ) / ( (double)fGenRates.at(j) * prob * prob);
 
 	  //Eqn 11 in https://arxiv.org/abs/1103.0354 for Beta: beta^2 + (mu x sigma^2 - 1)beta - n x sigma^2   (prob is mu, the mc events in bin. n is data events in bin)
 
@@ -71,9 +71,19 @@ BinnedNLLH::Evaluate(){
 	  double b = prob*sigma2 - 1;
 	  //b^2-4ac in quadratic
 	  double det = b*b + 4*fDataDist.GetBinContent(i)*sigma2;
-	  //positive beta
-	  double beta = (-b + sqrt(det))/2;
 
+	  if(det<0.) {    // imaginary roots
+	    throw OXSXException(Formatter()<<"BinnedNLLH:: Negative determinant in beta calculation for Barlow-Beeston. Something has gone terribly wrong.");
+	  }
+
+	  double sign = (b >= 0) ? 1. : -1.;
+	  double q = -0.5*( b + sign*sqrt(det) );
+
+	  double x1 = q;
+	  double x2 = fDataDist.GetBinContent(i)*sigma2/q;
+
+	  double beta = (x1 > x2) ? x1 : x2;
+ 
 	  //and update mc bin content
 	  newProb = beta*prob;
 	  //get beta penalty term

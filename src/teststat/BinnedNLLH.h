@@ -94,7 +94,7 @@ class BinnedNLLH : public TestStatistic{
     bool             fAlreadyShrunk;
     ComponentManager fComponentManager;
 
-    std::vector<int> fGenRates;
+    std::vector<unsigned int> fGenRates;
     bool fUseBarlowBeeston = false;
     
     bool fDebugMode;
