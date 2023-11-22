@@ -11,9 +11,7 @@
 
   The type we use here to store the data representation is the ObsSet class.
 
-  Observables are referred to by their sequential position in the dataset,
-  but if you have the dataset you are reading from it can produce a 
-  representation from a vector of names, both are shown below.
+  Observables are referred to by their name.
 
  */
 
@@ -23,33 +21,21 @@
 #include <iostream>
 
 int main(){
-    ObsSet dataRep1(0); 
-    // if only concerned in index 0, if you were reading from a root ntuple
-    // objects with this dataRep will automatically just look at the first
-    // branch of an event
-
-    // initialisation from a vector of indices
-    std::vector<size_t> indices;
-    indices.push_back(1);
-    indices.push_back(2);
-    ObsSet dataRep2(indices);
-    // will look at observables at indices 1 and 2
-
-    // ROOTNtuple nt("myfilename.root", "mytreename");
-    std::vector<std::string> interestingObservablesForMyObject;
-    interestingObservablesForMyObject.push_back("ob1");
-    interestingObservablesForMyObject.push_back("ob2");
-
-    // ObsSet dataRepForMyObject = nt.MakeDataRep(interestingObservablesForMyObject);
+    // initialisation from a vector of strings
+    std::vector<std::string> observables = {"energy", "radius"};
+    ObsSet dataRep2(observables);
    
     // Now test it out on some other fake objects
     AxisCollection axes;
-    axes.AddAxis(BinAxis("", 0, 10, 100));
+    axes.AddAxis(BinAxis("energy", 0, 30, 100));
+    axes.AddAxis(BinAxis("radius", 0, 6, 100));
     BinnedED pdf("", axes);
-    pdf.SetObservables(dataRep1);
+    pdf.SetObservables(observables);
 
-    Event event(std::vector<double> (20, 1));
-    std::cout << "A " << dataRep1.GetNObservables() << "D representation\n"
+    Event event(std::vector<double>{20, 1});
+    event.SetObservableNames(&observables);
+    pdf.Fill(event);
+    std::cout << "A " << dataRep2.GetNObservables() << "D representation\n"
               << "allows a " << pdf.GetNDims() << "D pdf\n"
               << "to act on an event with " 
               << event.GetNObservables()

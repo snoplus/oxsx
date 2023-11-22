@@ -24,14 +24,11 @@ int main(){
     AxisCollection axes;
     axes.AddAxis(BinAxis("energy", 0, 10, 10, "Energy"));
 
-    // Only interested in first bit of data ntuple
-    ObsSet dataRep(0);
-
     // Set up pdf with these bins in this observable
     BinnedED bgPdf("bgPDF",axes);
-    bgPdf.SetObservables(dataRep);
+    bgPdf.SetObservables({"energy"});
     BinnedED  signalPdf("signalPDF",axes);
-    signalPdf.SetObservables(dataRep);
+    signalPdf.SetObservables({"energy"});
 
     std::cout << "Initialised Pdfs" << std::endl;
 

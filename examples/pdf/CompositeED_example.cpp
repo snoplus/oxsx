@@ -22,18 +22,17 @@ int main(){
     // Build the constituent parts independently
     Gaussian gaus2d(2); // normal parameters by default
     AnalyticED pdf2d("analytic2D", &gaus2d);
-    // 2d pdf will look at observables 1 and 3
+    // 2d pdf will look at observables "E" and "r"
     // you can address these by names if they come from a data set
-    std::vector<size_t> indices;
-    indices.push_back(1);
-    indices.push_back(3);
+    std::vector<std::string> observables = {"E", "r"};
+    std::vector<std::string> observables_full = {"E", "r", "t"};
 
-    pdf2d.SetObservables(ObsSet(indices));
+    pdf2d.SetObservables(ObsSet(observables));
 
     Gaussian gaus1d(1);
     AnalyticED pdf1d("analytic1D", &gaus1d);
-    // 1d pdf will look at observable 4
-    pdf1d.SetObservables(ObsSet(4));
+    // 1d pdf will look at observable "t"
+    pdf1d.SetObservables(ObsSet("t"));
 
 
     // Now we combine them into a single composite pdf
@@ -47,7 +46,8 @@ int main(){
 
     std::cout << "Like any other pdf it can be normalised " << std::endl;
     
-    Event fakeEvent(std::vector<double>(10, 2));
+    Event fakeEvent(std::vector<double>{1, 2, 1});
+    fakeEvent.SetObservableNames(&observables_full);
 
     std::cout << "Calling probability on the composite pdf "
               << "gives you " 

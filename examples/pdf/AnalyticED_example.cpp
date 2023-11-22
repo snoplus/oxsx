@@ -19,15 +19,14 @@ int main(){
               << gausPdf.Probability(std::vector<double>(2, 0)) << std::endl;
 
     // or use a data representation to query an event
-    // this pdf picks out the 0th and 2nd observables in an event
-    std::vector<size_t> relevantIndices;
-    relevantIndices.push_back(0);
-    relevantIndices.push_back(2);
+    // this pdf picks out the energy and radius observables in an event
+    std::vector<std::string> observables = {"energy", "radius"};
     
-    gausPdf.SetObservables(ObsSet(relevantIndices));
+    gausPdf.SetObservables(ObsSet(observables));
 
     // fake event with ten observables in it, our pdf knows where to look
     Event event(std::vector<double>(10, 0));
+    event.SetObservableNames(&observables);
     std::cout << "Probability = "
               << gausPdf.Probability(event) << std::endl;
 
