@@ -20,7 +20,6 @@ class BinnedNLLH : public TestStatistic{
     void   SetPdfManager(const BinnedEDManager&);
     void   SetSystematicManager(const SystematicManager&);
 
-    void   AddPdf(const BinnedED&, const NormFittingStatus norm_fitting_status=DIRECT);
     void   AddSystematic(Systematic* sys_);
     void   AddSystematic(Systematic* sys_, const std::string& group_ );
 
@@ -46,6 +45,8 @@ class BinnedNLLH : public TestStatistic{
     void SetBuffer(const std::string& dim_, unsigned lower_, unsigned upper_);
     std::pair<unsigned, unsigned> GetBuffer(const std::string& dim_) const;
 
+
+    void AddPdf(const BinnedED& pdf, const NormFittingStatus norm_fitting_status=DIRECT);
     void AddPdf(const BinnedED& pdf, const std::vector<std::string>& syss_, const NormFittingStatus norm_fitting_status=DIRECT);
     void AddPdf(const BinnedED& pdf, const int& rate_, const NormFittingStatus norm_fitting_status=DIRECT);
     void AddPdf(const BinnedED& pdf, const std::vector<std::string>& syss_, const int& rate_, const NormFittingStatus norm_fitting_status=DIRECT);
@@ -94,7 +95,7 @@ class BinnedNLLH : public TestStatistic{
     ComponentManager fComponentManager;
 
     std::vector<int> fGenRates;
-    bool fUseBarlowBeeston;    
+    bool fUseBarlowBeeston = false;
     
     bool fDebugMode;
 };

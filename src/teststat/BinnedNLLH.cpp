@@ -139,7 +139,9 @@ BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs,
 }
 
 void
-BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<int>& genrates_, const std::vector<NormFittingStatus>* norm_fitting_statuses){
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs,
+		    const std::vector<int>& genrates_,
+		    const std::vector<NormFittingStatus>* norm_fitting_statuses){
 
     if(norm_fitting_statuses != nullptr && pdfs.size() != norm_fitting_statuses->size()) {
         throw DimensionError("BinnedNLLH: number of norm_fittable bools doesn't the number of pdfs");
@@ -154,7 +156,8 @@ BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<int>& g
 }
 
 void
-BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<NormFittingStatus>* norm_fitting_statuses){
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs,
+		    const std::vector<NormFittingStatus>* norm_fitting_statuses){
   if(fUseBarlowBeeston)
       throw OXSXException(Formatter()<<"BinnedNLLH:: Must set generated rates if using Barlow-Beeston");
   if(norm_fitting_statuses != nullptr && pdfs.size() != norm_fitting_statuses->size()) {
@@ -170,7 +173,10 @@ BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<NormFit
 }
 
 void
-BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& sys_, const std::vector<int>& genrates_, const std::vector<NormFittingStatus>* norm_fitting_statuses){
+BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs,
+		    const std::vector<std::vector<std::string> >& sys_,
+		    const std::vector<int>& genrates_,
+		    const std::vector<NormFittingStatus>* norm_fitting_statuses){
   if (pdfs.size() != sys_.size())
     throw DimensionError(Formatter()<<"BinnedNLLH:: #sys_ != #group_");
   for(size_t i = 0; i < pdfs.size(); i++){
@@ -183,7 +189,9 @@ BinnedNLLH::AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::ve
 }
 
 void
-BinnedNLLH::AddPdf(const BinnedED& pdf_, const std::vector<std::string>& syss_, const NormFittingStatus norm_fitting_status){
+BinnedNLLH::AddPdf(const BinnedED& pdf_,
+		   const std::vector<std::string>& syss_,
+		   const NormFittingStatus norm_fitting_status){
   if(fUseBarlowBeeston)
     throw OXSXException(Formatter()<<"BinnedNLLH:: Must set generated rates if using Barlow-Beeston");
   fPdfManager.AddPdf(pdf_, norm_fitting_status);
@@ -191,14 +199,17 @@ BinnedNLLH::AddPdf(const BinnedED& pdf_, const std::vector<std::string>& syss_, 
 }
 
 void
-BinnedNLLH::AddPdf(const BinnedED& pdf_, const int& genrate_, const NormFittingStatus norm_fitting_status){
+BinnedNLLH::AddPdf(const BinnedED& pdf_,
+		   const int& genrate_,
+		   const NormFittingStatus norm_fitting_status){
   fPdfManager.AddPdf(pdf_, norm_fitting_status);
   fSystematicManager.AddDist(pdf_,"");
   fGenRates.push_back(genrate_);
 }
 
 void
-BinnedNLLH::AddPdf(const BinnedED& pdf_, const NormFittingStatus norm_fitting_status){
+BinnedNLLH::AddPdf(const BinnedED& pdf_,
+		   const NormFittingStatus norm_fitting_status){
   if(fUseBarlowBeeston)
     throw OXSXException(Formatter()<<"BinnedNLLH:: Must set generated rates if using Barlow-Beeston");
   fPdfManager.AddPdf(pdf_, norm_fitting_status);
@@ -206,8 +217,11 @@ BinnedNLLH::AddPdf(const BinnedED& pdf_, const NormFittingStatus norm_fitting_st
 }
 
 void
-BinnedNLLH::AddPdf(const BinnedED& pdf_, const std::vector<std::string>& syss_, const int& genrate_){
-  fPdfManager.AddPdf(pdf_);
+BinnedNLLH::AddPdf(const BinnedED& pdf_,
+		   const std::vector<std::string>& syss_,
+		   const int& genrate_,
+		   const NormFittingStatus norm_fitting_status){
+  fPdfManager.AddPdf(pdf_, norm_fitting_status);
   fSystematicManager.AddDist(pdf_,syss_);
   fGenRates.push_back(genrate_);
 }
