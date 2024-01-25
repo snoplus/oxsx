@@ -19,6 +19,5 @@ include/*
 .*
 config/userconfig.ini
 *.log
+bin/*.sh
 gsl/
-bin/compile.sh
-bin/compile*.sh
