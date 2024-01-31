@@ -9,32 +9,35 @@
 #ifndef __OXSX_SPARSE_MATRIX__
 #define __OXSX_SPARSE_MATRIX__
 #include <AxisCollection.h>
-#define ARMA_DONT_USE_CXX11
 #include <armadillo>
 class BinnedPhysDist;
 
 class SparseMatrix{
  public:
     SparseMatrix() : fNRows(0), fNCols(0) {}
-    SparseMatrix(int rows_, int cols_);
+    SparseMatrix(size_t rows_, size_t cols_);
     std::vector<double> operator() (const std::vector<double>& input_) const;
 
     void   SetComponent(size_t row_, size_t column_, double val_);
     double GetComponent(size_t row_, size_t column_) const;
 
-    void   SetComponents(const std::vector<unsigned>& rowIndices_,
-                         const std::vector<unsigned>& colIndices_,
+    void   SetComponents(const std::vector<long long unsigned int>& rowIndices_,
+                         const std::vector<long long unsigned int>& colIndices_,
                        const std::vector<double>& values_);
 
     SparseMatrix operator*=(const SparseMatrix& other_);
+    SparseMatrix operator*(const SparseMatrix& other_);
     size_t GetNRows() const {return fNRows;}
     size_t GetNCols() const {return fNCols;}
     void   SetZeros();
     void   SetToIdentity();
 
+    void   Print(const std::string&) const;
+    void   PrintDense(const std::string&) const;
+
  private:
     arma::sp_mat fArmaMat;
-    int fNRows;
-    int fNCols;
+    size_t fNRows;
+    size_t fNCols;
 };
 #endif
