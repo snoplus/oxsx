@@ -105,11 +105,8 @@ BinnedNLLH::Evaluate(){
     }
 
     // Constraints
-    for(const auto& constraint: fConstraints) {
-        const double con = constraint.second.Evaluate(fComponentManager.GetParameter(constraint.first));
-        nLogLH += con;
-        if (fDebugMode) { std::cout << "constraint: " << con << "\t"; }
-    }
+    nLogLH += fConstraints.Evaluate(fComponentManager.GetParameters());
+
     if (fDebugMode) {
         std::cout << "\nTotal NLLH: " << nLogLH << "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
     }
@@ -338,12 +335,18 @@ BinnedNLLH::SetCuts(const CutCollection& cuts_){
 
 void 
 BinnedNLLH::SetConstraint(const std::string& paramName_, double mean_, double sigma_){
-    fConstraints[paramName_] = QuadraticConstraint(mean_, sigma_);
+    fConstraints.SetConstraint(paramName_, mean_, sigma_);
 }
 
 void
 BinnedNLLH::SetConstraint(const std::string& paramName_, double mean_, double sigma_lo_, double sigma_hi_) {
-    fConstraints[paramName_] = QuadraticConstraint(mean_, sigma_hi_, sigma_lo_);
+    fConstraints.SetConstraint(paramName_, mean_, sigma_hi_, sigma_lo_);
+}
+
+void
+BinnedNLLH::SetConstraint(const std::string& paramName_1, double mean_1, double sigma_1,
+                          const std::string& paramName_2, double mean_2, double sigma_2, double correlation) {
+    fConstraints.SetConstraint(paramName_1, mean_1, sigma_1, paramName_2, mean_2, sigma_2, correlation);
 }
 
 

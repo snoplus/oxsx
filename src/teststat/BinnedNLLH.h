@@ -8,7 +8,7 @@
 #include <DataSet.h>
 #include <CutCollection.h>
 #include <CutLog.h>
-#include <QuadraticConstraint.h>
+#include <ConstraintManager.h>
 #include <map>
 #include <vector>
 
@@ -28,6 +28,7 @@ class BinnedNLLH : public TestStatistic{
 
     void   SetConstraint(const std::string& paramName_, double mean_, double sigma_);
     void   SetConstraint(const std::string& paramName_, double mean_, double sigma_lo_, double sigma_hi_);
+    void   SetConstraint(const std::string& paramName_1, double mean_1, double sigma_1, const std::string& paramName_2, double mean_2, double sigma_2, double correlation);
     
     void SetNormalisations(const std::vector<double>& norms_);
     std::vector<double> GetNormalisations() const;
@@ -68,7 +69,7 @@ class BinnedNLLH : public TestStatistic{
     void   SetSignalCutLog(const CutLog&);
 
     bool GetDebugMode() const { return fDebugMode; }
-    void SetDebugMode(bool mode) { fDebugMode = mode; }
+    void SetDebugMode(bool mode) { fDebugMode = mode; fConstraints.SetDebugMode(mode); }
 
     // Test statistic interface
     void RegisterFitComponents(); 
@@ -84,7 +85,7 @@ class BinnedNLLH : public TestStatistic{
     BinnedEDShrinker     fPdfShrinker;
     DataSet*             fDataSet;
     CutCollection        fCuts;
-    std::map<std::string, QuadraticConstraint> fConstraints;
+    ConstraintManager fConstraints;
 
     double  fSignalCutEfficiency;
     CutLog  fSignalCutLog;
