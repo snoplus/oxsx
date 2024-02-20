@@ -23,7 +23,7 @@ class BivariateQuadraticConstraint{
     double Evaluate(double val_1, double val_2) const {
         const double z1 = (val_1 - fMean1) * (val_1 - fMean1) / (2 * fSigma1 * fSigma1);
         const double z2 = (val_2 - fMean2) * (val_2 - fMean2) / (2 * fSigma2 * fSigma2);
-        const double z12 = (val_1 - fMean1) * (val_2 - fMean2) / (fSigma1 * fSigma2);
+        const double z12 = fCorr*(val_1 - fMean1) * (val_2 - fMean2) / (fSigma1 * fSigma2);
         return (z1 - z12 + z2) / (1. - fCorr * fCorr);
     }
     
