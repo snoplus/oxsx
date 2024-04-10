@@ -5,7 +5,7 @@
 #include <math.h> //sqrt
 
 // initalise to zeros
-DenseMatrix::DenseMatrix(int rows_, int cols_){
+DenseMatrix::DenseMatrix(size_t rows_, size_t cols_){
     fNCols = cols_;
     fNRows = rows_;
     fArmaMat = arma::mat(rows_, cols_, arma::fill::zeros);
@@ -91,7 +91,7 @@ DenseMatrix::SetSymmetricMatrix(const std::vector<double>& _input){
                             << ") matrix."
 			    );
 
-    int noVectorEntries = _input.size();
+    size_t noVectorEntries = _input.size();
     double testTriangular = (fNRows * (fNRows + 1)) / 2;
 
     if (testTriangular != noVectorEntries)
@@ -103,12 +103,12 @@ DenseMatrix::SetSymmetricMatrix(const std::vector<double>& _input){
 			   << " entries.");
 
 
-    int i = 0;
+    size_t i = 0;
     while(i < noVectorEntries)
       {
-        for(int j = 0; j < fNRows; j++)
+        for(size_t j = 0; j < fNRows; j++)
           {
-            for(int k = 0;  k < (j+1); k++)
+            for(size_t k = 0;  k < (j+1); k++)
               {
                 fArmaMat(k, j) = _input.at(i);
                 fArmaMat(j, k) = _input.at(i);

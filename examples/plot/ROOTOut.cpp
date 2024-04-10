@@ -42,7 +42,7 @@ int main(){
     BinnedED pdf2D("2Dhisto", histo2D);
         
     // convert
-    TH2D th2dfromHisto = DistTools::ToTH2D(histo2D, false);
+    TH2D th2dfromHisto = DistTools::ToTH2D(histo2D);
         
 
     return 0;

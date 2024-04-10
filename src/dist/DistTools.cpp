@@ -6,9 +6,11 @@
 #include <BinnedED.h>
 #include <TH1D.h>
 #include <TH2D.h>
+#include <TH3D.h>
 #include <vector>
 #include <iostream>
 #include <algorithm>
+
 Histogram
 DistTools::ToHist(const PDF& analytic_, const AxisCollection& axes_){
     if (analytic_.GetNDims() != axes_.GetNDimensions())
@@ -71,12 +73,13 @@ DistTools::ToTH1D(const Histogram& histo_, const bool widthCorrect_){
       if (widthCorrect_)
         rtHist.SetBinContent(bin+1, histo_.GetBinContent(bin)/axis.GetBinWidth(bin));
       else
-        rtHist.SetBinContent(bin+1, histo_.GetBinContent(bin));    
+        rtHist.SetBinContent(bin+1, histo_.GetBinContent(bin));
+
     return rtHist;                         
 }
 
 TH2D
-DistTools::ToTH2D(const Histogram& histo_, const bool widthCorrect_){
+DistTools::ToTH2D(const Histogram& histo_){
     if(histo_.GetNDims() != 2)
         throw DimensionError("Only a 2D pdf can be represented by a TH2D");
     
@@ -108,10 +111,158 @@ DistTools::ToTH2D(const Histogram& histo_, const bool widthCorrect_){
 }
 
 TH2D
-DistTools::ToTH2D(const BinnedED& pdf_, const bool widthCorrect_){
+DistTools::ToTH2D(const BinnedED& pdf_){
     if(pdf_.GetNDims() != 2)
         throw DimensionError("Only a 2D pdf can be represented by a TH2D");
     
     TH2D rtHist = DistTools::ToTH2D(pdf_.GetHistogram());
     return rtHist;
+}
+
+
+TH3D
+DistTools::ToTH3D(const Histogram& histo_){
+    if(histo_.GetNDims() != 3)
+        throw DimensionError("Only a 3D pdf can be represented by a TH3D");
+    
+    const BinAxis& axis0 = histo_.GetAxes().GetAxis(0);
+    const BinAxis& axis1 = histo_.GetAxes().GetAxis(1);
+    const BinAxis& axis2 = histo_.GetAxes().GetAxis(2);
+    const unsigned nBinsX = axis0.GetNBins();
+    const unsigned nBinsY = axis1.GetNBins();
+    const unsigned nBinsZ = axis2.GetNBins();
+
+    std::vector<double> lowEdgesX = axis0.GetBinLowEdges();
+    lowEdgesX.push_back(axis0.GetMaximum());
+
+    std::vector<double> lowEdgesY = axis1.GetBinLowEdges();
+    lowEdgesY.push_back(axis1.GetMaximum());
+
+    std::vector<double> lowEdgesZ = axis2.GetBinLowEdges();
+    lowEdgesZ.push_back(axis2.GetMaximum());
+    
+    TH3D rtHist("", "", 
+                nBinsX, &lowEdgesX.at(0), 
+                nBinsY, &lowEdgesY.at(0),
+                nBinsZ, &lowEdgesZ.at(0));
+    rtHist.SetDirectory(0);
+    rtHist.GetXaxis() -> SetTitle(axis0.GetLatexName().c_str());
+    rtHist.GetYaxis() -> SetTitle(axis1.GetLatexName().c_str());
+    rtHist.GetZaxis() -> SetTitle(axis2.GetLatexName().c_str());
+
+    for(size_t i = 0; i < histo_.GetNBins(); i++){
+      rtHist.Fill(histo_.GetBinCentre(i, 0), // x
+                  histo_.GetAxes().GetBinCentre(i, 1), // y
+                  histo_.GetAxes().GetBinCentre(i, 2), // z
+                  histo_.GetBinContent(i)    // content
+                  );
+    }
+    return rtHist;
+}
+
+TH3D
+DistTools::ToTH3D(const BinnedED& pdf_){
+    if(pdf_.GetNDims() != 3)
+        throw DimensionError("Only a 3D pdf can be represented by a TH3D");
+    
+    TH3D rtHist = DistTools::ToTH3D(pdf_.GetHistogram());
+    return rtHist;
+}
+
+Histogram
+DistTools::ToHist(const TH1D& h_){
+    AxisCollection axes;
+    axes.AddAxis(BinAxis(h_.GetXaxis()->GetTitle(), 
+                         h_.GetXaxis()->GetBinLowEdge(1),
+                         h_.GetXaxis()->GetBinUpEdge(h_.GetNbinsX()),
+                         h_.GetNbinsX()
+                         )
+                 
+                 );
+    
+    Histogram hist(axes);
+    for(int i = 1; i < h_.GetNbinsX() + 1; i++){
+        hist.SetBinContent(i-1, h_.GetBinContent(i));
+    }
+
+    return hist;
+}
+
+
+Histogram
+DistTools::ToHist(const TH2D& h_){
+    AxisCollection axes;
+    axes.AddAxis(BinAxis(h_.GetXaxis()->GetTitle(), 
+                         h_.GetXaxis()->GetBinLowEdge(1),
+                         h_.GetXaxis()->GetBinUpEdge(h_.GetNbinsX()),
+                         h_.GetNbinsX()
+                         )
+                 
+                 );
+
+    axes.AddAxis(BinAxis(h_.GetYaxis()->GetTitle(), 
+                         h_.GetYaxis()->GetBinLowEdge(1),
+                         h_.GetYaxis()->GetBinUpEdge(h_.GetNbinsY()),
+                         h_.GetNbinsY()
+                         )
+                 
+                 );
+    
+    Histogram hist(axes);
+    for(int i = 1; i < h_.GetNbinsX() + 1; i++){
+        for(int j = 1; j < h_.GetNbinsY() + 1; j++){
+            std::vector<size_t> indices;
+            indices.push_back(i-1);
+            indices.push_back(j-1);
+            size_t histIndex = hist.FlattenIndices(indices);
+            hist.SetBinContent(histIndex, h_.GetBinContent(h_.GetBin(i,j)));
+        }
+    }
+
+    return hist;
+}
+
+
+Histogram
+DistTools::ToHist(const TH3D& h_){
+    AxisCollection axes;
+    axes.AddAxis(BinAxis(h_.GetXaxis()->GetTitle(), 
+                         h_.GetXaxis()->GetBinLowEdge(1),
+                         h_.GetXaxis()->GetBinUpEdge(h_.GetNbinsX()),
+                         h_.GetNbinsX()
+                         )
+                 
+                 );
+
+    axes.AddAxis(BinAxis(h_.GetYaxis()->GetTitle(), 
+                         h_.GetYaxis()->GetBinLowEdge(1),
+                         h_.GetYaxis()->GetBinUpEdge(h_.GetNbinsY()),
+                         h_.GetNbinsY()
+                         )
+                 
+                 );
+    
+    axes.AddAxis(BinAxis(h_.GetZaxis()->GetTitle(), 
+                         h_.GetZaxis()->GetBinLowEdge(1),
+                         h_.GetZaxis()->GetBinUpEdge(h_.GetNbinsZ()),
+                         h_.GetNbinsZ()
+                         )
+                 
+                 );
+    
+    Histogram hist(axes);
+    for(int i = 1; i < h_.GetNbinsX() + 1; i++){
+        for(int j = 1; j < h_.GetNbinsY() + 1; j++){
+            for (int k = 1; k < h_.GetNbinsZ() + 1; k++){
+                std::vector<size_t> indices;
+                indices.push_back(i-1);
+                indices.push_back(j-1);
+                indices.push_back(k-1);
+                size_t histIndex = hist.FlattenIndices(indices);
+                hist.SetBinContent(histIndex, h_.GetBinContent(h_.GetBin(i,j,k)));
+            }
+        }
+    }
+
+    return hist;
 }

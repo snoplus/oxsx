@@ -24,14 +24,8 @@ bool CutCollection::PassesCuts(const Event& event_, CutLog& log_) const{
 }
 
 void
-CutCollection::AddCut(const Cut& cut_, const std::string& name_){
+CutCollection::AddCut(const Cut& cut_){
   fCuts.push_back(cut_.Clone());
-  fCutNames.push_back(name_);
-}
-
-void
-CutCollection::AddCut(const Cut& cut_){    
-    AddCut(cut_, Formatter() << "Cut " << fCuts.size());
 }
 
 CutCollection::~CutCollection(){
@@ -60,5 +54,8 @@ CutCollection::operator= (const CutCollection& other_){
 
 std::vector<std::string> 
 CutCollection::GetCutNames() const{
-    return fCutNames;
+  std::vector<std::string> names;
+  for(size_t i = 0; i < fCuts.size(); i++)
+    names.push_back(fCuts.at(i)->GetName());
+  return names;
 }

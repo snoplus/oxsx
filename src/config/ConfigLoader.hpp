@@ -15,8 +15,6 @@ template<typename TargetType>
 void
 ConfigLoader::Load(const std::string& section_, const std::string& fieldName_, TargetType& loadVal_, typename enable_if<is_container<TargetType>::value, int>::type){
     CheckExists(section_, fieldName_);
-
-    typedef typename TargetType::value_type ContainedType;
     ConvertContainer(ContainerTools::Split(fParser->top()(section_)[fieldName_], ','), loadVal_, Converter<TargetType>());
 }
 
@@ -29,6 +27,7 @@ Converter<TargetType>::operator()(const std::string& s_) const{
 
   if (buffer.fail())
       throw ValueError("String conversion failed : value is invalid (this can mean the numerical type isn't big enough)");
+	
   return val;
 }
 

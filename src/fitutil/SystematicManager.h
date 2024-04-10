@@ -33,11 +33,11 @@ class SystematicManager{
     const std::vector<Systematic*>& GetSystematicsInGroup(const std::string & name) const;
 
     const std::set<std::string> GetGroupNames() const;
+    
+    size_t GetNSystematics() const;
+    size_t GetNGroups() const;
 
-    const size_t GetNSystematics() const;
-    const size_t GetNGroups() const;
-
-    const size_t GetNSystematicsInGroup(const std::string& name_) const;
+    size_t GetNSystematicsInGroup(const std::string& name_) const;
 
     const std::vector<std::string> GetSystematicsNamesInGroup(const std::string& name) const;
 
@@ -50,7 +50,9 @@ class SystematicManager{
 
     const SparseMatrix& GetTotalResponse(const std::string& groupName_ = "" ) const;
 
-    void DistortEDs(std::vector<BinnedED>& OrigEDs,std::vector<BinnedED>& WorkingEDs) const;
+    void DistortEDs(const std::vector<BinnedED>& OrigEDs,
+                    std::vector<BinnedED>& WorkingEDs,
+                    std::vector<double>* norms=nullptr) const;
 
     void Construct();
 
@@ -62,6 +64,6 @@ class SystematicManager{
     std::map<std::string,std::vector<std::string> > fEDGroups;
     void UniqueSystematics(const std::vector<std::string>&);
     void checkAllOtherGroups(const Systematic* syss_);
-    const size_t CountNSystematics() const;
+    size_t CountNSystematics() const;
 };
 #endif

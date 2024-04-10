@@ -68,7 +68,7 @@ void
 SystematicManager::checkAllOtherGroups(const Systematic* syss_){
   std::set<std::string> allname;
   allname.insert(syss_->GetName());
-  for (int j = 0; j <fGroups.at("").size(); ++j) {
+  for (size_t j = 0; j <fGroups.at("").size(); ++j) {
       if(allname.find( fGroups.at("").at(j)->GetName() ) == allname.end())
           allname.insert(fGroups.at("").at(j)->GetName());
       else
@@ -96,14 +96,14 @@ SystematicManager::checkAllOtherGroups(const Systematic* syss_){
 void
 SystematicManager::UniqueSystematics(const std::vector<std::string>& syss_){
     std::set<std::string> allname;
-    for (int i = 0; i <syss_.size(); ++i) {
+    for (size_t i = 0; i <syss_.size(); ++i) {
         if(fGroups.find( syss_.at(i) ) == fGroups.end())
             throw NotFoundError (
                     Formatter()<<"SystematicManager:: Systematic group "<<
                     syss_.at(i)<<
                     "  is not known to the SystematicManager." );
         std::vector<Systematic*> group = fGroups[syss_.at(i)];
-        for (int j = 0; j < group.size(); ++j) {
+        for (size_t j = 0; j < group.size(); ++j) {
             if(allname.find( group.at(j)->GetName() ) == allname.end())
                 allname.insert(group.at(j)->GetName());
             else
@@ -117,7 +117,7 @@ SystematicManager::UniqueSystematics(const std::vector<std::string>& syss_){
     // allnames has been populated.
     if( syss_ != std::vector<std::string>(1,"")){
       std::vector<Systematic*> group = fGroups[""];
-      for (int j = 0; j < group.size(); ++j) {
+      for (size_t j = 0; j < group.size(); ++j) {
         if(allname.find( group.at(j)->GetName() ) == allname.end())
           allname.insert(group.at(j)->GetName());
         else
@@ -141,7 +141,9 @@ SystematicManager::AddDist(const BinnedED& pdf, const std::string& syss_){
 }
 
 void
-SystematicManager::DistortEDs(std::vector<BinnedED>& OrignalEDs_,std::vector<BinnedED>& WorkingEDs_) const {
+SystematicManager::DistortEDs(const std::vector<BinnedED>& OrignalEDs_,
+                              std::vector<BinnedED>& WorkingEDs_,
+                              std::vector<double>* norms) const {
     for(size_t j = 0; j < WorkingEDs_.size(); j++){
         const std::string name = OrignalEDs_.at(j).GetName();
 
@@ -149,8 +151,8 @@ SystematicManager::DistortEDs(std::vector<BinnedED>& OrignalEDs_,std::vector<Bin
             continue;
 
         //Apply everything else.
-        for (int i = 0; i < fEDGroups.at(name).size(); ++i) {
-            //Check that the group has systematics in it.
+        for (size_t i = 0; i < fEDGroups.at(name).size(); ++i) {
+            //Check that the group has systematics in it. 
             std::string groupName = fEDGroups.at(name).at(i);
             //If "" is empty the do nothing.
             if( groupName =="" && fGroups.at("").size() == 0 ) {
@@ -186,12 +188,15 @@ SystematicManager::DistortEDs(std::vector<BinnedED>& OrignalEDs_,std::vector<Bin
                   GetTotalResponse(groupName).operator()(OrignalEDs_.at(j).GetBinContents()));
             }
         }
+        if (norms != nullptr) {
+            norms->operator[](j) = WorkingEDs_.at(j).Integral();
+        }
     }
 }
 
 //Getters and Setters
 
-const size_t
+size_t
 SystematicManager::GetNSystematicsInGroup(const std::string& name_) const{
     try{
         return fGroups.find(name_)->second.size();
@@ -214,8 +219,8 @@ SystematicManager::GetSystematicsNamesInGroup(const std::string& name) const{
     try{
         std::vector<Systematic*> sys = fGroups.at(name);
         std::vector<std::string> names;
-        for (int i = 0; i < sys.size(); ++i) {
-            names.push_back(sys.at(i)->GetName());
+        for (size_t i = 0; i < sys.size(); ++i) {
+            names.push_back(sys.at(i)->GetName());    
         }
         return names;
     }
@@ -264,7 +269,7 @@ SystematicManager::GetSystematicsGroup() const{
     return fGroups;
 }
 
-const size_t
+size_t
 SystematicManager::CountNSystematics() const{
     size_t NSystematics = 0;
     for (std::map<std::string,std::vector<Systematic*> >::const_iterator group =fGroups.begin(); group != fGroups.end(); ++group )
@@ -272,12 +277,12 @@ SystematicManager::CountNSystematics() const{
     return NSystematics;
 }
 
-const size_t
+size_t
 SystematicManager::GetNSystematics() const{
     return CountNSystematics();
 }
 
-const size_t
+size_t
 SystematicManager::GetNGroups() const{
     return fNGroups;
 }

@@ -1,5 +1,9 @@
+from __future__ import print_function
 from dependency   import Dependency, VALID_FIELDS
-from ConfigParser import ConfigParser
+try:
+    from configparser import ConfigParser  # Python 3 
+except ImportError:
+    from ConfigParser import SafeConfigParser as ConfigParser  # Python 2
 from SCons.Script import Split, Glob, Copy, File, Dir, Exit
 from platform import system
 from subprocess import check_call
@@ -15,12 +19,12 @@ def read_dependencies(filename):
             libs   = cparse.get(dep_name, "libs")
             cheads = cparse.get(dep_name, "check_headers")
         except KeyError:
-            print "Incomplete dependency spec for {0}, (needs libs & check_headers)".format(dep_name)
+            print("Incomplete dependency spec for {0}, (needs libs & check_headers)".format(dep_name))
         dependencies[dep_name] = Dependency(dep_name, libs, cheads)
     return dependencies
 
 def check_dependency(conf, dependency):
-    print "\nChecking {0} dependencies..".format(dependency.name)
+    print("\nChecking {0} dependencies..".format(dependency.name))
     for header in Split(dependency.check_headers):
         if not conf.CheckCXXHeader(header):
             print('!! Cannot locate header {0} ...'.format(header))
@@ -55,7 +59,7 @@ def parse_user_config(filename, dependencies):
             if opt in VALID_FIELDS:
                 dependencies[dep_name].__setattr__(opt, cparse.get(dep_name, opt))
             else:
-                print "Unknown build option: {0} for dependency {1}".format(opt, dep_name)
+                print("Unknown build option: {0} for dependency {1}".format(opt, dep_name))
     
 def update_and_check_env(conf, dependencies):
     '''

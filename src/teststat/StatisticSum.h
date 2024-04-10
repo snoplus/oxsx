@@ -18,7 +18,7 @@ class StatisticSum : public TestStatistic{
     virtual double Evaluate();
     virtual void   SetParameters(const ParameterDict& params_);
     virtual ParameterDict GetParameters() const;
-    virtual int    GetParameterCount() const;
+    virtual size_t GetParameterCount() const;
 
     virtual std::set<std::string> GetParameterNames() const;
     

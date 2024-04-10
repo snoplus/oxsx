@@ -37,6 +37,7 @@ std::vector<T1> Range(const T1& N, const T1& start = 0){
     return ret;
 }
 
+void RecursiveCombinations(size_t depth, std::vector< std::vector<size_t> >& combs, std::vector<size_t> vec, std::vector<size_t> maxes);
 
 }
 #endif

@@ -38,6 +38,7 @@ class BinAxis{
     std::vector<double> GetBinCentres() const {return fBinCentres;}
 
     std::string GetName() const {return fName;}
+    void SetName(const std::string& name_) {fName = name_;}
     std::string GetLatexName() const {return fLatexName;}
 
     double GetMaximum() const {return fMax;}
@@ -48,7 +49,7 @@ class BinAxis{
 	bool operator!=(const BinAxis& other_) const;
 
  private:
-    int    fNBins;
+    size_t fNBins;
     double fMin;
     double fMax;
 

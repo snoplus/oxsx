@@ -15,14 +15,15 @@ OXSXDataSet::AddEntry(const Event& evData_){
 
     if(!evData_.GetNObservables())
         throw DimensionError("OXSXDataSet::Tried to add empty event to data set!");
-
+    
     fData.push_back(evData_);
+    fData.back().SetObservableNames(&fObservableNames);
 }
 
 Event
 OXSXDataSet::GetEntry(size_t eventIndex_) const{
     try{
-    return fData.at(eventIndex_);
+        return fData.at(eventIndex_);
     }
     catch(std::out_of_range&){
         throw NotFoundError("");

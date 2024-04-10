@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 '''
 Quick script to generate fake data for example/simpleFit.cpp
 

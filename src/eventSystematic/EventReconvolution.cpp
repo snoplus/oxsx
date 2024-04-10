@@ -10,12 +10,17 @@ using ContainerTools::GetKeys;
 
 Event
 EventReconvolution::operator()(const Event& event_){
-    std::vector<double> obs = event_.GetData();
-    double relevantOb = obs.at(fObservables.GetIndex(0));
-    double truthVal   = obs.at(fObservables.GetIndex(1));
+    std::string truthObs   = fInObservables.GetNames().at(0);
+    std::string smearedObs = fOutObservables.GetNames().at(0);
 
-    obs[fObservables.GetIndex(0)] = truthVal + fCorrection * (relevantOb - truthVal);
-    return Event(obs);
+
+    double truthVal  = event_.GetDatum(truthObs);;  //  eg smeared energy
+    double smearedVal  = event_.GetDatum(smearedObs); // eg mc energy
+    
+    Event newEvent(event_);
+    newEvent.SetDatum(smearedObs,   truthVal + fCorrection * (smearedVal - truthVal) );
+
+    return newEvent;
 }
 
 void

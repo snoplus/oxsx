@@ -28,19 +28,24 @@ TEST_CASE("Shrinking a 1D pdf"){
     AxisCollection axes; 
     axes.AddAxis(axis1);
 
+    std::vector<std::string> observableTest;
+    observableTest.push_back("obs0");
+
     BinnedED inputDist("inputdist", axes);
     //fill with linearly increasing some data
     for(size_t i = 0; i < inputDist.GetNBins(); i++)
         inputDist.SetBinContent(i, i);
-    inputDist.SetObservables(0);
+    inputDist.SetObservables(observableTest);
 
     BinnedEDShrinker shrinker;
-    shrinker.SetBuffer(0, 3, 5); // buffer of 5 above, 3 below in dimension 0
+    shrinker.SetBuffer("test", 3, 5); // buffer of 5 above, 3 below in dimension test
 
     SECTION("With overflow bins"){
         shrinker.SetUsingOverflows(true);
 
+        shrinker.SetBinMap(inputDist);
         BinnedED shrunkPdf = shrinker.ShrinkDist(inputDist);
+
         REQUIRE(shrunkPdf.GetNBins() == inputDist.GetNBins() - 5 - 3);
 
         // check the over flow bins and the middle bin
@@ -49,11 +54,12 @@ TEST_CASE("Shrinking a 1D pdf"){
         // 94 is already there, then add 99, 98, 97, 96, 95 buffer bins = 579
         REQUIRE(shrunkPdf.GetBinContent(shrunkPdf.GetNBins() - 1) == 579); 
         REQUIRE(shrunkPdf.GetBinContent(50) == 53); // just gets offset by 3
-       
+
     }
     
     SECTION("With truncation"){
         shrinker.SetUsingOverflows(false);
+        shrinker.SetBinMap(inputDist);
         BinnedED shrunkPdf = shrinker.ShrinkDist(inputDist);
         REQUIRE(shrunkPdf.GetNBins() == inputDist.GetNBins() - 5 - 3);
 
@@ -79,18 +85,19 @@ TEST_CASE("2D pdf, only have buffer in one direction"){
     for (size_t i = 0; i < inputDist.GetNBins(); i++)
         inputDist.SetBinContent(i, 1);
 
-    std::vector<size_t> relevantIndicies;
-    relevantIndicies.push_back(0);
-    relevantIndicies.push_back(1);
+    std::vector<std::string> relevantIndicies;
+    relevantIndicies.push_back("test");
+    relevantIndicies.push_back("test2");
 
-    inputDist.SetObservables(ObsSet(relevantIndicies));
+    inputDist.SetObservables(relevantIndicies);
 
 
     BinnedEDShrinker shrinker;
-    shrinker.SetBuffer(1, 3, 5); // five, three from above on dim 1
+    shrinker.SetBuffer("test2", 3, 5); // five, three from above on dim test2
     
     SECTION("With Overflow bins"){
         shrinker.SetUsingOverflows(true);
+        shrinker.SetBinMap(inputDist);
         BinnedED shrunk = shrinker.ShrinkDist(inputDist);
 
         REQUIRE(shrunk.GetAxes().GetAxis(0).GetNBins() == inputDist.GetAxes().GetAxis(0).GetNBins());

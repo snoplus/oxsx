@@ -1,5 +1,6 @@
 #include <catch.hpp>
 #include <StatisticSum.h>
+#include <BinnedNLLH.h>
 
 class FakeStatistic : public TestStatistic{
 public:
@@ -7,7 +8,7 @@ public:
         return fVal;
     }
 
-    int GetParameterCount() const {
+    size_t GetParameterCount() const {
         return 1;
     }
 
@@ -127,4 +128,63 @@ TEST_CASE("Adding test statistics using StatisticSum constr"){
         REQUIRE(sum.Evaluate() == 6);
     }
 
+}
+
+TEST_CASE("StatisticSum working with multiple BinnedNLLH instances") {
+    /*
+     * Scenario for test: two datasets taken, one with background only, another with same background & signal.
+     * Essentially an on/off comparison measurement.
+     * Truth is a flat background, 12 events in the 3 bins of 1-4 MeV; 4 events of signal in the 2-3 MeV bin only.
+     */
+    // Set up signal & background PDFs
+    AxisCollection ax;
+    ax.AddAxis(BinAxis("energy", 1, 4, 3));
+    const std::vector<std::string> observables = {"energy"};
+    
+    BinnedED signal("signal", ax);
+    BinnedED background("background", ax);
+    
+    signal.SetObservables(observables);
+    background.SetObservables(observables);
+    
+    signal.Fill(2.5);
+    background.Fill(1.5);
+    background.Fill(2.5);
+    background.Fill(3.5);
+    background.Normalise();
+    // Create (fake) datasets
+    const double n_signal = 4;
+    const double n_back = 12;
+    
+    BinnedED* data_b = dynamic_cast<BinnedED*>(background.Clone());
+    data_b->Scale(n_back);
+    
+    BinnedED* data_sb = dynamic_cast<BinnedED*>(signal.Clone());
+    data_sb->Scale(n_signal);
+    data_sb->Add(*data_b);
+    // Set up log-likelihood test statistics for each dataset
+    BinnedNLLH lh_b;
+    lh_b.AddPdf(background);
+    lh_b.SetDataDist(*data_b);
+    
+    BinnedNLLH lh_sb;
+    lh_sb.AddPdf(background);
+    lh_sb.AddPdf(signal);
+    lh_sb.SetDataDist(*data_sb);
+
+    SECTION("StatisticSum setup with BinnedNLLH instances") {
+        // Set up StatisticSum object
+        std::vector<TestStatistic*> stats = {&lh_b, &lh_sb};
+        StatisticSum sum_lh = Sum(stats);
+        sum_lh.RegisterFitComponents();
+        // Set fit components to true values
+        ParameterDict params = {{"signal", 4}, {"background", 12}};
+        sum_lh.SetParameters(params);
+        
+        const double lh_eval = sum_lh.Evaluate();
+        const double lh_exp_b = n_back - 3.*(n_back/3.)*log(n_back/3.);
+        const double lh_exp_sb = n_signal + n_back - 2.*(n_back/3.)*log(n_back/3.) - (n_signal + n_back/3.)*log(n_signal + n_back/3.);
+        const double lh_exp_tot = lh_exp_b + lh_exp_sb;
+        REQUIRE(lh_eval == lh_exp_tot);
+    }
 }

@@ -12,11 +12,10 @@ TEST_CASE("Combining 1D gaussians", "[CompositeED]"){
     AnalyticED gaus1("g1", &gausF1);
     AnalyticED gaus2("g2", &gausF2);
 
-    ObsSet d1(0);
-    ObsSet d2(2);
+    ObsSet d1("obs0");
+    ObsSet d2("obs2");
     
     gaus1.SetObservables(d1);
-
     gaus2.SetObservables(d2);
 
     CompositeED compositeED = gaus1 * gaus2;
@@ -29,15 +28,22 @@ TEST_CASE("Combining 1D gaussians", "[CompositeED]"){
     vals.push_back(1);
     vals.push_back(999);
 
+    std::vector<std::string> observables;
+    observables.push_back("obs0");
+    observables.push_back("obs1");
+    observables.push_back("obs2");
+    observables.push_back("obs3");
+    observables.push_back("obs4");
 
+    Event ev(vals);
+    ev.SetObservableNames(&observables);
 
     SECTION("Check Dimensions"){
         REQUIRE(compositeED.GetNDims() == 2);
     }
 
     SECTION("Check Data Flow to internal pdfs "){
-
-        double prob  = compositeED.Probability(Event(vals));
+        double prob  = compositeED.Probability(ev);
         REQUIRE(prob == Approx(0.15141173681343614));
         
     }
@@ -45,17 +51,17 @@ TEST_CASE("Combining 1D gaussians", "[CompositeED]"){
     SECTION("Check Clone Functionality"){
         EventDistribution* clone = compositeED.Clone();
         REQUIRE(clone -> GetNDims() == 2);
-        REQUIRE(clone -> Probability(Event(vals)) == Approx(0.15141173681343614));
+        REQUIRE(clone -> Probability(ev) == Approx(0.15141173681343614));
     }
 
     SECTION("Second level of recursion"){
         Gaussian nextF = Gaussian(0.9, 0.8);
 
         AnalyticED nextED("g3", &nextF);
-        nextED.SetObservables(ObsSet(3));
+        nextED.SetObservables(ObsSet("obs3"));
         CompositeED level2 = compositeED * nextED;
         REQUIRE( level2.GetNDims() == 3 );
-        REQUIRE( level2.Probability(Event(vals)) == Approx(0.07491808959564718));
+        REQUIRE( level2.Probability(ev) == Approx(0.07491808959564718));
                                                                                          
     }
 }
@@ -83,14 +89,14 @@ TEST_CASE(" Composite of two Binned EDs"){
 
 
     // Data, where to look
-    std::vector<size_t> indicies1;
-    std::vector<size_t> indicies2;
+    std::vector<std::string> indicies1;
+    std::vector<std::string> indicies2;
 
-    indicies1.push_back(0);
-    indicies1.push_back(2);
+    indicies1.push_back("obs0");
+    indicies1.push_back("obs2");
     
-    indicies2.push_back(1);
-    indicies2.push_back(3);
+    indicies2.push_back("obs1");
+    indicies2.push_back("obs3");
 
     pdf1.SetObservables(indicies1);
     pdf2.SetObservables(indicies2);

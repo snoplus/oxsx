@@ -4,19 +4,19 @@
 #include  <Formatter.hpp>
 
 // Initialise to zeros
-SparseMatrix::SparseMatrix(int rows_, int cols_){
+SparseMatrix::SparseMatrix(size_t rows_, size_t cols_){
     fNCols = cols_;
     fNRows  = rows_; 
     fArmaMat = arma::sp_mat(fNRows, fNCols);
 }
 
 void 
-SparseMatrix::PrintDense(const std::string& prefix_=""){
+SparseMatrix::PrintDense(const std::string& prefix_="") const{
     fArmaMat.print(prefix_);
 }
 
 void 
-SparseMatrix::Print(const std::string& prefix_=""){
+SparseMatrix::Print(const std::string& prefix_="") const{
     arma::mat B(fArmaMat);
     B.print(prefix_);
 
@@ -102,8 +102,8 @@ SparseMatrix::SetToIdentity(){
 
 // FIXME: unsigned vs. size_t
 void 
-SparseMatrix::SetComponents(const std::vector<unsigned>& rowIndices_,
-                          const std::vector<unsigned>& colIndices_,
+SparseMatrix::SetComponents(const std::vector<long long unsigned int>& rowIndices_,
+                          const std::vector<long long unsigned int>& colIndices_,
                           const std::vector<double>& values_){
     if(rowIndices_.size() != values_.size() || colIndices_.size() != values_.size())
         throw DimensionError("SparseMatrix::SetComponent() #values != #locations");

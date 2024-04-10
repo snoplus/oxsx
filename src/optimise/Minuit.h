@@ -18,9 +18,11 @@ class TestStatistic;
 
 class Minuit : public Optimiser{
  public:
-    Minuit() :  fMethod("Migrad"),
-                fMinimiser(NULL), fMaxCalls(0), 
-                fTolerance(0.1), fMaximising(false) {}
+    Minuit() : fMaxCalls(0), 
+               fTolerance(0.1),
+               fMethod("Migrad"),
+               fMinimiser(NULL), 
+               fMaximising(false) {}
     ~Minuit();
 
     virtual const FitResult& Optimise(TestStatistic*);

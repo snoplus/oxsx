@@ -6,7 +6,7 @@
 class CutLog{
  public:
     CutLog() : fNEvents(0) {}
-    CutLog(const std::vector<std::string> cutNames_) : fCutNames(cutNames_), fCutCounts(std::vector<int>(cutNames_.size(), 0)), fNEvents(0) {}    
+    CutLog(const std::vector<std::string> cutNames_) : fCutCounts(std::vector<int>(cutNames_.size(), 0)), fCutNames(cutNames_), fNEvents(0) {}    
        
     void LogCut(size_t cutIndex_);
     void LogPass();
@@ -17,9 +17,11 @@ class CutLog{
     std::vector<double>      GetRemainderPercentages() const;
     std::vector<std::string> GetCutNames() const;
     
-    std::string AsString() const;
+    std::string AsString();
     void CalculateMeta();
-    void Print() const;
+    void Print();
+    void SaveAs(const std::string& title_, 
+		const std::string& path_);
 
  private:
     std::vector<int>         fCutCounts;

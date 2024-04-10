@@ -9,14 +9,13 @@
 #ifndef __OXSX_DENSE_MATRIX__
 #define __OXSX_DENSE_MATRIX__
 #include <AxisCollection.h>
-#define ARMA_DONT_USE_CXX11
 #include <armadillo>
 class BinnedPhysDist;
 
 class DenseMatrix{
  public:
  DenseMatrix() : fNRows(0), fNCols(0) {}
-    DenseMatrix(int rows_, int cols_);
+    DenseMatrix(size_t rows_, size_t cols_);
 
     std::vector<double> operator() (const std::vector<double>& input_) const;
 
@@ -35,8 +34,8 @@ class DenseMatrix{
 
  private:
     // N x M matrix
-    int fNRows;
-    int fNCols;
+    size_t fNRows;
+    size_t fNCols;
     arma::mat fArmaMat;
 
 };

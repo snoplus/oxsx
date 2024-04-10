@@ -12,8 +12,6 @@ const std::string treeName = "";
 // used for creating data representations, both should match an observable
 // name from the root ntuple (i.e. a branch name)
 
-const std::string observableName1 = "";
-const std::string observableName2 = "";
 int main(){
     ROOTNtuple nt(fileName, treeName);
     
@@ -26,11 +24,7 @@ int main(){
         std::cout << nt.GetObservableNames().at(i) << "\t";
     std::cout << std::endl;
 
-    std::vector<std::string> relevantObservablesForMyPDF;
-    relevantObservablesForMyPDF.push_back(observableName1);
-    relevantObservablesForMyPDF.push_back(observableName2);
-
-    ObsSet dataRepForMyPDF = nt.MakeDataRep(relevantObservablesForMyPDF);
+    ObsSet dataRepForMyPDF = nt.GetObservableNames();
     // Call pdf.SetDataRep(dataRepForMyPDF) so that your pdf automatically
     // picks out <observableName1> and <observableName2> from events
 

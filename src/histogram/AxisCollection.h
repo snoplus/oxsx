@@ -14,13 +14,14 @@
 class AxisCollection{
     
  public:
-    AxisCollection() : fNDimensions(0), fNBins(0){}
+    AxisCollection() : fNBins(0), fNDimensions(0) {}
     size_t  FindBin(const std::vector<double>& vals_) const;
     size_t  GetNBins() const;
     void    AddAxis(const BinAxis& axis_);
     void    AddAxes(const std::vector<BinAxis>& axes_);
     const BinAxis& GetAxis(size_t axisIndex_) const;    
     const BinAxis& GetAxis(const std::string& axisName_) const;
+    size_t GetAxisIndex(const std::string& name_) const;
     
     size_t GetNDimensions() const;
     size_t FlattenIndices(const std::vector<size_t>& indicies_) const;

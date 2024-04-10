@@ -31,7 +31,7 @@ int main(){
 
     //  every bin is assigned a unique ID
     std::cout << "bin (5, 5) is equivalent to bin #" 
-              << binnedED.FlattenIndices(std::vector<size_t>(5, 5))
+              << binnedED.FlattenIndices(std::vector<size_t>{5, 5})
               << std::endl;
 
     std::vector<size_t> binIndices = binnedED.UnpackIndices(505);
@@ -50,26 +50,26 @@ int main(){
     std::cout << binnedED.Probability(std::vector<double>(2,1)) << std::endl;
 
     // If we also want to use it on events, we set the data representation
-    // our pdf should extract the 0th and 2nd indices and ignore the rest
+    // our pdf should extract the "obs0" and "obs1" observables and
+    // ignore the rest.
     // obviously there should be the same number of indices in the data rep
     // as there are axes in the pdf
-    std::vector<size_t> relevantIndices;
-    relevantIndices.push_back(0);
-    relevantIndices.push_back(2);
-    binnedED.SetObservables(ObsSet(relevantIndices));
+    std::vector<std::string> observables = {"obs0", "obs1"};
+    binnedED.SetObservables(observables);
 
     // Now its ready for use on events, make a fake one here with 10 obs
     // the call to Probability automatically selects the right indices,
     // this allows different pdfs to operate on different observables
     Event fakeEvent(std::vector<double>(10,1));
+    fakeEvent.SetObservableNames(&observables);
     binnedED.Fill(fakeEvent);
     std::cout << binnedED.Probability(fakeEvent) << std::endl;
     
 
     // Marginalisation is possible, just pass the indices you would like to
     // _keep_. Here the options are 0 or 2 (think data representation)
-    BinnedED projection = binnedED.Marginalise(std::vector<size_t>(1,2));
-    std::cout << "the projection along index 2 is " 
+    BinnedED projection = binnedED.Marginalise(std::vector<std::string>{"axis name2"});
+    std::cout << "the projection along observable 0 is " 
               << projection.GetNDims() << " dimensional"
               << std::endl;
 

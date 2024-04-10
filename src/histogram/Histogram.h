@@ -45,9 +45,11 @@ class Histogram{
     void   SetBinContent(size_t bin_, double content_);
     void   Empty();
 
-    Histogram Marginalise(const std::vector<size_t>& indices_) const;
-    Histogram Marginalise(size_t index_) const;
+    Histogram Marginalise(const std::vector<std::string>& indices_) const;
+    Histogram Marginalise(const std::string& index_) const;
     
+    Histogram GetSlice(const std::map<std::string, size_t>& fixedBins_) const;
+
     double    GetBinLowEdge(size_t bin_, size_t dim_) const;
     double    GetBinHighEdge(size_t bin_, size_t dim_) const;
     double    GetBinCentre(size_t bin_, size_t dim_) const;
@@ -57,13 +59,14 @@ class Histogram{
     void Divide(const Histogram&);
     
     std::vector<std::string> GetAxisNames() const;
-
+    size_t GetAxisIndex(const std::string& name_) const;
     void AddPadding(double padding_ = std::numeric_limits<double>::min());
-    
+ 
  private:
     AxisCollection fAxes;
     std::vector<double> fBinContents;
     size_t fNBins;
     size_t fNDims;
+    void Recurse(size_t numFreeIdx, std::vector<size_t> binsEachAxis, std::vector<size_t> coords, std::vector<std::vector<size_t> > &localIdx, std::vector<size_t> free_ax) const;
 };
 #endif

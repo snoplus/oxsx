@@ -35,7 +35,7 @@
 
 TH1D* diffHist(TH1D * h1,TH1D * h2);
 
-int main(int argc, char *argv[]){
+int main(){
 
     Rand::SetSeed(0);
     AxisCollection axes;
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]){
     ///////////////////// 
     Gaussian gausPdf(15, 0.5);
     BinnedED pdf1("a_mc", DistTools::ToHist(gausPdf, axes));
-    pdf1.SetObservables(0);
+    pdf1.SetObservables({"axis1"});
     pdf1.Scale(100000);
 
     pdf1.Normalise();
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]){
 
     // Padding MC PDFs with small numbers
     std::cout<<"Padding MC Now"<<std::endl;
-    for(int i=0; i<mcPdfs.size(); i++){
+    for(size_t i=0; i<mcPdfs.size(); i++){
       mcPdfs.at(i).AddPadding();
     }
 
@@ -65,14 +65,14 @@ int main(int argc, char *argv[]){
     /////////////////////////
     Gaussian gausData(20, 1.0);
     BinnedED pdf3("a_data", DistTools::ToHist(gausData, axes));
-    pdf3.SetObservables(0);
+    pdf3.SetObservables({"axis1"});
 
     std::vector<BinnedED> dataPdfs;
     dataPdfs.push_back(pdf3);
     
     // Padding data distributions with small numbers
     std::cout<<"Padding Data Now"<<std::endl;
-    for(int i=0; i<dataPdfs.size(); i++){
+    for(size_t i=0; i<dataPdfs.size(); i++){
       dataPdfs.at(i).AddPadding();
     }
 

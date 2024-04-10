@@ -79,7 +79,8 @@ BinAxis::FindBin(double value_) const{
 
 bool
 BinAxis::operator==(const BinAxis& other_) const{
-  return (other_.fName == fName && other_.fLatexName == fLatexName && other_.fBinLowEdges == fBinLowEdges && other_.fBinHighEdges == fBinHighEdges);
+    //  return (other_.fName == fName && other_.fLatexName == fLatexName && other_.fBinLowEdges == fBinLowEdges && other_.fBinHighEdges == fBinHighEdges);
+ return (other_.fBinLowEdges == fBinLowEdges && other_.fBinHighEdges == fBinHighEdges);
 }
 
 bool

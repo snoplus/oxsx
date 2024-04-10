@@ -12,8 +12,6 @@ DistFiller
 
 const std::string filename = "";
 const std::string treename = "";
-const std::string obs1 = "obs1name";
-const std::string obs2 = "obs2name"; 
 // this is the name inside the dataset, e.g. for a ROOTNtuple its the branch 
 // name.
 
@@ -27,13 +25,8 @@ int main(){
     axes.AddAxis(BinAxis("obs2", 0, 10, 10));
 
     BinnedED pdf("pdf", axes);
-    
-    // now link up the pdf to the two observables we want, by name
-    std::vector<std::string> relevantObs;
-    relevantObs.push_back(obs1);
-    relevantObs.push_back(obs2);
 
-    pdf.SetObservables(nt.MakeDataRep(relevantObs));
+    pdf.SetObservables(nt.GetObservableNames());
 
     // Now fill em up
     for(size_t i = 0; i < nt.GetNEntries(); i++)

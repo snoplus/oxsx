@@ -18,13 +18,11 @@ CountingResult::AddBackground(double expectedRate_, const std::string& name_,
     fExpectedRateErrors.push_back(error_);
     fBackgroundNames.push_back(name_);
     fBackgroundLogs.push_back(log_);
-    fBackgroundLogs.back().CalculateMeta();
 }
 
 void
 CountingResult::SetDataLog(const CutLog& log_){
     fDataLog = log_;
-    fDataLog.CalculateMeta();
 }
 
 void
@@ -60,13 +58,12 @@ void
 CountingResult::SetSignal(double sigEff_, const std::string& name_, const CutLog& log_){
     fSignalName = name_;
     fSignalLog  = log_;
-    fSignalLog.CalculateMeta();
     fSignalEfficiency = sigEff_;
     
 }
 
 void
-CountingResult::Print() const{
+CountingResult::Print(){
     std::cout << AsString() << std::endl;
 }
 
@@ -82,7 +79,7 @@ CountingResult::GetExpectedRateErrors() const{
 }
 
 void 
-CountingResult::SaveAs(const std::string& fileName_) const{
+CountingResult::SaveAs(const std::string& fileName_){
     time_t t = time(0);
     struct tm * now = localtime(&t);
 
@@ -106,7 +103,7 @@ CountingResult::SaveAs(const std::string& fileName_) const{
        << AsString();       
 }
 std::string
-CountingResult::AsString() const{
+CountingResult::AsString(){
     Formatter resultString;
     resultString << "------Backgrounds:----------------------------------------------------\n";
     for(size_t i = 0; i < fBackgroundLogs.size(); i++){

@@ -1,9 +1,13 @@
 #include <catch.hpp>
-#include <ROOTNtuple.h>
+#include <ROOTTree.h>
 #include <IO.h>
 #include <OXSXDataSet.h>
+#include <TTree.h>
+#include <TFile.h>
+#include <math.h>
 #include <iostream>
-TEST_CASE("Writing a data set to disk  and reading back"){
+
+TEST_CASE("Writing a data set to disk in the HDF5 format, and reading back"){
     
     // Create fake data set
     OXSXDataSet origDataSet;
@@ -46,4 +50,50 @@ TEST_CASE("Writing a data set to disk  and reading back"){
     }
     
     remove("data_set_io_root_test.h5");
+}
+
+TEST_CASE("Read TTree file in from disk") {
+    // First - we must create the TTree file!
+    const std::string treename = "T";
+    TTree tree(treename.c_str(), "");
+    double energy;
+    unsigned int nhits;
+    tree.Branch("energy", &energy, "energy/D");
+    tree.Branch("nhits", &nhits, "nhits/i");
+    const std::vector<std::string> observable_names = {"energy", "nhits"};
+
+    for (size_t i = 0; i < 10000; i++) {
+        energy = std::sin(i);
+        nhits = (i % 13) + (i % 53);
+        tree.Fill();
+    }
+    // Write tree to a file
+    const std::string filename = "data_set_io_ttree_test.root";
+    TFile outfile(filename.c_str(), "RECREATE");
+    tree.Write();
+    outfile.Close();
+
+    // Now - let's try and read in that file, using the ROOTTree class!
+    ROOTTree intree(filename, treename);
+
+    SECTION("Names copied correctly") {
+        REQUIRE(intree.GetObservableNames() == observable_names);
+    }
+    SECTION("Same data dimension") {
+        REQUIRE(intree.GetNObservables() == observable_names.size());
+        REQUIRE(intree.GetNEntries() == tree.GetEntries());
+    }
+    SECTION("All data matches, to within a floating point conversion") {
+        tree.SetBranchAddress("energy", &energy);
+        tree.SetBranchAddress("nhits", &nhits);
+        for (size_t i = 0; i < intree.GetNEntries(); i++) {
+            Event evt = intree.GetEntry(i);
+            tree.GetEntry(i);
+            REQUIRE(evt.GetDatum("energy") == Approx(energy));
+            REQUIRE(evt.GetDatum("nhits") == Approx(static_cast<double>(nhits)));
+        }
+    }
+
+    // Finally, delete the ROOT file
+    remove(filename.c_str());
 }

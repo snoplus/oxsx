@@ -9,9 +9,9 @@ int main(){
     
     // DataSetGenerator        
     DataSetGenerator dataGen;        
-    dataGen.AddDataSet(&zeroNuMC, 5);  // second arg is the expected rate        
-    dataGen.AddDataSet(&twoNuMC, 50);        
-    dataGen.AddDataSet(&b8NuMC, 100);        
+    dataGen.AddDataSet(&zeroNuMC, 5, false);  // second arg is the expected rate        
+    dataGen.AddDataSet(&twoNuMC, 50, false);        
+    dataGen.AddDataSet(&b8NuMC, 100, false);        
     
     // Generate a data set        
     OXSXDataSet fakeData  = dataGen.PoissonFluctuatedDataSet();

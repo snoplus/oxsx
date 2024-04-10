@@ -2,12 +2,14 @@
 #include <Event.h>
 #include <Exceptions.h>
 
-LineCut::LineCut(size_t dim_, double val_, 
+LineCut::LineCut(const std::string& name_, const std::string& obs_, double val_, 
                  const std::string& side_){
-    fDim = dim_;
+    fName = name_;
+    fObs = obs_;
     fVal = val_;
     SetSidedness(side_);
 }
+
 Cut* 
 LineCut::Clone() const{
     return new LineCut(*this);
@@ -17,7 +19,7 @@ bool
 LineCut::PassesCut(const Event& ev_) const{
     double val = 0;
     try{
-        val = ev_.GetDatum(fDim);
+        val = ev_.GetDatum(fObs);
     }
     catch(const NotFoundError&){
         throw NotFoundError("Cut::Cut to non-existent data observable requested!");
@@ -50,4 +52,10 @@ LineCut::SetSidedness(const std::string& side_){
 std::string 
 LineCut::GetSidedness() const{
     return fSidedness;
+}
+
+
+std::string
+LineCut::GetName() const{
+  return fName;
 }

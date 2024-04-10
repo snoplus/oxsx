@@ -12,8 +12,10 @@ TEST_CASE("Add a couple of analytic pdfs"){
 
     AnalyticED pdf1("g1", &gaus1);
     AnalyticED pdf2("g2", &gaus2);
-    pdf1.SetObservables(0);
-    pdf2.SetObservables(0);
+    std::vector<std::string> observable;
+    observable.push_back("obs0");
+    pdf1.SetObservables(observable);
+    pdf2.SetObservables(observable);
     
     SECTION("initialised correctly"){
         REQUIRE(pdfMan.GetNDists() == 0);
@@ -46,6 +48,11 @@ TEST_CASE("Add a couple of analytic pdfs"){
         pdfMan.AddDist(&pdf2);
 
         Event event(std::vector<double>(1, 0));
+        std::vector<std::string> observablesEvent;
+        observablesEvent.push_back("obs0");
+        observablesEvent.push_back("obs1");
+        event.SetObservableNames(&observablesEvent);
+
         REQUIRE(pdfMan.Probability(event) == 0); // norms are zero
 
         pdfMan.SetNormalisations(std::vector<double>(2, 1));
