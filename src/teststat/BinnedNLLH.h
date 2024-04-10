@@ -15,12 +15,11 @@
 class DataSet;
 class BinnedNLLH : public TestStatistic{
  public:
-    BinnedNLLH() : fCalculatedDataDist(false), fAlreadyShrunk(false), fDataSet(NULL), fSignalCutEfficiency(1){}
+    BinnedNLLH() : fDataSet(NULL), fSignalCutEfficiency(1), fCalculatedDataDist(false), fAlreadyShrunk(false), fDebugMode(false) {}
 
     void   SetPdfManager(const BinnedEDManager&);
     void   SetSystematicManager(const SystematicManager&);
 
-    void   AddPdf(const BinnedED&);
     void   AddSystematic(Systematic* sys_);
     void   AddSystematic(Systematic* sys_, const std::string& group_ );
 
@@ -28,7 +27,8 @@ class BinnedNLLH : public TestStatistic{
     void   AddSystematics(const std::vector<Systematic*>, const std::vector<std::string>&);
 
     void   SetConstraint(const std::string& paramName_, double mean_, double sigma_);
-
+    void   SetConstraint(const std::string& paramName_, double mean_, double sigma_lo_, double sigma_hi_);
+    
     void SetNormalisations(const std::vector<double>& norms_);
     std::vector<double> GetNormalisations() const;
 
@@ -37,15 +37,24 @@ class BinnedNLLH : public TestStatistic{
     void SetDataDist(const BinnedED&);
     BinnedED GetDataDist() const;
 
+    void SetBarlowBeeston(const bool);
+
     void SetDataSet(DataSet*);
     DataSet* GetDataSet();
 
-    void AddPdf(const BinnedED& pdf, const std::vector<std::string>& syss_);
-    void AddPdfs(const std::vector<BinnedED>& pdfs);
-    void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& syss_);
+    void SetBuffer(const std::string& dim_, unsigned lower_, unsigned upper_);
+    std::pair<unsigned, unsigned> GetBuffer(const std::string& dim_) const;
 
-    void SetBuffer(size_t dim_, unsigned lower_, unsigned upper_);
-    std::pair<unsigned, unsigned> GetBuffer(size_t dim_) const;
+
+    void AddPdf(const BinnedED& pdf, const NormFittingStatus norm_fitting_status=DIRECT);
+    void AddPdf(const BinnedED& pdf, const std::vector<std::string>& syss_, const NormFittingStatus norm_fitting_status=DIRECT);
+    void AddPdf(const BinnedED& pdf, const int& rate_, const NormFittingStatus norm_fitting_status=DIRECT);
+    void AddPdf(const BinnedED& pdf, const std::vector<std::string>& syss_, const int& rate_, const NormFittingStatus norm_fitting_status=DIRECT);
+    void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<NormFittingStatus>* norm_fitting_statuses=nullptr);
+    void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& syss_, const std::vector<NormFittingStatus>* norm_fitting_statuses=nullptr);
+    void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<int>& rates_, const std::vector<NormFittingStatus>* norm_fitting_statuses=nullptr);
+    void AddPdfs(const std::vector<BinnedED>& pdfs, const std::vector<std::vector<std::string> >& syss_, const std::vector<int>& rates_, const std::vector<NormFittingStatus>* norm_fitting_statuses=nullptr);
+
     void SetBufferAsOverflow(bool b_); // true by default
     bool GetBufferAsOverflow() const;
 
@@ -58,13 +67,14 @@ class BinnedNLLH : public TestStatistic{
     CutLog GetSignalCutLog() const;
     void   SetSignalCutLog(const CutLog&);
 
-    std::vector<double> GetWorkingNormalisations() const;
+    bool GetDebugMode() const { return fDebugMode; }
+    void SetDebugMode(bool mode) { fDebugMode = mode; }
 
     // Test statistic interface
-    void RegisterFitComponents();
+    void RegisterFitComponents(); 
     void SetParameters(const ParameterDict&);
     ParameterDict GetParameters() const;
-    int  GetParameterCount() const;
+    size_t GetParameterCount() const;
     std::set<std::string> GetParameterNames() const;
     double Evaluate();
 
@@ -76,8 +86,6 @@ class BinnedNLLH : public TestStatistic{
     CutCollection        fCuts;
     std::map<std::string, QuadraticConstraint> fConstraints;
 
-    std::vector<std::string> fOscPdfs;
-
     double  fSignalCutEfficiency;
     CutLog  fSignalCutLog;
 
@@ -85,6 +93,10 @@ class BinnedNLLH : public TestStatistic{
     bool             fCalculatedDataDist;
     bool             fAlreadyShrunk;
     ComponentManager fComponentManager;
-    std::vector<double> fWorkingNormalisations;
+
+    std::vector<unsigned int> fGenRates;
+    bool fUseBarlowBeeston = false;
+    
+    bool fDebugMode;
 };
 #endif
