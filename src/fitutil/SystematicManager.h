@@ -55,7 +55,7 @@ class SystematicManager{
                     std::vector<double>* norms=nullptr) const;
 
     void Construct();
-    
+
  private:
     size_t fNGroups;
     std::map<std::string,SparseMatrix> fTotalReponses;
