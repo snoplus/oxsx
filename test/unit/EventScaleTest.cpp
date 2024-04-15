@@ -25,7 +25,7 @@ TEST_CASE("Simple scale on variable number 3"){
     Event inData(fakeObservations);
     inData.SetObservableNames(&observablesData);
     
-    // apply the shift
+    // apply the scale
     Event outData = scaler(inData);
     std::vector<double> modifiedObs = outData.GetData();
 

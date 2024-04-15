@@ -60,13 +60,13 @@ void Shape::Construct() {
 
 void Shape::SetParameter(const std::string& name_, double value){
     if(fParamDict.count(name_) == 0)
-        throw ParameterError("Shift: can't set " + name_);
+        throw ParameterError("Shape: can't set " + name_);
     fParamDict[name_] = value;
 }
 
 double Shape::GetParameter(const std::string& name_) const{
     if(fParamDict.count(name_) == 0)
-        throw ParameterError("Shift: parameter " + name_ + "does not exist");
+        throw ParameterError("Shape: parameter " + name_ + "does not exist");
     return fParamDict.at(name_);
 }
 
