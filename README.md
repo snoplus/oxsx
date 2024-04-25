@@ -32,7 +32,7 @@ Follow the installation instructions for each of the above using either the defa
 
 4. Test the build was sucessful with ```./test/RunUnits```
 
-If you get the error: `catch.hpp: No such file or directory` check you used the `--recursive` option when git cloning.
+    If you get the error: `catch.hpp: No such file or directory` check you used the `--recursive` option when git cloning.
 
 
 <h3> Compiling Your Own Scripts</h3>
