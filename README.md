@@ -19,7 +19,7 @@ Signal Extraction framework for the SNO+ experiment
 <h2>Installation Instructions </h2>
 Follow the installation instructions for each of the above using either the default install location or a different directory if you would prefer. Be careful to start the install with a clean environment.
 
-1. Clone this repository with ```git clone https://github.com/jackdunger/oxsx.git --recursive``` if you've already cloned without the recursive flag just run ```git submodule update --init```
+1. Clone this repository with ```git clone https://github.com/snoplus/oxsx.git --recursive``` if you've already cloned without the recursive flag just run ```git submodule update --init```
 
 2. If your dependencies are somewhere the compiler can't find them, copy `config/userconfig.ini.template` to `config/userconfig.ini` and add the relevant paths. Missing entries are assumed to be in standard locations. e.g.
     ```
@@ -31,6 +31,8 @@ Follow the installation instructions for each of the above using either the defa
 3. Run ```scons && scons units```: this will compile the OXSX library and subsequently the unit tests.
 
 4. Test the build was sucessful with ```./test/RunUnits```
+
+If you get the error: `catch.hpp: No such file or directory` check you used the `--recursive` option when git cloning.
 
 
 <h3> Compiling Your Own Scripts</h3>
