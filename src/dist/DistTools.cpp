@@ -41,8 +41,7 @@ DistTools::ToTH1D(const BinnedED& pdf_, const bool widthCorrect_){
     std::vector<double> highEdges = axis.GetBinHighEdges();
     lowEdges.push_back(highEdges.back());
 
-    TH1D rtHist(pdf_.GetName().c_str(), pdf_.GetName().c_str(), nBins, &lowEdges.at(0));
-    std::cout << "saving eh " << pdf_.GetName() << std::endl;
+    TH1D rtHist("", "", nBins, &lowEdges.at(0));
     rtHist.SetDirectory(0);
     rtHist.GetXaxis() -> SetTitle(axis.GetLatexName().c_str());
 
