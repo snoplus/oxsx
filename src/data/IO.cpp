@@ -285,25 +285,31 @@ IO::UnpackString(const std::string& str_){
 
 
 void
-IO::SaveHistogram(const Histogram& hist_, const std::string& filename_){
+IO::SaveHistogram(const Histogram& hist_, const std::string& filename_, const std::string& histname_){
     std::string ext = GetExt(filename_);
     if(ext == "h5")
         SaveHistogramH5(hist_, filename_);
 
     else if(ext == "root")
-        SaveHistogramROOT(hist_, filename_);
+        SaveHistogramROOT(hist_, filename_, histname_);
 
     else
         throw IOError("IO::SaveDataSet Don't know how to save file as ." + ext);
 }
 
 void
-IO::SaveHistogramROOT(const Histogram& hist_, const std::string& filename_){
+IO::SaveHistogramROOT(const Histogram& hist_, const std::string& filename_, const std::string& histname_){
     int dim = hist_.GetNDims();
-    if(dim == 1)
-        DistTools::ToTH1D(hist_).SaveAs(filename_.c_str());
-    else if(dim == 2)
-        DistTools::ToTH2D(hist_).SaveAs(filename_.c_str());
+    if(dim == 1){
+        TH1D hist = DistTools::ToTH1D(hist_);
+        hist.SetName(histname_.c_str());
+        hist.SaveAs(filename_.c_str());
+    }
+    else if(dim == 2){
+        TH2D hist = DistTools::ToTH2D(hist_);
+        hist.SetName(histname_.c_str());
+        hist.SaveAs(filename_.c_str());
+    }
     else
         throw IOError(Formatter() << "IO::SaveHistogramROOT don't know how to save a " << dim
                       << "histogram (just 1D or 2D)");

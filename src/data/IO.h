@@ -22,8 +22,8 @@ class IO{
       
 
     static void SaveHistogramH5(const Histogram& , const std::string& filename_);
-    static void SaveHistogramROOT(const Histogram& , const std::string& filename_);
-    static void SaveHistogram(const Histogram&, const std::string& filename_);
+    static void SaveHistogramROOT(const Histogram& , const std::string& filename_, const std::string& = "oxsx_saved");
+    static void SaveHistogram(const Histogram&, const std::string& filename_, const std::string& = "oxsx_saved");
 
     static OXSXDataSet* LoadDataSet(const std::string& filename_);
     static Histogram    LoadHistogram(const std::string& filename_);
