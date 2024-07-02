@@ -46,7 +46,7 @@ Look in `<oxsx root>/examples` for help getting started
 <h2> Creating ntuples </h2>
 One way to read in data is using a ROOT ntuple. If you are looking at SNO+ data, you probably have a flat root tree that can be easily pruned down into this format with only the branches you are interested in.
 
-To create ntuples for oxsx run ```./util/prune_flat_tree <path_to_file_to_convert> -treename <name_of_the_tree> <branch1> <branch2> <branch3> -newtreename <name_of_your_tree> -outputfile <name_of_your_file> -nevents <number_of_events>```
+To create ntuples for oxsx run ```./util/prune_flat_tree <path_to_file_to_convert> -treename <name_of_the_tree> <branch1> <branch2> <branch3> -newtreename <name_of_your_tree> -outfile <name_of_your_file> -nevents <number_of_events>```
 
  * The name of the tree in an input file is optional, as a default it is "output"
  * The name of the output file is optional, as a default is is <the_name_of_input_file>+"_oxsx.root"
