@@ -69,7 +69,7 @@ EDManager::RegisterParameters(){
     fParameterManager.Clear();
     std::vector<std::string> parameterNames;
     for(size_t i = 0; i < fDists.size(); i++)
-        parameterNames.push_back(fDists.at(i)->GetName() + "_norm");
+        parameterNames.push_back(fDists.at(i)->GetName());
     
     fParameterManager.AddContainer(fNormalisations, parameterNames);
 }    

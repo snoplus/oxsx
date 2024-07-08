@@ -136,8 +136,8 @@ int main()
     AxisCollection axes;
     axes.AddAxis(BinAxis("axis1", 10, 30 ,200));
 
-    ObsSet  obsSet(0);
-    ObsSet  obsSetToTransform(0);
+    ObsSet  obsSet("axis1");
+    ObsSet  obsSetToTransform("axis1");
 
     Convolution* conv_a = new Convolution("conv_a");
     VaryingCDF smear("smear");

@@ -66,17 +66,17 @@ TEST_CASE("Add a couple of analytic pdfs"){
 
         REQUIRE(pdfMan.GetParameterCount() == 2);
         ParameterDict testPs;
-        testPs["g1_norm"] = 0;
-        testPs["g2_norm"] = 0;
+        testPs["g1"] = 0;
+        testPs["g2"] = 0;
         REQUIRE(pdfMan.GetParameters() == testPs);
         
         std::set<std::string> expectedNames;
-        expectedNames.insert("g1_norm");
-        expectedNames.insert("g2_norm");
+        expectedNames.insert("g1");
+        expectedNames.insert("g2");
         REQUIRE(pdfMan.GetParameterNames() == expectedNames);
         
-        testPs["g1_norm"] = 10;
-        testPs["g2_norm"] = 15;
+        testPs["g1"] = 10;
+        testPs["g2"] = 15;
         pdfMan.SetParameters(testPs);
         REQUIRE(pdfMan.GetParameters()     == testPs);
         // note the line below only works because the normalisations
