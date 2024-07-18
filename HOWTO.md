@@ -1,4 +1,4 @@
-OXSX/OXO is a signal extraction frmaework built for the SNO+ experiment.
+OXSX/OXO is a signal extraction framework built for the SNO+ experiment.
 It is built to be useful for general analyses within particle physics.
 
 This document will try and explain the critical components of OXO, so you can
@@ -10,27 +10,32 @@ build your analysis code efficiently.
   - [1.3. DataSet](#13-dataset)
     - [1.3.1. OXSXDataSet](#131-oxsxdataset)
     - [1.3.2. ROOTNtuple](#132-rootntuple)
-    - [1.3.3. LazyOXSXDataSet](#133-lazyoxsxdataset)
+    - [1.3.3. ROOTTree](#133-roottree)
+    - [1.3.4. LazyOXSXDataSet](#134-lazyoxsxdataset)
 - [2. Histograms, etc.](#2-histograms-etc)
   - [2.1. BinAxis](#21-binaxis)
   - [2.2. AxisCollection](#22-axiscollection)
   - [2.3. Histogram](#23-histogram)
-- [3. PDFs & Event Distributions](#3-pdfs--event-distributions)
+- [3. PDFs \& Event Distributions](#3-pdfs--event-distributions)
   - [3.1. ParameterDict](#31-parameterdict)
   - [3.2. FitComponent](#32-fitcomponent)
     - [3.2.1. Function](#321-function)
       - [3.2.1.1. Heaviside](#3211-heaviside)
-      - [3.2.1.2. PDF](#3212-pdf)
-        - [3.2.1.2.1. Gaussian](#32121-gaussian)
+      - [3.2.1.2. 3.2.1.2 SquareRootScale](#3212-3212-squarerootscale)
+      - [3.2.1.3. PDF](#3213-pdf)
+        - [3.2.1.3.1. Gaussian](#32131-gaussian)
+    - [3.2.2. ConditionalPDF](#322-conditionalpdf)
+      - [3.2.2.1. JumpPDF](#3221-jumppdf)
+      - [3.2.2.2. VaryingCDF](#3222-varyingcdf)
   - [3.3. EventDistribution](#33-eventdistribution)
     - [3.3.1. AnalyticED](#331-analyticed)
     - [3.3.2. BinnedED](#332-binneded)
     - [3.3.3. CompositeED](#333-compositeed)
     - [3.3.4. SpectralFitDist](#334-spectralfitdist)
-- [4. Random number & Event generation](#4-random-number--event-generation)
+- [4. Random number \& Event generation](#4-random-number--event-generation)
   - [4.1. DataSetGenerator](#41-datasetgenerator)
   - [4.2. BinnedEDGenerator](#42-binnededgenerator)
-- [5. Data type conversions & IO](#5-data-type-conversions--io)
+- [5. Data type conversions \& IO](#5-data-type-conversions--io)
   - [5.1. DistTools](#51-disttools)
   - [5.2. DistFiller](#52-distfiller)
   - [5.3. IO](#53-io)
@@ -49,9 +54,41 @@ build your analysis code efficiently.
     - [7.1.4. EventReconvolution](#714-eventreconvolution)
   - [7.2. Systematic](#72-systematic)
     - [7.2.1. Scale](#721-scale)
-    - [7.2.2. Convolution](#722-convolution)
-- [Managers](#managers)
-  - [ParameterManager](#parametermanager)
+    - [7.2.2. ScaleFunction](#722-scalefunction)
+    - [7.2.3. 7.2.3 Shift](#723-723-shift)
+    - [7.2.4. 7.2.4 Convolution](#724-724-convolution)
+    - [7.2.5. 7.2.5 Shape](#725-725-shape)
+- [8. Constraints](#8-constraints)
+  - [8.1. QuadraticConstraint](#81-quadraticconstraint)
+  - [8.2. BivariateQuadraticConstraint](#82-bivariatequadraticconstraint)
+- [9. Parameter Wrangling](#9-parameter-wrangling)
+  - [9.1. ComponentManager](#91-componentmanager)
+  - [9.2. FitParameter](#92-fitparameter)
+    - [9.2.1. DoubleParameter](#921-doubleparameter)
+    - [9.2.2. ContainerParameter](#922-containerparameter)
+    - [9.2.3. ParameterManager](#923-parametermanager)
+    - [9.2.4. EDManager](#924-edmanager)
+    - [9.2.5. BinnedEDManager](#925-binnededmanager)
+- [10. Other Managers](#10-other-managers)
+  - [10.1. ConstraintManager](#101-constraintmanager)
+  - [10.2. EventSystematicManager](#102-eventsystematicmanager)
+  - [10.3. SystematicManager](#103-systematicmanager)
+  - [10.4. BinnedEDShrinker](#104-binnededshrinker)
+- [11. Test Statistics](#11-test-statistics)
+  - [11.1. ChiSquare](#111-chisquare)
+  - [11.2. BinnedNLLH](#112-binnednllh)
+  - [11.3. StatisticSum](#113-statisticsum)
+- [12. Optimisers](#12-optimisers)
+  - [12.1. FitResult](#121-fitresult)
+  - [12.2. Optimiser](#122-optimiser)
+  - [12.3. GridSearch](#123-gridsearch)
+  - [12.4. Minuit](#124-minuit)
+  - [12.5. Markov Chain Monte Carlo](#125-markov-chain-monte-carlo)
+    - [12.5.1. MCSampler](#1251-mcsampler)
+      - [12.5.1.1. MetropolisSampler](#12511-metropolissampler)
+      - [12.5.1.2. HamiltonianSampler](#12512-hamiltoniansampler)
+    - [12.5.2. MCMCSamples](#1252-mcmcsamples)
+    - [12.5.3. MCMC](#1253-mcmc)
 
 # 1. Objects for storing data
 ## 1.1. Event
@@ -128,7 +165,7 @@ A `DataSet` object derived from a ROOT `TNtuple` object that is stored in a
 file. When the object is created, the `TNtuple` object is loaded. Adding
 events afterwards is not possible: you're stuck with what you loaded in.
 
-### 1.3.2. ROOTTree
+### 1.3.3. ROOTTree
 
 Almost identical to the `ROOTNTuple` class, but loads in a ROOT `TTree` instead.
 Tends to be more useful in practice than `ROOTNTuple`, because most data
@@ -137,7 +174,7 @@ one handles in particle physics gets stored in `TTree` objects.
 Importantly, for this class to work the `TTree` structure must be flat, with
 all branches having variables that can be cast into a double.
 
-### 1.3.3. LazyOXSXDataSet
+### 1.3.4. LazyOXSXDataSet
 
 A fancy version of `OXSXDataSet`; so fancy I'm not sure anyone uses this.
 You create the object with a filename pointing to some data that is stored
@@ -237,7 +274,7 @@ Evaluation of this function will always return either a 1 or a zero only.
 
 Frankly not really used very much.
 
-#### 3.2.1.2 SquareRootScale
+#### 3.2.1.2. 3.2.1.2 SquareRootScale
 `SquareRootScale` is a `Function` whose evaluation function is of the form
 `f(x) = a*sqrt(x)`, where `a` is the "gradient" parameter. This gradient
 can be set directly by `SetGradient(a)`, or indirectly using the standard
@@ -657,28 +694,28 @@ given the value to be scaled and the `ParameterDict` of `ScaleFunction`
 parameters, returns a scaled value. This kind of function has been typedefed as
 `ScaleFunc`.
 
-### 7.2.3 Shift
+### 7.2.3. 7.2.3 Shift
 The `Shift` systematic works like `EventShift`, shifting a distribution by some 
 constant amount.
 
-### 7.2.4 Convolution
+### 7.2.4. 7.2.4 Convolution
 The `Convolution` systematic works similar to `EventConvolution`, but now smears 
 each bin's contents via calls to a `ConditionalPDF::Integral()` method. Requires 
 a `PDF` or `ConditionalPDF` to be given for the smearing kernel.
 
-### 7.2.5 Shape
+### 7.2.5. 7.2.5 Shape
 The `Shape` systematic applies a bin-by-bin scaling of its contents, effectively 
 modifying the overall shape of the distribution. The shape function must be 
 provided by the user as an `std::function<double(const ParameterDict&,const double&)>` 
 object, typedefed to `ShapeFunction`.
 
 
-# Constraints
+# 8. Constraints
 A standard component of test statistics are contraint penalty terms. In OXO, there 
 is currently no fully-general way of handling constraints. There are currently two 
 kinds of constraint classes that handle many standard situations.
 
-## QuadraticConstraint
+## 8.1. QuadraticConstraint
 The `QuadraticConstraint` class handles the very standard situation of wanting a 
 penalty function on a single parameter of the form:
 ```
@@ -696,7 +733,7 @@ on whether the function is evaluated above or below the mean param value.
 The constraint parameters are set up with the `SetConstraint()` methods; the 
 penalty is evaluated for a given value with `Evaluate(x)`.
 
-## BivariateQuadraticConstraint
+## 8.2. BivariateQuadraticConstraint
 The `QuadraticConstraint` class is limited in part because of not allowing for 
 penalty terms to account for correlations between multiple parameters. Currently 
 in OXO, we only have one class that handles a correlated constraint: `BivariateQuadraticConstraint`. 
@@ -705,7 +742,7 @@ some amount of correlation between them (correlation must be < 1 though).
 
 As expected, the penalty term can be evaluated with the `Evaluate(x1, x2)` method.
 
-# Parameter Wrangling
+# 9. Parameter Wrangling
 We've seen that a large fraction of classes within OXO inherit from `FitComponent`, 
 and so they have parameters that can be varied. We're going to see when it comes to 
 test statistics and optimisations that knowing what the status of all the parameters 
@@ -718,7 +755,7 @@ One approach is relatively straightforward; the other is somewhat more complex.
 Note that the classes in this section are usually back-end classes: it will be rare 
 that you should have to interact with these classes directly.
 
-## ComponentManager
+## 9.1. ComponentManager
 The `ComponentManager` class is the simple, and somewhat logical conclusion to having 
 loads of objects that derive from `FitComponent`. It stores a vector of pointers to 
 `FitComponent` object that you want to keep track of. To add an object to be tracked, 
@@ -729,7 +766,7 @@ With this class, you can then get and set all of the parameters in all of the tr
 There are a few other functions that allow you to act over the whole collection of 
 tracked objects simultaneously. Neat!
 
-## FitParameter
+## 9.2. FitParameter
 The first method works fine, as long as you're dealing with `FitComponent` objects. 
 Some OXO objects don't inherit from `FitComponent` though, e.g. `BinnedED`, so this won't 
 work in general!
@@ -745,11 +782,11 @@ NOTE: `FitComponent` and `FitParameter` are totally different things! Both are a
 base classes, but `FitParameter` describes a single parameter, whereas `FitComponent` is 
 any object that has fittable components. Sorry.
 
-### DoubleParameter
+### 9.2.1. DoubleParameter
 The simplest implementation of `FitParameter`, `DoubleParameter` is just a class 
 that stores a reference to a single double, which can be `Get()` and `Set(x)`.
 
-### ContainerParameter
+### 9.2.2. ContainerParameter
 The `ContainerParameter` class allows you to create a `FitParameter` object for 
 any double that's within any reasonably-defined container object, such as a `std::vector`. 
 All you have to do is provide the container and the index of the parameter within that 
@@ -762,7 +799,7 @@ double x = cp.Get(); // x = 6.0;
 cp.Set(3.0); // now vals = {2.5, 3.0, 3.2}
 ```
 
-### ParameterManager
+### 9.2.3. ParameterManager
 Using `DoubleParameter` and `ContainerParameter`, we can now endow basically any double 
 variable in our code as a `FitParameter` object. In order to corall all of these together, 
 and generally provide some quality-of-life features, the `ParameterManager` is used.
@@ -778,7 +815,7 @@ method for each parameter. This is likely to get tedious! Instead, you can get t
 to do all of the `FitParameter` object creation for you using the `AddDouble()` and `AddContainer()` 
 methods.
 
-### EDManager
+### 9.2.4. EDManager
 So far, all of the `FitParameter` stuff has been pretty hypothetical: now to provide a couple 
 of concrete uses for this second approach, as well as a way to bridge from `FitParameter` 
 world to `FitComponent` world. After all, we eventually want to have /all/ of the parameters 
@@ -797,7 +834,7 @@ The `EDManager` class inherits from `FitComponent`, with the `FitComponent`
 interface simply referring to that of the `ParameterManager`. By consequence, 
 it can be added to a central `ComponentManager` object.
 
-### BinnedEDManager
+### 9.2.5. BinnedEDManager
 The `BinnedEDManager` class works a bit like `EDManager`, but handles the more specific 
 case of a collection of `BinnedED` objects. It also contains a `ParameterManager` to 
 track normalisations; it inherits from `FitComponent` similarly.
@@ -836,18 +873,18 @@ normalisation directly, and have the pre-systematic normalisation variable withi
 the `BinnedEDManager` turned off. This is the `FALSE` mode.
 
 
-# Other Managers
+# 10. Other Managers
 In the previous section, a bunch of "Manager" vlasses were explained. Well, it turns out 
 there are even more of them in OXO!
 
-## ConstraintManager
+## 10.1. ConstraintManager
 The `ConstraintManager` class stores a collection of constraint objects - either 
 `QuadraticConstraint` or `BivariateQuadraticConstraint` at the moment - and allows the 
 user to centrally control the constraint parameters via `SetConstraint()` methods. 
 It also allows users to simultaneously `Evaluate(params)` them in one call, and it will 
 sum the totals of all `Evaluate()` calls for each tracked constraint.
 
-## EventSystematicManager
+## 10.2. EventSystematicManager
 If you have a bunch of `EventSystematic` objects, and want to deal with them in one place, 
 then the `EventSystematicManager` is the class for you. It stores a collection of pointers 
 to `EventSystematic` objects, which can be added to with the `Add(ev_sys)` method.
@@ -855,7 +892,7 @@ to `EventSystematic` objects, which can be added to with the `Add(ev_sys)` metho
 The key method here is `ApplySystematics(event)`: an `Event` object will have each 
 systematic that is being tracked applied to it. Neat!
 
-## SystematicManager
+## 10.3. SystematicManager
 Similar to `EventSystematicManager`, the `SystematicManager` class stores a collection 
 of `Systematic` object pointers. It also allows for `Systematic` objects to be tracked 
 through `Add(sys)`. There are some key advancements in what this class can do, however.
@@ -881,7 +918,7 @@ You can add a `BinnedED` object to a group (or multiple groups!) through the
 adding it to be tracked by the manager: `Add(sys, group_name)`. If a systematic is added 
 without a group, then it is "global", and is applied to all PDFs.
 
-## BinnedEDShrinker
+## 10.4. BinnedEDShrinker
 The `BinnedEDShrinker` isn't really a "manager", but it's worth talking about at this point 
 anyways. When applying systematics to PDFs, problems can rapidly arise near the edges of 
 the PDFs. In order to avoid this issue, it is generally wise to put "buffer" bins around the 
@@ -902,7 +939,7 @@ However, you may want those contents to be put into the underflow/overflow bins:
 use the `SetUsingOverflows(true)` method.
 
 
-# Test Statistics
+# 11. Test Statistics
 A key part of most analyses is the calculation of some kind of test statistic, be it 
 a chi-squared, log-likelihood, or otherwise. We'll see later how optimisers are 
 based around repeatedly evaluting a test statistic at different points in the 
@@ -916,7 +953,7 @@ and most importantly an `Evaluate()` method to get the test statistic value for
 a given set of parameter values. The `RegisterFitComponents()` method must be 
 run once before any evaluations are performed.
 
-## ChiSquare
+## 11.1. ChiSquare
 The `ChiSqaure` class is a `TestStatistic` that calculates the chi-squared value 
 for a collection of `BinnedED` objects when compared to a data distribution. This 
 chi-square value corresponds to `sum((obs_i - mc_i)^2/mc_i)`, where `obs_i` is the ith 
@@ -925,7 +962,7 @@ data bin contents, and `mc_i` is the summed (and normalisation-weighted) PDF bin
 WARNING: this class is currently broken! It requires `BinnedED` PDFs to be provided to it 
 for comparison to data, but has no way of adding a PDF to the class.
 
-## BinnedNLLH
+## 11.2. BinnedNLLH
 The binned negative log-likelihood is a test statistic used ubiquitously within 
 experimental particle physics, and is implemented in OXO with the `BinnedNLLH` 
 class. This class has many features, allowing fairly complicated analyses to 
@@ -1000,7 +1037,7 @@ bit complicated at times, there is an option to turn on a "debug mode" via
 `Evaluate()`, given full details about how the calculation is performed. 
 This can be very useful when you're confused about what has gone wrong in your fit!
 
-## StatisticSum
+## 11.3. StatisticSum
 What if you're in a situation where you have multiple different datasets that you 
 want to fit simultaneously with one combined test statistic? This is where the 
 `StatisticSum` class comes in. For each dataset, set up the relevant `TestStatistic` 
@@ -1018,14 +1055,14 @@ interface within the `StatisticSum` object to handle things: `RegisterFitCompone
 the sum of all the registered `TestStatistic`'s `Evaluate()` methods.
 
 
-# Optimisers
+# 12. Optimisers
 Test statistics are only so useful on their own. At some point, we want to map out the 
 fit parameter space, or find the point in parameter space that optimises for the
 maximum/minimum test statistic value. OXO currently has features for three different 
 kinds of optimiser: basic grid search, Minuit, and Markov Chain Monte Carlo. Each 
 behave very differently.
 
-## FitResult
+## 12.1. FitResult
 Before we go anywhere, we need a way of providing the final result of a fit in some way: 
 this is what the `FitResult` class does. This is a glorified struct, storing the 
 best-fit result as a `ParameterDict` that can be obtained through `GetBestFit()`. 
@@ -1037,12 +1074,12 @@ The only non-getter/setter methods for this class are `AsString()`, which provid
 nicely-formatted string with the best fit results, and `SaveAs(filename)`, which 
 writes that string to a file.
 
-## Optimiser
+## 12.2. Optimiser
 `Optimiser` is an abstract base class that defines what an optimiser is in OXO. 
 The only requirement for any `Optimiser` is the existence of an `Optimise(test_stat)` 
 method, which takes a `TestStatistic` pointer and returns a `FitResult` object.
 
-## GridSearch
+## 12.3. GridSearch
 Arguably the simplest kind of optimisation algorithm is that of a grid search: just 
 calculate the test statistic value at every point in a regularly-spaced n-dimensional 
 grid of positions in the n-dimensional parameter space, and see which one gives you 
@@ -1059,7 +1096,7 @@ you can flip this to find the maxmimum via `SetMaximising(true)`.
 The only information provided by `GridSearch` in the `FitResult` object is the 
 best-fit point, and the associated test statistic value.
 
-## Minuit
+## 12.4. Minuit
 The Minuit optimiser is a classic set of optimsiation algorithms used widely in particle 
 physics. If you've set the optimisation hyper-parameters up sufficiently well, 
 then Minuit is often great at optimising over the parameter space in a robust way. 
@@ -1090,7 +1127,7 @@ Under the hood of the `Minuit` class, the `TestStatistic` object is stored withi
 a class to make the evaluation calls on. Fortunately, no direct interaction with 
 this class should ever be needed.
 
-## Markov Chain Monte Carlo
+## 12.5. Markov Chain Monte Carlo
 The final `Optimiser` currently implemented within OXO is that of Markov Chain 
 Monte Carlo (MCMC). Unlike other optimisation algorithms, 
 MCMC doesn't try and find the position in the parameter space with the maximum/minimum 
@@ -1099,7 +1136,7 @@ space, such that the overall sampled distribution of parameters tends towards
 the posterior density distribution of the parameter space, assuming the test statistic 
 corresponds to the sum of the log-likelihood and prior distributions of the space.
 
-### MCSampler
+### 12.5.1. MCSampler
 To get MCMC to work, a critical part is the choice of algorithm for making random 
 samples of the parameter space. `MCSampler` is an abstract base class for these 
 sampling algorithms, of which two have been implemented in OXO: the "Metropolis" 
@@ -1110,7 +1147,7 @@ a new position in the parameter space to try and step to, given the current step
 There must also be the method `CorrectAccParam()`, which provides a correction 
 factor to the eventual acceptance probability for the proposed step.
 
-#### MetropolisSampler
+#### 12.5.1.1. MetropolisSampler
 The "Metropolis" algorithm is implemented within the `MetropolisSampler` class, 
 which derives from `MCSampler`. In many ways, it is one of the simplest possible 
 MCMC algorithms. The `Draw(current_params)` method here consists of displacing 
@@ -1131,7 +1168,7 @@ proposal distribution. This can mean that for an analysis where the MCMC chain
 is often trying to be near a high-dimensional "corner" of the parameter space, 
 the acceptance probability could be quite low.
 
-#### HamiltonianSampler
+#### 12.5.1.2. HamiltonianSampler
 A more complex MCMC sampling algorithm is that of "Hamiltonian Monte Carlo" (HMC), 
 defined in OXO with the `HamiltonianSampler`. Here, 
 the test statistic is thought of defining a "potential" in the parameter space, 
@@ -1167,7 +1204,7 @@ parameters' minimum and maxmimum values, via `SetMinima(minima)` and `SetMaxima(
 Note: don't get confused between the steps that the HMC algorithm takes, and the 
 overall MCMC alogrithm!
 
-### MCMCSamples
+### 12.5.2. MCMCSamples
 At the other end of the MCMC process, we would like a away to store information about 
 what has happened when we ran the chain. Most of the statistical information is stored 
 in the overall distribution of the steps in 
@@ -1179,7 +1216,7 @@ important class that can be used once the `MCMCSamples` class has already been f
 is `GetChain()`, which will return a ROOT `TTree` with information about the MCMC 
 chain.
 
-### MCMC
+### 12.5.3. MCMC
 Finally we reach the actual `MCMC` class! This is the actual `Optimiser` class, with 
 the appropriate `Optimise(test_stat)` method to run the MCMC. You will need to set 
 some things up first, though.
