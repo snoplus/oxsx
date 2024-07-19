@@ -107,7 +107,7 @@ fitWithSystematicsGroups(){
 
     padPDFs(mcPdfs);
 
-    ObsSet  obsSet(0);
+    ObsSet  obsSet("axis1");
 
     Convolution* conv_a = new Convolution("conv_a");
     Gaussian* gaus_a = new Gaussian(0,1,"gaus_a"); 
@@ -133,42 +133,32 @@ fitWithSystematicsGroups(){
 
     // Setting optimisation limits
     ParameterDict minima;
-    minima["a_mc_norm"] = 10; 
-    minima["b_mc_norm"] = 10; 
+    minima["a_mc"] = 10; 
+    minima["b_mc"] = 10; 
     minima["gaus_a_1" ] = -15;
     minima["gaus_a_2" ] = 0;  
     minima["gaus_b_1" ] = -15;
     minima["gaus_b_2" ] = 0;  
 
     ParameterDict maxima;
-    maxima["a_mc_norm"] = 200000;
-    maxima["b_mc_norm"] = 200000;
+    maxima["a_mc"] = 200000;
+    maxima["b_mc"] = 200000;
     maxima["gaus_a_1" ] = 15;    
     maxima["gaus_a_2" ] = 1;     
     maxima["gaus_b_1" ] = 16.;   
     maxima["gaus_b_2" ] = 1;     
 
-
-    // ParameterDict initialval;
-    // Rand rand;
-    // initialval["a_mc_norm"] = rand.UniformRange(minima["a_mc_norm"],maxima["a_mc_norm"]); 
-    // initialval["b_mc_norm"] = rand.UniformRange(minima["b_mc_norm"],maxima["b_mc_norm"]); 
-    // initialval["gaus_a_1" ] = rand.UniformRange(minima["gaus_a_1" ],maxima["gaus_a_1" ]); 
-    // initialval["gaus_a_2" ] = rand.UniformRange(minima["gaus_a_2" ],maxima["gaus_a_2" ]); 
-    // initialval["gaus_b_1" ] = rand.UniformRange(minima["gaus_b_1" ],maxima["gaus_b_1" ]); 
-    // initialval["gaus_b_2" ] = rand.UniformRange(minima["gaus_b_2" ],maxima["gaus_b_2" ]); 
-
     ParameterDict initialval;
-    initialval["a_mc_norm"] = 90000; 
-    initialval["b_mc_norm"] = 90000; 
+    initialval["a_mc"] = 90000; 
+    initialval["b_mc"] = 90000; 
     initialval["gaus_a_1"]  = -4.;   
     initialval["gaus_a_2"]  = 1.;    
     initialval["gaus_b_1"]  = 9.;    
     initialval["gaus_b_2"]  = 1.;    
 
     ParameterDict initialerr;
-    initialerr["a_mc_norm"] = 0.1*initialval["a_mc_norm"];
-    initialerr["b_mc_norm"] = 0.1*initialval["b_mc_norm"];
+    initialerr["a_mc"] = 0.1*initialval["a_mc"];
+    initialerr["b_mc"] = 0.1*initialval["b_mc"];
     initialerr["gaus_a_1" ] = 0.1*initialval["gaus_a_1"]; 
     initialerr["gaus_a_2" ] = 0.1*initialval["gaus_a_2"]; 
     initialerr["gaus_b_1" ] = 0.1*initialval["gaus_b_1"]; 
@@ -180,7 +170,7 @@ fitWithSystematicsGroups(){
 
     BinnedNLLH lh; 
     lh.SetBufferAsOverflow(false);
-    lh.SetBuffer(0,BuffLow,BuffHigh);
+    lh.SetBuffer("axis1",BuffLow,BuffHigh);
     lh.SetDataDist(fakeData); // initialise with the data set
     
     // Add systematics to groups. The order in which the systematic is added to
@@ -231,8 +221,8 @@ fitWithSystematicsGroups(){
         PoResult = PoSmearer( PoHolder );
         BiResult = BiSmearer( BiHolder );
 
-        BiResult.Scale(bestResult.at("a_mc_norm"));
-        PoResult.Scale(bestResult.at("b_mc_norm"));
+        BiResult.Scale(bestResult.at("a_mc"));
+        PoResult.Scale(bestResult.at("b_mc"));
 
         TH1D fakeDataHist;
         TH1D BiFit;
@@ -296,8 +286,8 @@ fitWithSystematicsGroups(){
         leg->Draw(); 
 
         TPaveText pt(0.7,0.2,1.0,0.6,"NDC");
-        pt.AddText(Form("a norm = %.2f" ,bestResult["a_mc_norm"]));
-        pt.AddText(Form("b norm = %.2f",bestResult["b_mc_norm"]));
+        pt.AddText(Form("a norm = %.2f" ,bestResult["a_mc"]));
+        pt.AddText(Form("b norm = %.2f",bestResult["b_mc"]));
         pt.AddText(Form("a conv mean = %.2f",bestResult["gaus_a_1"]));
         pt.AddText(Form("a conv RMS= %.2f",bestResult["gaus_a_2"]));
         pt.AddText(Form("b conv mean = %.2f",bestResult["gaus_b_1"]));
@@ -342,7 +332,7 @@ fitWithGlobalSystematics(){
     Rand::SetSeed(0);
     AxisCollection axes;
     axes.AddAxis(BinAxis("axis1", 0, 50 ,200));
-    ObsSet  obsSet(0);
+    ObsSet  obsSet("axis1");
 
     // Setting up artificial scale with a scaleFactor = 1.5.
     Scale* scale = new Scale("scale");
@@ -392,32 +382,23 @@ fitWithGlobalSystematics(){
 
     // Setting optimisation limits
     ParameterDict minima;
-    minima["a_mc_norm"] = 10; 
-    minima["b_mc_norm"] = 10; 
+    minima["a_mc"] = 10; 
+    minima["b_mc"] = 10; 
     minima["scaleFactor" ] = 0.1;
 
     ParameterDict maxima;
-    maxima["a_mc_norm"] = 200000;
-    maxima["b_mc_norm"] = 200000;
-    maxima["scaleFactor" ] = 2.0;    
-
-    // ParameterDict initialval;
-    // Rand rand;
-    // initialval["a_mc_norm"] = rand.UniformRange(minima["a_mc_norm"],maxima["a_mc_norm"]); 
-    // initialval["b_mc_norm"] = rand.UniformRange(minima["b_mc_norm"],maxima["b_mc_norm"]); 
-    // initialval["gaus_a_1" ] = rand.UniformRange(minima["gaus_a_1" ],maxima["gaus_a_1" ]); 
-    // initialval["gaus_a_2" ] = rand.UniformRange(minima["gaus_a_2" ],maxima["gaus_a_2" ]); 
-    // initialval["gaus_b_1" ] = rand.UniformRange(minima["gaus_b_1" ],maxima["gaus_b_1" ]); 
-    // initialval["gaus_b_2" ] = rand.UniformRange(minima["gaus_b_2" ],maxima["gaus_b_2" ]); 
+    maxima["a_mc"] = 200000;
+    maxima["b_mc"] = 200000;
+    maxima["scaleFactor" ] = 2.0;
 
     ParameterDict initialval;
-    initialval["a_mc_norm"] = 90000; 
-    initialval["b_mc_norm"] = 90000; 
+    initialval["a_mc"] = 90000; 
+    initialval["b_mc"] = 90000; 
     initialval["scaleFactor"]  = 1;   
 
     ParameterDict initialerr;
-    initialerr["a_mc_norm"] = 0.1*initialval["a_mc_norm"];
-    initialerr["b_mc_norm"] = 0.1*initialval["b_mc_norm"];
+    initialerr["a_mc"] = 0.1*initialval["a_mc"];
+    initialerr["b_mc"] = 0.1*initialval["b_mc"];
     initialerr["scaleFactor" ] = 0.1*initialval["scaleFactor"]; 
 
     //Setting up likelihood.
@@ -426,7 +407,7 @@ fitWithGlobalSystematics(){
 
     BinnedNLLH lh; 
     lh.SetBufferAsOverflow(false);
-    lh.SetBuffer(0,BuffLow,BuffHigh);
+    lh.SetBuffer("axis1",BuffLow,BuffHigh);
     lh.SetDataDist(fakeData); // initialise with the data set
 
     // Add global systematic. Order in which global systematics are applied is the same as the order in which they are applied.
@@ -467,8 +448,8 @@ fitWithGlobalSystematics(){
         PoResult = scale->operator()( PoHolder );
         BiResult = scale->operator()( BiHolder );
 
-        BiResult.Scale(bestResult.at("a_mc_norm"));
-        PoResult.Scale(bestResult.at("b_mc_norm"));
+        BiResult.Scale(bestResult.at("a_mc"));
+        PoResult.Scale(bestResult.at("b_mc"));
 
         TH1D fakeDataHist;
         TH1D BiFit;
@@ -532,8 +513,8 @@ fitWithGlobalSystematics(){
         leg->Draw(); 
 
         TPaveText pt(0.7,0.2,1.0,0.6,"NDC");
-        pt.AddText(Form("a norm = %.2f" ,bestResult["a_mc_norm"]));
-        pt.AddText(Form("b norm = %.2f",bestResult["b_mc_norm"]));
+        pt.AddText(Form("a norm = %.2f" ,bestResult["a_mc"]));
+        pt.AddText(Form("b norm = %.2f",bestResult["b_mc"]));
         pt.AddText(Form("scaleFactor = %.2f",bestResult["scaleFactor"]));
         pt.SetFillColor(kWhite);
         pt.SetShadowColor(kWhite);
@@ -575,7 +556,7 @@ fitWithCombinedSystematics(){
     Rand::SetSeed(0);
     AxisCollection axes;
     axes.AddAxis(BinAxis("axis1", 0, 75 ,300));
-    ObsSet  obsSet(0);
+    ObsSet  obsSet("axis1");
 
     Gaussian gaus1(10, 0.5);
     Gaussian gaus2(25, 1);
@@ -653,8 +634,8 @@ fitWithCombinedSystematics(){
 
     // Setting optimisation limits
     ParameterDict minima;
-    minima["a_mc_norm"] = 10; 
-    minima["b_mc_norm"] = 10; 
+    minima["a_mc"] = 10; 
+    minima["b_mc"] = 10; 
     minima["scaleFactor" ] = 0.1;
     minima["gaus_a_1" ] = -5;
     minima["gaus_a_2" ] = 0;  
@@ -662,26 +643,17 @@ fitWithCombinedSystematics(){
     minima["gaus_b_2" ] = 0;  
 
     ParameterDict maxima;
-    maxima["a_mc_norm"] = 200000;
-    maxima["b_mc_norm"] = 200000;
+    maxima["a_mc"] = 200000;
+    maxima["b_mc"] = 200000;
     maxima["scaleFactor" ] = 2.0;    
     maxima["gaus_a_1" ] = 5;    
     maxima["gaus_a_2" ] = 5;     
     maxima["gaus_b_1" ] = 5.;   
     maxima["gaus_b_2" ] = 5;     
 
-    // ParameterDict initialval;
-    // Rand rand;
-    // initialval["a_mc_norm"] = rand.UniformRange(minima["a_mc_norm"],maxima["a_mc_norm"]); 
-    // initialval["b_mc_norm"] = rand.UniformRange(minima["b_mc_norm"],maxima["b_mc_norm"]); 
-    // initialval["gaus_a_1" ] = rand.UniformRange(minima["gaus_a_1" ],maxima["gaus_a_1" ]); 
-    // initialval["gaus_a_2" ] = rand.UniformRange(minima["gaus_a_2" ],maxima["gaus_a_2" ]); 
-    // initialval["gaus_b_1" ] = rand.UniformRange(minima["gaus_b_1" ],maxima["gaus_b_1" ]); 
-    // initialval["gaus_b_2" ] = rand.UniformRange(minima["gaus_b_2" ],maxima["gaus_b_2" ]); 
-
     ParameterDict initialval;
-    initialval["a_mc_norm"] = 90000; 
-    initialval["b_mc_norm"] = 90000; 
+    initialval["a_mc"] = 90000; 
+    initialval["b_mc"] = 90000; 
     initialval["scaleFactor"]  = 1.4;   
     initialval["gaus_a_1"]  = 0.;   
     initialval["gaus_a_2"]  = 1;    
@@ -689,8 +661,8 @@ fitWithCombinedSystematics(){
     initialval["gaus_b_2"]  = 2;    
 
     ParameterDict initialerr;
-    initialerr["a_mc_norm"] = 0.1*initialval["a_mc_norm"];
-    initialerr["b_mc_norm"] = 0.1*initialval["b_mc_norm"];
+    initialerr["a_mc"] = 0.1*initialval["a_mc"];
+    initialerr["b_mc"] = 0.1*initialval["b_mc"];
     initialerr["scaleFactor" ] = 0.1*initialval["scaleFactor"]; 
     initialerr["gaus_a_1" ] = 0.1*initialval["gaus_a_1"]; 
     initialerr["gaus_a_2" ] = 0.1*initialval["gaus_a_2"]; 
@@ -703,7 +675,7 @@ fitWithCombinedSystematics(){
 
     BinnedNLLH lh; 
     lh.SetBufferAsOverflow(false);
-    lh.SetBuffer(0,BuffLow,BuffHigh);
+    lh.SetBuffer("axis1",BuffLow,BuffHigh);
     lh.SetDataDist(fakeData); // initialise with the data set
 
     // Add the scale as a global systematic.
@@ -766,8 +738,8 @@ fitWithCombinedSystematics(){
         BiResult = BiSmearer(scale->operator()( BiHolder ));
         PoResult = PoSmearer(scale->operator()( PoHolder ));
 
-        BiResult.Scale(bestResult.at("a_mc_norm"));
-        PoResult.Scale(bestResult.at("b_mc_norm"));
+        BiResult.Scale(bestResult.at("a_mc"));
+        PoResult.Scale(bestResult.at("b_mc"));
 
         TH1D fakeDataHist;
         TH1D BiFit;
@@ -831,8 +803,8 @@ fitWithCombinedSystematics(){
         leg->Draw(); 
 
         TPaveText pt(0.7,0.2,1.0,0.7,"NDC");
-        pt.AddText(Form("a norm = %.2f" ,bestResult["a_mc_norm"]));
-        pt.AddText(Form("b norm = %.2f",bestResult["b_mc_norm"]));
+        pt.AddText(Form("a norm = %.2f" ,bestResult["a_mc"]));
+        pt.AddText(Form("b norm = %.2f",bestResult["b_mc"]));
         pt.AddText(Form("scaleFactor = %.2f",bestResult["scaleFactor"]));
         pt.AddText(Form("a conv mean = %.2f",bestResult["gaus_a_1"]));
         pt.AddText(Form("a conv RMS= %.2f",bestResult["gaus_a_2"]));

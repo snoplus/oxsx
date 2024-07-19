@@ -69,19 +69,17 @@ int main(){
     // Set up optimisation parameters.
     // Grid search needs a minimum, maximum and step size for each fit
     // parameter.
-    // For BinnedEDs the normalisations are named by appending "_norm" to the
-    // BinnedED name.
     ParameterDict minima;
-    minima["bgPDF_norm"]= 800;
-    minima["signalPDF_norm"]=800;
+    minima["bgPDF"]= 800;
+    minima["signalPDF"]=800;
 
     ParameterDict maxima;
-    maxima["bgPDF_norm"]= 2200;
-    maxima["signalPDF_norm"]=2200;
+    maxima["bgPDF"]= 2200;
+    maxima["signalPDF"]=2200;
 
     ParameterDict steps;
-    steps["bgPDF_norm"]= 200;
-    steps["signalPDF_norm"]=200;
+    steps["bgPDF"]= 200;
+    steps["signalPDF"]=200;
     
     // Set optimisation parameters.
     gSearch.SetMinima(minima);

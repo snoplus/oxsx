@@ -46,8 +46,7 @@ int main(){
   bgPdf.Normalise();
 
   //Hard code generated number of events
-  std::vector<int> genRates;
-  genRates.push_back(1000);
+  const int gen_rate = 1000;
 
   std::cout << "Initialised PDF" << std::endl;
 
@@ -71,8 +70,7 @@ int main(){
   ////////////////////////////
   BinnedNLLH lhFunction;
   lhFunction.SetDataDist(bgData); // initialise with the data set
-  lhFunction.AddPdf(bgPdf);        
-  lhFunction.SetGenRates(genRates);
+  lhFunction.AddPdf(bgPdf, gen_rate);
   lhFunction.SetBarlowBeeston(true);
 
   lhFunction.RegisterFitComponents();

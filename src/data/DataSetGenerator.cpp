@@ -51,9 +51,17 @@ DataSetGenerator::ExpectedRatesDataSet(std::vector<int>* eventsTaken_){
     dataSet.SetObservableNames(fDataSets.at(0)->GetObservableNames());
     for(size_t i = 0; i < fDataSets.size(); i++){
         unsigned expectedCounts = round(fExpectedRates.at(i));
+
+	if(fBootstraps.size() == 0)
+	  throw NotFoundError("Bootstrap flags not set for dataset");
+
 	if(fBootstraps.at(i))
 	  RandomDrawsWithReplacement(i, expectedCounts, dataSet);
 	else{
+
+	  if(fSequentialFlags.size() == 0)
+	    throw NotFoundError("Sequential flags not set for dataset");
+
 	  if(fSequentialFlags.at(i))
 	    SequentialDrawsNoReplacement(i, expectedCounts, dataSet);
 	  else
@@ -88,15 +96,22 @@ DataSetGenerator::PoissonFluctuatedDataSet(std::vector<int>* eventsTaken_){
     for(size_t i = 0; i < fDataSets.size(); i++){
         size_t counts = Rand::Poisson(fExpectedRates.at(i));
 
+	if(fBootstraps.size() == 0)
+          throw NotFoundError("Bootstrap flags not set for dataset");
+
         if(fBootstraps.at(i))
             RandomDrawsWithReplacement(i, counts, dataSet);
 
         else{
-            if(fSequentialFlags.at(i))
-                SequentialDrawsNoReplacement(i, counts, dataSet);
-            
-            else
-                RandomDrawsNoReplacement(i, counts, dataSet);
+
+	  if(fSequentialFlags.size() == 0)
+            throw NotFoundError("Sequential flags not set for dataset");
+
+	  if(fSequentialFlags.at(i))
+	    SequentialDrawsNoReplacement(i, counts, dataSet);
+
+	  else
+	    RandomDrawsNoReplacement(i, counts, dataSet);
         }
         
         if(eventsTaken_)

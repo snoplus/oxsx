@@ -83,12 +83,12 @@ int main(){
 
     // BinnedED fakeData= dataGen.ExpectedRatesED();
     BinnedED fakeData= dataGen.PoissonFluctuatedED();
-
+    std::cout << "Fake data set up\n";
 
     ///////////////////////
     // 3. The systematic //
     ///////////////////////
-    ObsSet  obsSet(0);
+    ObsSet  obsSet("axis1");
 
     Convolution* conv_a = new Convolution("conv_a");
     Gaussian* gaus_a = new Gaussian(0,1,"gaus_a"); 
@@ -102,31 +102,31 @@ int main(){
     conv_a->SetDistributionObs(obsSet);
     conv_a->Construct();
 
-
+    std::cout << "Convolution constructed\n";
     ////////////////////////////////////
     // 4. Setting optimisation limits //
     ////////////////////////////////////
     ParameterDict minima;
-    minima["a_mc_norm"] = 10; 
+    minima["a_mc"] = 10; 
     minima["gaus_a_1" ] = -15;
     minima["gaus_a_2" ] = 0;  
 
     ParameterDict maxima;
-    maxima["a_mc_norm"] = 200000;
+    maxima["a_mc"] = 200000;
     maxima["gaus_a_1" ] = 15;    
     maxima["gaus_a_2" ] = 1;     
 
     ParameterDict initialval;
-    initialval["a_mc_norm"] = 90000; 
+    initialval["a_mc"] = 90000; 
     initialval["gaus_a_1"]  = 4.;   
     initialval["gaus_a_2"]  = 1.;    
 
     ParameterDict initialerr;
-    initialerr["a_mc_norm"] = 0.1*initialval["a_mc_norm"];
+    initialerr["a_mc"] = 0.1*initialval["a_mc"];
     initialerr["gaus_a_1" ] = 0.1*initialval["gaus_a_1"]; 
     initialerr["gaus_a_2" ] = 0.1*initialval["gaus_a_2"]; 
 
-
+    std::cout << "Limits set\n";
     //////////////////////////////////////////
     // 5. Setting up likelihood, including  //
     //    PDF, fake data and systematic     //
@@ -136,7 +136,7 @@ int main(){
 
     BinnedNLLH lh; 
     lh.SetBufferAsOverflow(false);
-    lh.SetBuffer(0,BuffLow,BuffHigh);
+    lh.SetBuffer("axis1",BuffLow,BuffHigh);
     // Initialise with the data set
     lh.SetDataDist(fakeData); 
     //Add systematics to the global group "", will be applied to all distributions.
@@ -144,7 +144,7 @@ int main(){
     // Associate EDs to lh, systematics will be applied
     lh.AddPdf(mcPdfs.at(0));
 
-
+    std::cout << "BinnedNLLH set up\n";
     ////////////
     // 6. Fit //
     ////////////
@@ -178,7 +178,7 @@ int main(){
 
 
     BiResult = BiSmearer( BiHolder );
-    BiResult.Scale(bestResult.at("a_mc_norm"));
+    BiResult.Scale(bestResult.at("a_mc"));
 
     TH1D fakeDataHist;
     TH1D BiFit;
@@ -230,7 +230,7 @@ int main(){
     leg->Draw(); 
     
     TPaveText pt(0.7,0.2,1.0,0.6,"NDC");
-    pt.AddText(Form("a norm = %.2f" ,bestResult["a_mc_norm"]));
+    pt.AddText(Form("a norm = %.2f" ,bestResult["a_mc"]));
     pt.AddText(Form("a conv mean = %.2f",bestResult["gaus_a_1"]));
     pt.AddText(Form("a conv RMS= %.2f",bestResult["gaus_a_2"]));
     pt.SetFillColor(kWhite);
