@@ -3,7 +3,7 @@ Signal Extraction framework for the SNO+ experiment
 
 
 <h2> Dependencies </h2>
-1. GCC compiler capable of compiling C++ code to the C++11 standard: GCC version 4.8.5 that comes default with CentOS7 systems is good enough.
+1. GCC compiler capable of compiling C++ code to the C++17 standard
 
 2. [Armadillo](http://arma.sourceforge.net/) is a linear algebra package used for quick matrix multiplication
 
