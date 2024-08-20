@@ -302,7 +302,7 @@ means and standard deviations of any of the dimensions by either `SetMean()` etc
 or with the `FitComponent` `SetParameter()` method. For the latter, the name of
 the mean & sigma parameters are given by `means_i` & `stddevs_i` respectively, 
 where `i` here corresponds to the index of the dimension of interest.
-(Note - the actual parameter names are handles not within the `Gaussian` class
+(Note - the actual parameter names are handled not within the `Gaussian` class
 itself, but within a helper class called `GaussianFitter`. Despite the name,
 this latter class doesn't fit a Gaussian, but instead holds the fit parameters.)
 You can evaluate the `Gaussian` at any point in the n-dimensional space, and 
@@ -380,7 +380,7 @@ have a total normalisation of 1 by definition. Because of this, actual
 mathematical PDFs are defined within the `PDF` class, separate from this class.
 
 ### 3.3.1. AnalyticED
-One possible event distribution is a purely analytic one, givne by `AnalyticED`.
+One possible event distribution is a purely analytic one, given by `AnalyticED`.
 This class holds a `PDF` that holds the underlying shape of the distribution,
 along with a constant normalisation. It also has an `ObsSet` object, so that
 the observable quantities of interest can be defined distinct to the (possibly)
@@ -451,7 +451,7 @@ instead as a Poisson fluctuation on the event rate: this is the most "realistic"
 kind of fake data set. Note that in both modes, the output `OXSXDataSet` object
 has events ordered by `DataSet` type - e.g. if a dataset was generated from
 `DataSet` objects A and B, the generated dataset would have a number of A-type
-events followed by a number of B-types.Both methods also have an optional parameter
+events followed by a number of B-types. Both methods also have an optional parameter
 which outputs by reference a vector of the number of events actually simulated
 per type.
 
@@ -629,7 +629,7 @@ defining the observable to be shifted with `SetOutObservables()`, and setting
 the shift with `SetParameter()` (technically one can also do this with 
 `SetShift()`, but using `SetParameter()` allows the whole `FitComponent` to
 work nicely - useful if doing fits), then one can apply the shift to an event
-by evaluation. this will apply `x' = x + a`, where `x` and `x'` are the 
+by evaluation. This will apply `x' = x + a`, where `x` and `x'` are the 
 observable of interested before and after the transformation, and `a` is the
 shift parameter.
 
@@ -675,7 +675,7 @@ detector response matrix has on the event distribution.
 
 There are two sets of observables considered by this class: firstly, the full 
 set of observables needed to describe an event distribution; and secondly the
-observable(s) that the systematic actually acts upon.These can be defined by
+observable(s) that the systematic actually acts upon. These can be defined by
 the `SetDistributionObs()` and `SetTransformationObs()` methods, respectively.
 
 ### 7.2.1. Scale
@@ -845,7 +845,7 @@ the `ApplySystematics(sys_man)` method, where `sys_man` is an object of
 the `SystematicManager` class (more on this class in a bit). The `fOriginalPdfs` 
 member contains all of the PDFs before systematics have been applied; 
 `fWorkingPdfs` after. The `Probability()` and `BinProbability()` methods 
-always refer to latter collection.
+always refer to the latter collection.
 
 The `ApplyShrink(shrinker)` method allows one to "shrink" the `BinnedED` 
 objects via a `BinnedEDShrinker` object (more of this class in a bit). Once 
@@ -874,7 +874,7 @@ the `BinnedEDManager` turned off. This is the `FALSE` mode.
 
 
 # 10. Other Managers
-In the previous section, a bunch of "Manager" vlasses were explained. Well, it turns out 
+In the previous section, a bunch of "Manager" classes were explained. Well, it turns out 
 there are even more of them in OXO!
 
 ## 10.1. ConstraintManager
@@ -923,7 +923,7 @@ The `BinnedEDShrinker` isn't really a "manager", but it's worth talking about at
 anyways. When applying systematics to PDFs, problems can rapidly arise near the edges of 
 the PDFs. In order to avoid this issue, it is generally wise to put "buffer" bins around the 
 edges of the PDFs. The buffer bins continue to store PDF information as usual, so that 
-systematics can stil be applied in the region, but are then sacrificed during the final 
+systematics can still be applied in the region, but are then sacrificed during the final 
 test statistic calculation.
 
 This "sacrificing" off certain bins of the edge of a `BinnedED` object is what the 
