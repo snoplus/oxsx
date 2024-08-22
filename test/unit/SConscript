@@ -5,9 +5,9 @@ Import('lib')
 # scons needs catch (unit test framework) and the new build
 # for tests
 testenv = env.Clone()
-testenv.Append(CPPPATH = "#/Catch/include")
-testenv.Append(LIBS = "oxsx")
-testenv.Append(LIBPATH = "#/build")
+testenv.Append(CPPPATH = "#/Catch2/include")
+testenv.Append(LIBPATH = ["#/build","#/Catch2/lib64"])
+testenv.Append(LIBS = ["oxsx","Catch2Main", "Catch2"])
 
 # make the object files
 unit_test_files = Glob("*/*.cpp") + Glob("*.cpp")
