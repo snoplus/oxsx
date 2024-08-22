@@ -1,4 +1,5 @@
-#include <catch.hpp>
+#include <catch2/catch_approx.hpp>
+#include <catch2/catch_all.hpp>
 #include <EDManager.h>
 #include <Gaussian.h>
 #include <AnalyticED.h>
@@ -56,7 +57,7 @@ TEST_CASE("Add a couple of analytic pdfs"){
         REQUIRE(pdfMan.Probability(event) == 0); // norms are zero
 
         pdfMan.SetNormalisations(std::vector<double>(2, 1));
-        REQUIRE(pdfMan.Probability(event) == Approx(0.7978845607));
+        REQUIRE(pdfMan.Probability(event) == Catch::Approx(0.7978845607));
         // 0.7978845607 = 2 /sqrt(2 * pi)
     }
 

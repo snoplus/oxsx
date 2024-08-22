@@ -1,4 +1,5 @@
-#include <catch.hpp>
+#include <catch2/catch_approx.hpp>
+#include <catch2/catch_all.hpp>
 #include <EventSystematicManager.h>
 #include <EventScale.h>
 #include <EventShift.h>

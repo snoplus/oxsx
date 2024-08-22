@@ -1,4 +1,5 @@
-#include <catch.hpp>
+#include <catch2/catch_approx.hpp>
+#include <catch2/catch_all.hpp>
 #include <BinnedED.h>
 #include <Event.h>
 
@@ -22,7 +23,7 @@ TEST_CASE("Filling a 2x2 PDF"){
             pdf.Fill(vals, 0.36);
         }
 
-        REQUIRE(pdf.Integral() == Approx(100 * 0.36));
+        REQUIRE(pdf.Integral() == Catch::Approx(100 * 0.36));
         
 
         SECTION("Then Normalise"){
@@ -62,7 +63,7 @@ TEST_CASE("Filling a 2x2 PDF"){
             pdf.Fill(evData, 0.36);
         }
         
-        REQUIRE(pdf.Integral() == Approx(0.36 * 100));
+        REQUIRE(pdf.Integral() == Catch::Approx(0.36 * 100));
 
     }
 
@@ -81,7 +82,7 @@ TEST_CASE("Filling a 2x2 PDF"){
         newContent = pdf.GetBinContent(1);
 
         REQUIRE(newContent == 20.9);
-        REQUIRE(pdf.Integral() == Approx(20.9));
+        REQUIRE(pdf.Integral() == Catch::Approx(20.9));
     }
 
 }

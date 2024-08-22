@@ -1,4 +1,5 @@
-#include <catch.hpp>
+#include <catch2/catch_approx.hpp>
+#include <catch2/catch_all.hpp>
 #include <SystematicManager.h>
 #include <ScaleFunction.h>
 
@@ -127,6 +128,6 @@ TEST_CASE("Another simple ScaleFunction systematic on 2d PDF"){
     correctVals[axes.FlattenIndices({4,1})] = 2;
     
     for (size_t i=0; i<modifiedObs.size(); i++) {
-        REQUIRE(modifiedObs.at(i) == Approx(correctVals.at(i)));
+        REQUIRE(modifiedObs.at(i) == Catch::Approx(correctVals.at(i)));
     }
 }

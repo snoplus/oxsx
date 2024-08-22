@@ -1,4 +1,5 @@
-#include <catch.hpp>
+#include <catch2/catch_approx.hpp>
+#include <catch2/catch_all.hpp>
 #include <Shape.h>
 #include <ParameterDict.h>
 #include <Gaussian.h>
@@ -112,7 +113,7 @@ TEST_CASE("Shape") {
         
         lh.SetParameters({{"back", 1}, {"a", 1}, {"b", 1000}});
 
-        REQUIRE(lh.Evaluate() == Approx(sum_log_prob + sum_norm));
+        REQUIRE(lh.Evaluate() == Catch::Approx(sum_log_prob + sum_norm));
 
         // Now change params, and check if lh can still handle it!
         lh.SetParameters({{"back", 2}, {"a", 1}, {"b", 500}});
@@ -125,6 +126,6 @@ TEST_CASE("Shape") {
         sum_log_prob = -log(prob_back + prob_sig);
         sum_norm = shape_norm_factor + 2.;
 
-        REQUIRE(lh.Evaluate() == Approx(sum_log_prob + sum_norm));
+        REQUIRE(lh.Evaluate() == Catch::Approx(sum_log_prob + sum_norm));
     }
 }

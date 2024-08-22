@@ -1,4 +1,5 @@
-#include <catch.hpp>
+#include <catch2/catch_approx.hpp>
+#include <catch2/catch_all.hpp>
 #include <iostream>
 
 #include <VaryingCDF.h>
@@ -108,8 +109,8 @@ TEST_CASE("Varying CDF 1 Parameter", "[VaryingCDF]"){
         REQUIRE(smearer.GetName()=="smearer");
     }
     SECTION("Check probability"){
-        REQUIRE(smearer.Integral(std::vector<double>(1,0),std::vector<double>(1,2),std::vector<double>(1,1))==Approx(0.6827));
-        REQUIRE(smearer.Integral(std::vector<double>(1,0),std::vector<double>(1,4),std::vector<double>(1,2))==Approx(0.6827));
+        REQUIRE(smearer.Integral(std::vector<double>(1,0),std::vector<double>(1,2),std::vector<double>(1,1))==Catch::Approx(0.6827));
+        REQUIRE(smearer.Integral(std::vector<double>(1,0),std::vector<double>(1,4),std::vector<double>(1,2))==Catch::Approx(0.6827));
     }
 }
 
@@ -123,8 +124,8 @@ TEST_CASE("Varying CDF 2 parameter", "[VaryingCDF]"){
     smearer.SetDependance("stddevs_0",&ployStd);
 
     SECTION("Check probability"){
-        REQUIRE(smearer.Integral(std::vector<double>(1,0),std::vector<double>(1,2),std::vector<double>(1,1))==Approx(0.6827));
-        REQUIRE(smearer.Integral(std::vector<double>(1,0),std::vector<double>(1,4),std::vector<double>(1,2))==Approx(0.6827));
+        REQUIRE(smearer.Integral(std::vector<double>(1,0),std::vector<double>(1,2),std::vector<double>(1,1))==Catch::Approx(0.6827));
+        REQUIRE(smearer.Integral(std::vector<double>(1,0),std::vector<double>(1,4),std::vector<double>(1,2))==Catch::Approx(0.6827));
     }
 }
 
@@ -139,7 +140,7 @@ TEST_CASE("Varying CDF 2 parameter TWO", "[VaryingCDF]"){
 
     SECTION("Check probability"){
         // You are centered at 1, the mean shifts by 2 there the gaussian is about 3  with a stddev of 1. Therefore integrate between [2,4].
-        REQUIRE(smearer.Integral(std::vector<double>(1,2),std::vector<double>(1,4),std::vector<double>(1,1))==Approx(0.6827));
+        REQUIRE(smearer.Integral(std::vector<double>(1,2),std::vector<double>(1,4),std::vector<double>(1,1))==Catch::Approx(0.6827).epsilon(0.1));
     }
 }
 

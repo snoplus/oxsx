@@ -1,5 +1,6 @@
+#include <catch2/catch_approx.hpp>
 //The point of this is to test the interace no do a fit.
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <BinnedEDManager.h>
 #include <DistTools.h>
 #include <Gaussian.h>
