@@ -140,7 +140,7 @@ TEST_CASE("Varying CDF 2 parameter TWO", "[VaryingCDF]"){
 
     SECTION("Check probability"){
         // You are centered at 1, the mean shifts by 2 there the gaussian is about 3  with a stddev of 1. Therefore integrate between [2,4].
-        REQUIRE(smearer.Integral(std::vector<double>(1,2),std::vector<double>(1,4),std::vector<double>(1,1))==Catch::Approx(0.6827).epsilon(0.1));
+        REQUIRE(smearer.Integral(std::vector<double>(1,2),std::vector<double>(1,4),std::vector<double>(1,1))==Catch::Approx(0.6827));
     }
 }
 
