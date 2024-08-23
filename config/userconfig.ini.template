@@ -14,3 +14,7 @@ lib_path    : /path/to/dir
 [gsl]
 header_path : /path/to/dir
 lib_path    : /path/to/dir
+
+[catch2]
+header_path : /path/to/dir
+lib_path    : /path/to/dir

@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <StatisticSum.h>
 #include <BinnedNLLH.h>
 

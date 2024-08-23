@@ -1,4 +1,5 @@
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
+#include <catch2/catch_approx.hpp>
 #include <ComponentManager.h>
 #include <SpectralFitDist.h>
 #include <Formatter.hpp>
@@ -52,8 +53,8 @@ TEST_CASE("Stand alone component manager"){
     }
     SECTION("getting parameter by name"){
         cmpMan.AddComponent(&pdf1);
-        REQUIRE(cmpMan.GetParameter("test1_bin_1") == Approx(0.));
+        REQUIRE(cmpMan.GetParameter("test1_bin_1") == Catch::Approx(0.));
         pdf1.SetBinContent(0, 10);
-        REQUIRE(cmpMan.GetParameter("test1_bin_0") == Approx(10.));
+        REQUIRE(cmpMan.GetParameter("test1_bin_0") == Catch::Approx(10.));
     }
 }

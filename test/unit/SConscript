@@ -2,19 +2,12 @@
 Import('env')
 Import('lib')
 
-# scons needs catch (unit test framework) and the new build
-# for tests
-testenv = env.Clone()
-testenv.Append(CPPPATH = "#/Catch/include")
-testenv.Append(LIBS = "oxsx")
-testenv.Append(LIBPATH = "#/build")
-
 # make the object files
 unit_test_files = Glob("*/*.cpp") + Glob("*.cpp")
 
-unit_tests      = [testenv.Object(x) for x in unit_test_files]
-unit_test_executible = testenv.Program("#/test/RunUnits", 
+unit_tests      = [env.Object(x) for x in unit_test_files]
+unit_test_executible = env.Program("#/test/RunUnits", 
                                        source = [unit_tests, lib],
                                        )
 
-testenv.Alias("units", unit_test_executible)
+env.Alias("units", unit_test_executible)

@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <Formatter.hpp>
 #include <ContainerTools.hpp>
 #include <SpectralFitDist.h>

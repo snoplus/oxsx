@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <Gaussian.h>
 #include <ParameterDict.h>
 #include <iostream>

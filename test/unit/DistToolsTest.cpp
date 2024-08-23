@@ -1,4 +1,5 @@
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
+#include <catch2/catch_approx.hpp>
 #include <DistTools.h>
 #include <BinnedED.h>
 #include <Gaussian.h>
@@ -60,7 +61,7 @@ TEST_CASE("Converting a 1D gaussian to a binned pdf", "[DistTools]"){
     gaus.SetCdfCutOff(1E8);                                                  
     BinnedED binnedGaus("bg", DistTools::ToHist(gaus, axes));
     double intBinError  = std::abs(binnedGaus.Integral() - 1);
-    REQUIRE(intBinError == Approx(0));
+    REQUIRE(intBinError == Catch::Approx(0));
     
     SECTION("Numerical Checks"){             
         binnedGaus.Normalise();
@@ -107,9 +108,9 @@ TEST_CASE("Converting 2D gaussian to binned and marginalise", "[DistTools]"){
         REQUIRE(binnedGaus.GetNDims() == 2);
 
         // 0.5% error
-        REQUIRE(integralError == Approx(0));
-        REQUIRE(mean1Error == Approx(0));
-        REQUIRE(mean2Error == Approx(0));
+        REQUIRE(integralError == Catch::Approx(0));
+        REQUIRE(mean1Error == Catch::Approx(0));
+        REQUIRE(mean2Error == Catch::Approx(0));
 
         // binning tends to give an error on the varaince 0.1% becuase rms != sigma
         REQUIRE(stDev1Error/20/20 < 0.004);
@@ -135,11 +136,11 @@ TEST_CASE("Converting 2D gaussian to binned and marginalise", "[DistTools]"){
         double xVarEr = std::abs(xProj.Variances().at(0) - 20 * 20);
         double yVarEr = std::abs(yProj.Variances().at(0) - 30 * 30);
 
-        REQUIRE(xProj.Integral() == Approx(1));
-        REQUIRE(yProj.Integral() == Approx(1));
+        REQUIRE(xProj.Integral() == Catch::Approx(1));
+        REQUIRE(yProj.Integral() == Catch::Approx(1));
 
-        REQUIRE(xMean == Approx(0));
-        REQUIRE(yMean == Approx(10));
+        REQUIRE(xMean == Catch::Approx(0));
+        REQUIRE(yMean == Catch::Approx(10));
 
         REQUIRE(xVarEr/20/20 < 0.004);
         REQUIRE(yVarEr/30/30 < 0.004);

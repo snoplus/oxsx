@@ -1,4 +1,5 @@
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
+#include <catch2/catch_approx.hpp>
 #include <Gaussian.h>
 #include <BinnedED.h>
 #include <CompositeED.h>
@@ -44,14 +45,14 @@ TEST_CASE("Combining 1D gaussians", "[CompositeED]"){
 
     SECTION("Check Data Flow to internal pdfs "){
         double prob  = compositeED.Probability(ev);
-        REQUIRE(prob == Approx(0.15141173681343614));
+        REQUIRE(prob == Catch::Approx(0.15141173681343614));
         
     }
 
     SECTION("Check Clone Functionality"){
         EventDistribution* clone = compositeED.Clone();
         REQUIRE(clone -> GetNDims() == 2);
-        REQUIRE(clone -> Probability(ev) == Approx(0.15141173681343614));
+        REQUIRE(clone -> Probability(ev) == Catch::Approx(0.15141173681343614));
     }
 
     SECTION("Second level of recursion"){
@@ -61,7 +62,7 @@ TEST_CASE("Combining 1D gaussians", "[CompositeED]"){
         nextED.SetObservables(ObsSet("obs3"));
         CompositeED level2 = compositeED * nextED;
         REQUIRE( level2.GetNDims() == 3 );
-        REQUIRE( level2.Probability(ev) == Approx(0.07491808959564718));
+        REQUIRE( level2.Probability(ev) == Catch::Approx(0.07491808959564718));
                                                                                          
     }
 }

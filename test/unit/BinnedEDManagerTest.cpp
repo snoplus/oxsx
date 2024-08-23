@@ -1,4 +1,5 @@
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
+#include <catch2/catch_approx.hpp>
 #include <BinnedEDManager.h>
 #include <DistTools.h>
 #include <Gaussian.h>
@@ -34,7 +35,7 @@ TEST_CASE("Three pdfs no systematics"){
     edMan.SetNormalisations(std::vector<double>(3, 1));
 
     SECTION("Bin Probability Method"){
-        REQUIRE(edMan.BinProbability(0) == Approx(prob1 * prob2 * prob3));
+        REQUIRE(edMan.BinProbability(0) == Catch::Approx(prob1 * prob2 * prob3));
     }
     
     SECTION("Probability Method"){
@@ -43,7 +44,7 @@ TEST_CASE("Three pdfs no systematics"){
         observablesEvent.push_back("obs0");
         observablesEvent.push_back("obs1");
         ev.SetObservableNames(&observablesEvent);
-        REQUIRE(edMan.Probability(ev) == Approx(prob1 * prob2 * prob3));
+        REQUIRE(edMan.Probability(ev) == Catch::Approx(prob1 * prob2 * prob3));
     }
 
 }

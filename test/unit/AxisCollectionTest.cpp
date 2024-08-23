@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <AxisCollection.h>
 
 TEST_CASE("Correct Indexing for 3x3 Uniform Axes","[AxisCollection]"){

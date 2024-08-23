@@ -1,4 +1,5 @@
-#include <catch.hpp>
+#include <catch2/catch_all.hpp>
+#include <catch2/catch_approx.hpp>
 #include <ROOTTree.h>
 #include <IO.h>
 #include <OXSXDataSet.h>
@@ -89,8 +90,8 @@ TEST_CASE("Read TTree file in from disk") {
         for (size_t i = 0; i < intree.GetNEntries(); i++) {
             Event evt = intree.GetEntry(i);
             tree.GetEntry(i);
-            REQUIRE(evt.GetDatum("energy") == Approx(energy));
-            REQUIRE(evt.GetDatum("nhits") == Approx(static_cast<double>(nhits)));
+            REQUIRE(evt.GetDatum("energy") == Catch::Approx(energy));
+            REQUIRE(evt.GetDatum("nhits") == Catch::Approx(static_cast<double>(nhits)));
         }
     }
 
