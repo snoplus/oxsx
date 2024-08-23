@@ -1,4 +1,3 @@
-#include <catch2/catch_approx.hpp>
 #include <catch2/catch_all.hpp>
 #include <OXSXDataSet.h>
 #include <DataSetGenerator.h>
