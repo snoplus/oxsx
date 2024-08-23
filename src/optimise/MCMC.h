@@ -7,82 +7,84 @@
 #include <set>
 
 class TestStatistic;
-class MCMC : public Optimiser{
- public:
-    MCMC(MCSampler& s_) : fMaxIter(100000), 
-                          fTestStatLogged(false),
-                          fFlipSign(false),
-                          fMaxVal(0),
-                          fCurrentVal(0.),
-                          fSamples(this),
-                          pTestStatistic(NULL),
-                          fSampler(s_)
-                          {}
-    
-    const FitResult& Optimise(TestStatistic*); 
+class MCMC : public Optimiser
+{
+public:
+   MCMC(MCSampler &s_) : fMaxIter(100000),
+                         fTestStatLogged(false),
+                         fFlipSign(false),
+                         fMaxVal(0),
+                         fCurrentVal(0.),
+                         fSamples(this),
+                         pTestStatistic(NULL),
+                         fSampler(s_)
+   {
+   }
 
-    unsigned GetBurnIn() const;
-    void     SetBurnIn(unsigned);
-    
-    unsigned GetThinFactor() const;
-    void     SetThinFactor(unsigned);
-    
-    unsigned GetMaxIter() const;
-    void     SetMaxIter(unsigned);
+   const FitResult &Optimise(TestStatistic *);
 
-    double   GetRejectionRate() const;
+   unsigned GetBurnIn() const;
+   void SetBurnIn(unsigned);
 
-    ParameterDict GetMaxima() const;
-    void SetMaxima(const ParameterDict&);
+   unsigned GetThinFactor() const;
+   void SetThinFactor(unsigned);
 
-    ParameterDict GetMinima() const;
-    void SetMinima(const ParameterDict&);
+   unsigned GetMaxIter() const;
+   void SetMaxIter(unsigned);
 
-    bool GetFlipSign() const;
-    void SetFlipSign(bool);
-    
-    bool GetTestStatLogged() const;
-    void SetTestStatLogged(bool b_);
+   double GetRejectionRate() const;
 
-    bool GetSaveFullHistogram() const;
-    void SetSaveFullHistogram(bool);
+   ParameterDict GetMaxima() const;
+   void SetMaxima(const ParameterDict &);
 
-    bool GetSaveChain() const;
-    void SetSaveChain(bool);
+   ParameterDict GetMinima() const;
+   void SetMinima(const ParameterDict &);
 
-    void SetHistogramAxes(const AxisCollection&);
-    AxisCollection GetHistogramAxes() const;
+   bool GetFlipSign() const;
+   void SetFlipSign(bool);
 
-    void SetInitialTrial(const ParameterDict&);
-    ParameterDict GetInitialTrial() const;
+   bool GetTestStatLogged() const;
+   void SetTestStatLogged(bool b_);
 
-    const MCMCSamples& GetSamples() const;
+   bool GetSaveFullHistogram() const;
+   void SetSaveFullHistogram(bool);
 
- private:
-    // configuration
-    unsigned  fMaxIter;
-    unsigned  fNDims;
-    bool      fTestStatLogged;
-    bool      fFlipSign;
-    
-    double fMaxVal;
-    double fCurrentVal;
-    FitResult fFitResult;
-    ParameterDict fBestFit;
-    ParameterDict fCurrentStep;
-    
-    MCMCSamples fSamples;
-    
-    ParameterDict fMaxima;
-    ParameterDict fMinima;
-    ParameterDict fInitialTrial;
+   bool GetSaveChain() const;
+   void SetSaveChain(bool);
 
-    // internal copy
-    TestStatistic* pTestStatistic;
-    
-    MCSampler& fSampler;
-    
-    bool   StepAccepted(const ParameterDict& proposedStep_);
-    bool fSaveChain;
+   void SetHistogramAxes(const AxisCollection &);
+   AxisCollection GetHistogramAxes() const;
+
+   void SetInitialTrial(const ParameterDict &);
+   ParameterDict GetInitialTrial() const;
+
+   const MCMCSamples &GetSamples() const;
+
+private:
+   // configuration
+   unsigned fMaxIter;
+   unsigned fNDims;
+   bool fTestStatLogged;
+   bool fFlipSign;
+
+   double fMaxVal;
+   double fCurrentVal;
+   FitResult fFitResult;
+   ParameterDict fBestFit;
+   ParameterDict fCurrentStep;
+
+   MCMCSamples fSamples;
+
+   ParameterDict fMaxima;
+   ParameterDict fMinima;
+   ParameterDict fInitialTrial;
+
+   // internal copy
+   TestStatistic *pTestStatistic;
+
+   MCSampler &fSampler;
+
+   bool StepAccepted(const ParameterDict &proposedStep_);
+   bool fSaveChain;
 };
 #endif

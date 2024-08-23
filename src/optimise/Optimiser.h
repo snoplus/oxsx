@@ -8,9 +8,10 @@
 class TestStatistic;
 class FitResult;
 
-class Optimiser{
- public:
+class Optimiser
+{
+public:
     virtual ~Optimiser() {}
-    virtual const FitResult& Optimise(TestStatistic*) = 0;
+    virtual const FitResult &Optimise(TestStatistic *) = 0;
 };
 #endif

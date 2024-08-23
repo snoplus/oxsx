@@ -10,17 +10,18 @@
 #include <string>
 #include <stddef.h>
 
-class TestStatistic{
- public:
+class TestStatistic
+{
+public:
     virtual ~TestStatistic() {}
 
-    virtual double Evaluate() = 0;    
-    virtual void   SetParameters(const ParameterDict& params_) = 0;
+    virtual double Evaluate() = 0;
+    virtual void SetParameters(const ParameterDict &params_) = 0;
     virtual ParameterDict GetParameters() const = 0;
     virtual size_t GetParameterCount() const = 0;
 
     virtual std::set<std::string> GetParameterNames() const = 0;
-    
+
     // Set up all the components for a fit
     virtual void RegisterFitComponents() = 0;
 };

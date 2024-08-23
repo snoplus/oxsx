@@ -6,34 +6,34 @@
 #include <ParameterDict.h>
 
 class TestStatistic;
-class GridSearch : public Optimiser{
- public:
-    GridSearch() :  fMaximising(false){}
-    virtual const FitResult& Optimise(TestStatistic*);
-    
-    void SetMinima(const ParameterDict&);
-    void SetMaxima(const ParameterDict&);
-    void SetStepSizes(const ParameterDict&);
+class GridSearch : public Optimiser
+{
+public:
+   GridSearch() : fMaximising(false) {}
+   virtual const FitResult &Optimise(TestStatistic *);
 
-    ParameterDict GetMinima() const;
-    ParameterDict GetMaxima() const;
-    ParameterDict GetStepSizes()  const;
-    
-    FitResult GetFitResult() const;
-    void SetMaximising(bool);
-    bool GetMaximising() const;
+   void SetMinima(const ParameterDict &);
+   void SetMaxima(const ParameterDict &);
+   void SetStepSizes(const ParameterDict &);
 
- private:
-    ParameterDict       fParamVals;
-    FitResult           fFitResult;
-    
-    bool fMaximising;
+   ParameterDict GetMinima() const;
+   ParameterDict GetMaxima() const;
+   ParameterDict GetStepSizes() const;
 
-    ParameterDict fMinima;
-    ParameterDict fMaxima;
-    ParameterDict fStepSizes;
-    bool Increment(ParameterDict::iterator it_, ParameterDict::iterator end_);
-    double fMinVal;
-    
+   FitResult GetFitResult() const;
+   void SetMaximising(bool);
+   bool GetMaximising() const;
+
+private:
+   ParameterDict fParamVals;
+   FitResult fFitResult;
+
+   bool fMaximising;
+
+   ParameterDict fMinima;
+   ParameterDict fMaxima;
+   ParameterDict fStepSizes;
+   bool Increment(ParameterDict::iterator it_, ParameterDict::iterator end_);
+   double fMinVal;
 };
 #endif

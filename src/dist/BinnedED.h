@@ -15,69 +15,70 @@
 #include <limits>
 
 class Event;
-class BinnedED : public EventDistribution{
- public:
-    BinnedED() {}
-    BinnedED(const std::string& name_, const AxisCollection& axes_);
-    BinnedED(const std::string& name_, const Histogram& histo_);
-    EventDistribution*   Clone() const; 
+class BinnedED : public EventDistribution
+{
+public:
+   BinnedED() {}
+   BinnedED(const std::string &name_, const AxisCollection &axes_);
+   BinnedED(const std::string &name_, const Histogram &histo_);
+   EventDistribution *Clone() const;
 
-    double Probability(const Event&) const;
-    double Probability(const std::vector<double>&) const;
-    double Integral()  const;
-    void   Normalise();
-    void   Scale(double s_);
-    
-    void   Fill(const std::vector<double>& vals_, double weight_ = 1);
-    void   Fill(const Event& data_, double weight_ = 1);
-    void   Fill(double val_, double weight_ = 1);
+   double Probability(const Event &) const;
+   double Probability(const std::vector<double> &) const;
+   double Integral() const;
+   void Normalise();
+   void Scale(double s_);
 
-    size_t FindBin(const std::vector<double>& vals_) const;
-    size_t FindBin(const Event& data_) const;
+   void Fill(const std::vector<double> &vals_, double weight_ = 1);
+   void Fill(const Event &data_, double weight_ = 1);
+   void Fill(double val_, double weight_ = 1);
 
-    std::vector<size_t> UnpackIndices(size_t bin_) const;
-    size_t FlattenIndices(const std::vector<size_t>& indices_) const;
+   size_t FindBin(const std::vector<double> &vals_) const;
+   size_t FindBin(const Event &data_) const;
 
-    const AxisCollection& GetAxes() const;
-    void  SetAxes(const AxisCollection& axes_);
+   std::vector<size_t> UnpackIndices(size_t bin_) const;
+   size_t FlattenIndices(const std::vector<size_t> &indices_) const;
 
-    std::vector<double> GetBinContents() const; 
-    void SetBinContents(const std::vector<double>& data_);     
+   const AxisCollection &GetAxes() const;
+   void SetAxes(const AxisCollection &axes_);
 
-    std::vector<double> Means() const;
-    std::vector<double> Variances() const;
+   std::vector<double> GetBinContents() const;
+   void SetBinContents(const std::vector<double> &data_);
 
-    const Histogram& GetHistogram() const;
-    void  SetHistogram(const Histogram&);
+   std::vector<double> Means() const;
+   std::vector<double> Variances() const;
 
-    double GetBinContent(size_t bin_) const;
-    size_t GetNBins() const;
+   const Histogram &GetHistogram() const;
+   void SetHistogram(const Histogram &);
 
-    void     AddBinContent(size_t bin_, double content_);
-    void     SetBinContent(size_t bin_, double content_);
-    void     Empty();
-    unsigned GetNDims() const;
-        
-    BinnedED Marginalise(const std::vector<std::string>& indices_) const;
-    BinnedED Marginalise(const std::string& index_) const;
+   double GetBinContent(size_t bin_) const;
+   size_t GetNBins() const;
 
-    BinnedED GetSlice(const std::map<std::string, size_t>& namesAndBins_) const;
+   void AddBinContent(size_t bin_, double content_);
+   void SetBinContent(size_t bin_, double content_);
+   void Empty();
+   unsigned GetNDims() const;
 
-    void   SetObservables(const std::vector<std::string>&);
-    const std::vector<std::string>& GetObservables() const;
+   BinnedED Marginalise(const std::vector<std::string> &indices_) const;
+   BinnedED Marginalise(const std::string &index_) const;
 
-    void Add(const BinnedED& other_, double weight_ = 1);
-    void Multiply(const BinnedED& other_);
-    void Divide(const BinnedED& other_);
+   BinnedED GetSlice(const std::map<std::string, size_t> &namesAndBins_) const;
 
-    std::string GetName() const;
-    void SetName(const std::string&);
+   void SetObservables(const std::vector<std::string> &);
+   const std::vector<std::string> &GetObservables() const;
 
-    void AddPadding(double padding_ = std::numeric_limits<double>::min());
-    
- protected:
-    ObsSet      fObservables;
-    Histogram   fHistogram;
-    std::string fName;    
+   void Add(const BinnedED &other_, double weight_ = 1);
+   void Multiply(const BinnedED &other_);
+   void Divide(const BinnedED &other_);
+
+   std::string GetName() const;
+   void SetName(const std::string &);
+
+   void AddPadding(double padding_ = std::numeric_limits<double>::min());
+
+protected:
+   ObsSet fObservables;
+   Histogram fHistogram;
+   std::string fName;
 };
 #endif

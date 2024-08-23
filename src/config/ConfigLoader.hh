@@ -33,49 +33,52 @@ using TypeTraits::enable_if;
 using TypeTraits::is_container;
 using TypeTraits::is_number;
 
-class ConfigLoader{
+class ConfigLoader
+{
 public:
-    static void Open(const std::string& fileName_);
-    static void Close();
-    
-    // Fundamental numeric types
-    template<typename TargetType>
-    static void
-    Load(const std::string& section_, const std::string& fieldName_,  TargetType& loadVal_, typename enable_if<is_number<TargetType>::value, int>::type = 0);
+  static void Open(const std::string &fileName_);
+  static void Close();
 
-    // another one for containers
-    template<typename TargetType>
-    static void
-    Load(const std::string& section_, const std::string& fieldName_, TargetType& loadVal_, typename enable_if<is_container<TargetType>::value, int>::type = 0);
+  // Fundamental numeric types
+  template <typename TargetType>
+  static void
+  Load(const std::string &section_, const std::string &fieldName_, TargetType &loadVal_, typename enable_if<is_number<TargetType>::value, int>::type = 0);
 
-    //
-    static void
-    Load(const std::string& section_, const std::string& fieldName_, std::string&);
+  // another one for containers
+  template <typename TargetType>
+  static void
+  Load(const std::string &section_, const std::string &fieldName_, TargetType &loadVal_, typename enable_if<is_container<TargetType>::value, int>::type = 0);
+
+  //
+  static void
+  Load(const std::string &section_, const std::string &fieldName_, std::string &);
 
   static std::set<std::string> ListSections();
-  
+
 private:
-    static void   CheckExists(const std::string& section_, const std::string& field_);
-    static INI::Parser* fParser;
+  static void CheckExists(const std::string &section_, const std::string &field_);
+  static INI::Parser *fParser;
 };
 
 // nested class performs string conversions
-template<typename TargetType>
-struct Converter{
-  TargetType operator()(const std::string& s_) const;
+template <typename TargetType>
+struct Converter
+{
+  TargetType operator()(const std::string &s_) const;
 };
 
 // specialise this for strings
-template<>
-struct Converter<std::string>{
-      std::string operator()(const std::string& s_) const {return s_;}
+template <>
+struct Converter<std::string>
+{
+  std::string operator()(const std::string &s_) const { return s_; }
 };
 
 // convert a whole container
-template<typename InContainer, typename OutContainer, typename ConverterSp>
+template <typename InContainer, typename OutContainer, typename ConverterSp>
 static void
-ConvertContainer(const InContainer& incntr_, OutContainer& outcntr_, const ConverterSp& cnvtr_);
+ConvertContainer(const InContainer &incntr_, OutContainer &outcntr_, const ConverterSp &cnvtr_);
 
 #include <ConfigLoader.hpp>
-    
+
 #endif

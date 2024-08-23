@@ -7,7 +7,8 @@
 const std::string fileName = "/Users/Jack/snoplus/bbplus/ntuples/fake_pu_ntup.root";
 const std::string treeName = "T";
 
-void BuildAPdf(){
+void BuildAPdf()
+{
     // Build the pdf
     AxisCollection ax;
     ax.AddAxis(BinAxis("energy", 0, 3, 100));
@@ -22,24 +23,23 @@ void BuildAPdf(){
     indicies.push_back(3);
     pdf.SetObservables(ObsSet(indicies));
 
-
     // Get the data
     ROOTNtuple rHandle(fileName, treeName);
     unsigned nEntries = rHandle.GetNEntries();
     std::cout << nEntries << " Entries to fill" << std::endl;
     // Fill the Pdf
-    for(size_t i = 0; i < nEntries; i++){
+    for (size_t i = 0; i < nEntries; i++)
+    {
         pdf.Fill(rHandle.GetEntry(i));
     }
-    
+
     return;
 }
 
-
-int main(){
+int main()
+{
     Bench b(&BuildAPdf, "Filling ");
     b.TimeRepetitions(100);
     b.PrintResult();
     return 0;
-
 }

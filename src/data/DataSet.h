@@ -8,15 +8,15 @@
 #include <string>
 
 class Event;
-class DataSet{
- public:
+class DataSet
+{
+public:
     virtual Event GetEntry(size_t iEvent_) const = 0;
     virtual ~DataSet() {}
 
-    virtual unsigned GetNEntries() const = 0; 
-    virtual unsigned GetNObservables() const = 0; 
+    virtual unsigned GetNEntries() const = 0;
+    virtual unsigned GetNObservables() const = 0;
 
     virtual std::vector<std::string> GetObservableNames() const = 0;
-
 };
 #endif

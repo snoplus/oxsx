@@ -16,68 +16,69 @@
 
 class TestStatistic;
 
-class Minuit : public Optimiser{
- public:
-    Minuit() : fMaxCalls(0), 
-               fTolerance(0.1),
-               fMethod("Migrad"),
-               fMinimiser(NULL), 
-               fMaximising(false) {}
-    ~Minuit();
+class Minuit : public Optimiser
+{
+public:
+   Minuit() : fMaxCalls(0),
+              fTolerance(0.1),
+              fMethod("Migrad"),
+              fMinimiser(NULL),
+              fMaximising(false) {}
+   ~Minuit();
 
-    virtual const FitResult& Optimise(TestStatistic*);
+   virtual const FitResult &Optimise(TestStatistic *);
 
-    void Fix(const std::string& param_);
-    void Release(const std::string& param_);
+   void Fix(const std::string &param_);
+   void Release(const std::string &param_);
 
-    void SetMethod(const std::string&);
-    std::string GetMethod() const;
+   void SetMethod(const std::string &);
+   std::string GetMethod() const;
 
-    void SetInitialValues(const ParameterDict&);
-    void SetInitialErrors(const ParameterDict&);
+   void SetInitialValues(const ParameterDict &);
+   void SetInitialErrors(const ParameterDict &);
 
-    void   SetUpperContourEdge(double);
-    double GetUpperContourEdge() const;
+   void SetUpperContourEdge(double);
+   double GetUpperContourEdge() const;
 
-    void SetMinima(const ParameterDict& minima_);
-    ParameterDict GetMinima() const;
+   void SetMinima(const ParameterDict &minima_);
+   ParameterDict GetMinima() const;
 
-    void SetMaxima(const ParameterDict& maxima_);
-    ParameterDict GetMaxima() const;
-   
-    void     SetMaxCalls(unsigned);
-    unsigned GetMaxCalls() const;
-    
-    void   SetTolerance(double);
-    double GetTolerance() const;
+   void SetMaxima(const ParameterDict &maxima_);
+   ParameterDict GetMaxima() const;
 
-    void SetMaximising(bool b_) {fMaximising = b_;}
-    bool GetMaximising() const  {return fMaximising;}
+   void SetMaxCalls(unsigned);
+   unsigned GetMaxCalls() const;
 
-    FitResult GetFitResult() const;
+   void SetTolerance(double);
+   double GetTolerance() const;
 
- private:
-    void Initialise(TestStatistic*);
-    MinuitFCN   fMinuitFCN; // wrapper on evaluator so migrad can call it
-    ParameterDict fInitialValues;
-    ParameterDict fInitialErrors;
+   void SetMaximising(bool b_) { fMaximising = b_; }
+   bool GetMaximising() const { return fMaximising; }
 
-    ParameterDict fMinima;
-    ParameterDict fMaxima;
-    std::set<std::string>    fFixedParameters;
+   FitResult GetFitResult() const;
 
-    unsigned fMaxCalls;
-    double   fTolerance;
+private:
+   void Initialise(TestStatistic *);
+   MinuitFCN fMinuitFCN; // wrapper on evaluator so migrad can call it
+   ParameterDict fInitialValues;
+   ParameterDict fInitialErrors;
 
-    std::string fMethod;
-    ROOT::Minuit2::MnApplication* fMinimiser;
+   ParameterDict fMinima;
+   ParameterDict fMaxima;
+   std::set<std::string> fFixedParameters;
 
-    std::set<std::string> fParameterNames; 
-    // the order they are held in vectors for ROOT
+   unsigned fMaxCalls;
+   double fTolerance;
 
-    FitResult fFitResult;
-    bool fMaximising;
+   std::string fMethod;
+   ROOT::Minuit2::MnApplication *fMinimiser;
 
-    DenseMatrix CalcCovarianceMatrix(ROOT::Minuit2::FunctionMinimum);
+   std::set<std::string> fParameterNames;
+   // the order they are held in vectors for ROOT
+
+   FitResult fFitResult;
+   bool fMaximising;
+
+   DenseMatrix CalcCovarianceMatrix(ROOT::Minuit2::FunctionMinimum);
 };
 #endif

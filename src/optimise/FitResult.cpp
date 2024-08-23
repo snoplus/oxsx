@@ -8,33 +8,36 @@
 #include <Exceptions.h>
 #include <Formatter.hpp>
 
-FitResult::~FitResult(){
+FitResult::~FitResult()
+{
     delete fStatSpace;
 }
 
-void
-FitResult::SetBestFit(const ParameterDict& bestFit_){
+void FitResult::SetBestFit(const ParameterDict &bestFit_)
+{
     fBestFit = bestFit_;
 }
 
-const ParameterDict&
-FitResult::GetBestFit() const{
+const ParameterDict &
+FitResult::GetBestFit() const
+{
     return fBestFit;
 }
 
-
-void
-FitResult::SetStatSpace(const Histogram& statSpace_){
+void FitResult::SetStatSpace(const Histogram &statSpace_)
+{
     fStatSpace = new Histogram(statSpace_);
 }
 
-const Histogram&
-FitResult::GetStatSpace() const{
+const Histogram &
+FitResult::GetStatSpace() const
+{
     return *fStatSpace;
 }
 
 FitResult
-FitResult::operator=(const FitResult& other_){
+FitResult::operator=(const FitResult &other_)
+{
     if (!fStatSpace)
         fStatSpace = NULL;
     else
@@ -49,7 +52,8 @@ FitResult::operator=(const FitResult& other_){
     return *this;
 }
 
-FitResult::FitResult(const FitResult& other_){
+FitResult::FitResult(const FitResult &other_)
+{
     if (!other_.fStatSpace)
         fStatSpace = NULL;
 
@@ -64,119 +68,128 @@ FitResult::FitResult(const FitResult& other_){
     fCovarianceMatrix = other_.fCovarianceMatrix;
 }
 
-const std::vector<std::vector<double> >&
-FitResult::GetStatSample() const{
+const std::vector<std::vector<double>> &
+FitResult::GetStatSample() const
+{
     return fStatSample;
 }
 
-void
-FitResult::SetStatSample(const std::vector<std::vector<double> >& statSample_){
+void FitResult::SetStatSample(const std::vector<std::vector<double>> &statSample_)
+{
     fStatSample = statSample_;
 }
 
-bool
-FitResult::GetValid() const {
+bool FitResult::GetValid() const
+{
     return fIsValid;
 }
 
-void
-FitResult::SetValid(bool b_){
+void FitResult::SetValid(bool b_)
+{
     fIsValid = b_;
 }
 
-void
-FitResult::Print() const{
-  std::cout << AsString() << std::endl;
+void FitResult::Print() const
+{
+    std::cout << AsString() << std::endl;
 }
 
-void
-FitResult::SaveAs(const std::string& fileName_) const{
-  std::ofstream fs;
-  fs.open(fileName_.c_str());
-  fs << AsString();
-  fs.close();
+void FitResult::SaveAs(const std::string &fileName_) const
+{
+    std::ofstream fs;
+    fs.open(fileName_.c_str());
+    fs << AsString();
+    fs.close();
 }
 
 std::string
-FitResult::AsString() const{
-  time_t t = time(0);
-  struct tm * now = localtime(&t);
-  
-  std::stringstream ss;
-  ss << "-----------------------------------"
-     << "-----------------------------------" << std::endl
-     << "OXSX Fit Result: "
-     << now -> tm_year + 1900 << '-' 
-     << now -> tm_mon + 1 << '-'
-     << now -> tm_mday
-     << "  "
-     << now -> tm_hour
-     << ":"
-     << now -> tm_min
-     << ":"
-     << now -> tm_sec
-     << std::endl
-     << "-----------------------------------"
-     << "-----------------------------------" << std::endl
-     << std::endl;
-       
-  ss << "Best Fit Values: " << std::endl << std::endl;
-  for(ParameterDict::const_iterator it = fBestFit.begin(); it != fBestFit.end(); ++it){
-    ss << std::setw(25) 
-       << it->first << "\t\t" 
-       << std::setw(10) 
-       << std::setprecision(printPrecision)
-       << it->second
+FitResult::AsString() const
+{
+    time_t t = time(0);
+    struct tm *now = localtime(&t);
+
+    std::stringstream ss;
+    ss << "-----------------------------------"
+       << "-----------------------------------" << std::endl
+       << "OXSX Fit Result: "
+       << now->tm_year + 1900 << '-'
+       << now->tm_mon + 1 << '-'
+       << now->tm_mday
+       << "  "
+       << now->tm_hour
+       << ":"
+       << now->tm_min
+       << ":"
+       << now->tm_sec
+       << std::endl
+       << "-----------------------------------"
+       << "-----------------------------------" << std::endl
        << std::endl;
-  }
-  return ss.str();
+
+    ss << "Best Fit Values: " << std::endl
+       << std::endl;
+    for (ParameterDict::const_iterator it = fBestFit.begin(); it != fBestFit.end(); ++it)
+    {
+        ss << std::setw(25)
+           << it->first << "\t\t"
+           << std::setw(10)
+           << std::setprecision(printPrecision)
+           << it->second
+           << std::endl;
+    }
+    return ss.str();
 }
 
-void 
-FitResult::SetPrintPrecision(const size_t& prec_){
-    printPrecision= prec_;
+void FitResult::SetPrintPrecision(const size_t &prec_)
+{
+    printPrecision = prec_;
 }
 
 size_t
-FitResult::GetPrintPrecision() const{
+FitResult::GetPrintPrecision() const
+{
     return printPrecision;
 }
-void 
-FitResult::Set1DProjections(const HistMap& hists_){
-  f1DProjections = hists_;
+void FitResult::Set1DProjections(const HistMap &hists_)
+{
+    f1DProjections = hists_;
 }
 
-void 
-FitResult::Set2DProjections(const HistMap& hists_){
-  f2DProjections = hists_;
+void FitResult::Set2DProjections(const HistMap &hists_)
+{
+    f2DProjections = hists_;
 }
 
-HistMap 
-FitResult::Get1DProjections() const{
-  return f1DProjections;
+HistMap
+FitResult::Get1DProjections() const
+{
+    return f1DProjections;
 }
 
-HistMap 
-FitResult::Get2DProjections() const{
-  return f2DProjections;
+HistMap
+FitResult::Get2DProjections() const
+{
+    return f2DProjections;
 }
 
 double
-FitResult::GetExtremeVal() const{
+FitResult::GetExtremeVal() const
+{
     return fExtremeVal;
 }
 
-void
-FitResult::SetExtremeVal(double val_){
+void FitResult::SetExtremeVal(double val_)
+{
     fExtremeVal = val_;
 }
 
-void
-FitResult::SetCovarianceMatrix(const DenseMatrix covarianceMatrix_){
+void FitResult::SetCovarianceMatrix(const DenseMatrix covarianceMatrix_)
+{
     fCovarianceMatrix = covarianceMatrix_;
 }
 
 const DenseMatrix
-FitResult::GetCovarianceMatrix() const{
+FitResult::GetCovarianceMatrix() const
+{
     return fCovarianceMatrix;
 }

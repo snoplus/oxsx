@@ -13,59 +13,64 @@ class Event;
 class SystematicManager;
 class BinnedEDShrinker;
 
-enum NormFittingStatus{ FALSE=0, DIRECT=1, INDIRECT=2 };
-class BinnedEDManager : public FitComponent{
- public:
-    BinnedEDManager() : fAllNormsDirFittable(true), fNPdfs(0), fName("norms") {}
+enum NormFittingStatus
+{
+   FALSE = 0,
+   DIRECT = 1,
+   INDIRECT = 2
+};
+class BinnedEDManager : public FitComponent
+{
+public:
+   BinnedEDManager() : fAllNormsDirFittable(true), fNPdfs(0), fName("norms") {}
 
-    void   AddPdf(const BinnedED&, const NormFittingStatus norm_fitting_status=DIRECT);
-    void   AddPdfs(const std::vector<BinnedED>&,
-                   const std::vector<NormFittingStatus>* norm_fitting_statuses=nullptr);
+   void AddPdf(const BinnedED &, const NormFittingStatus norm_fitting_status = DIRECT);
+   void AddPdfs(const std::vector<BinnedED> &,
+                const std::vector<NormFittingStatus> *norm_fitting_statuses = nullptr);
 
-    double Probability(const Event&);
-    double BinProbability(size_t);
-    
-    const std::vector<double>& GetNormalisations() const;
-    void SetNormalisations(const std::vector<double>& normalisations_);
+   double Probability(const Event &);
+   double BinProbability(size_t);
 
-    void ApplySystematics(const SystematicManager& sysMan_);
-    void ApplyShrink(const BinnedEDShrinker&);
+   const std::vector<double> &GetNormalisations() const;
+   void SetNormalisations(const std::vector<double> &normalisations_);
 
-    const BinnedED& GetOriginalPdf(size_t index_) const;
-    unsigned GetNPdfs() const;
-    size_t   GetNDims() const;
-    
-    void AssertDimensions(const std::vector<std::string>& observables);
-    void ReassertNorms(bool calcing_binprob=false);
+   void ApplySystematics(const SystematicManager &sysMan_);
+   void ApplyShrink(const BinnedEDShrinker &);
 
-    // Make a fittable component - i.e. rescale the binned pdfs inside to fit
-    void   SetParameter(const std::string& name_, double value);
-    double GetParameter(const std::string& name_) const;
+   const BinnedED &GetOriginalPdf(size_t index_) const;
+   unsigned GetNPdfs() const;
+   size_t GetNDims() const;
 
-    void   SetParameters(const ParameterDict&);
-    ParameterDict GetParameters() const;
-    size_t GetParameterCount() const;
+   void AssertDimensions(const std::vector<std::string> &observables);
+   void ReassertNorms(bool calcing_binprob = false);
 
-    std::set<std::string> GetParameterNames() const;
-    void   RenameParameter(const std::string& old_, const std::string& new_);
+   // Make a fittable component - i.e. rescale the binned pdfs inside to fit
+   void SetParameter(const std::string &name_, double value);
+   double GetParameter(const std::string &name_) const;
 
-    std::string GetName() const;
-    void SetName(const std::string&);
+   void SetParameters(const ParameterDict &);
+   ParameterDict GetParameters() const;
+   size_t GetParameterCount() const;
 
+   std::set<std::string> GetParameterNames() const;
+   void RenameParameter(const std::string &old_, const std::string &new_);
 
- private:
-    ParameterManager                fParameterManager;
-    std::vector<BinnedED>           fOriginalPdfs;
-    std::vector<BinnedED>           fWorkingPdfs;
-    std::vector<double>             fNormalisations;
-    std::vector<NormFittingStatus>  fAllowNormsFittable;
-    std::vector<double>             fFittableNorms;
-    bool                            fAllNormsDirFittable;
-    int                             fNPdfs;
-    size_t fNDims;
+   std::string GetName() const;
+   void SetName(const std::string &);
 
-    std::string fName; // component name
+private:
+   ParameterManager fParameterManager;
+   std::vector<BinnedED> fOriginalPdfs;
+   std::vector<BinnedED> fWorkingPdfs;
+   std::vector<double> fNormalisations;
+   std::vector<NormFittingStatus> fAllowNormsFittable;
+   std::vector<double> fFittableNorms;
+   bool fAllNormsDirFittable;
+   int fNPdfs;
+   size_t fNDims;
 
-    void RegisterParameters();
+   std::string fName; // component name
+
+   void RegisterParameters();
 };
 #endif

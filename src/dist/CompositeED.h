@@ -13,27 +13,28 @@
 #include <string>
 
 class Event;
-class CompositeED : public EventDistribution{
- public:
-    CompositeED(const EventDistribution* p1_, const EventDistribution* p2_);
-    CompositeED(const std::vector<EventDistribution*>& pdfs_); 
-    virtual ~CompositeED();
-        
-    virtual double Probability(const Event&) const;
-    virtual EventDistribution*   Clone() const; // required for futher compositions
+class CompositeED : public EventDistribution
+{
+public:
+   CompositeED(const EventDistribution *p1_, const EventDistribution *p2_);
+   CompositeED(const std::vector<EventDistribution *> &pdfs_);
+   virtual ~CompositeED();
 
-    virtual double Integral()  const;
-    virtual void   Normalise();
-    unsigned GetNDims() const;
+   virtual double Probability(const Event &) const;
+   virtual EventDistribution *Clone() const; // required for futher compositions
 
-    std::string GetName() const;
-    void SetName(const std::string&);
+   virtual double Integral() const;
+   virtual void Normalise();
+   unsigned GetNDims() const;
 
- private:
-    std::string fName;
-    std::vector<EventDistribution*> fDistPtrs;
+   std::string GetName() const;
+   void SetName(const std::string &);
+
+private:
+   std::string fName;
+   std::vector<EventDistribution *> fDistPtrs;
 };
 
-CompositeED operator * (const EventDistribution&, const EventDistribution&);
+CompositeED operator*(const EventDistribution &, const EventDistribution &);
 
 #endif
