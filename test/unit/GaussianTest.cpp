@@ -39,22 +39,22 @@ TEST_CASE("1D gaussian", "[Gaussian]"){
     }
 
     SECTION("Check probability"){
-        REQUIRE(gaus(std::vector<double>(1,1)) == Catch::Approx(0.24197));
-        REQUIRE(gaus(std::vector<double> (1,1E8)) == Catch::Approx(0));
-        REQUIRE(gaus(std::vector<double> (1,-1E8)) == Catch::Approx(0));
+        REQUIRE_THAT(gaus(std::vector<double>(1,1)), Catch::Matchers::WithinAbs(0.24197, 0.0001));
+        REQUIRE_THAT(gaus(std::vector<double> (1,1E8)), Catch::Matchers::WithinAbs(0, 0.0001));
+        REQUIRE_THAT(gaus(std::vector<double> (1,-1E8)), Catch::Matchers::WithinAbs(0, 0.0001));
     }
 
 
     SECTION("Test CDF"){
-        REQUIRE(gaus.Cdf(0, 1) == Catch::Approx(0.841344));
-        REQUIRE(gaus.Cdf(0, 100) == Catch::Approx(1));
-        REQUIRE(gaus.Cdf(0, -100) == Catch::Approx(0));
+        REQUIRE_THAT(gaus.Cdf(0, 1), Catch::Matchers::WithinAbs(0.841344, 0.0001));
+        REQUIRE_THAT(gaus.Cdf(0, 100), Catch::Matchers::WithinAbs(1, 0.0001));
+        REQUIRE_THAT(gaus.Cdf(0, -100), Catch::Matchers::WithinAbs(0, 0.0001));
     }
 
     SECTION("Test Integral"){
-        REQUIRE(gaus.Integral(std::vector<double>(1,-1),std::vector<double>(1,1)) == Catch::Approx(0.6827));
-        REQUIRE(gaus.Integral(std::vector<double>(1, -100), std::vector<double>(1, 100)) == Catch::Approx(1));
-        REQUIRE(gaus.Integral(std::vector<double>(1,0), std::vector<double>(1,0)) == Catch::Approx(0));
+        REQUIRE_THAT(gaus.Integral(std::vector<double>(1,-1),std::vector<double>(1,1)), Catch::Matchers::WithinAbs(0.6827, 0.0001));
+        REQUIRE_THAT(gaus.Integral(std::vector<double>(1, -100), std::vector<double>(1, 100)), Catch::Matchers::WithinAbs(1, 0.0001));
+        REQUIRE_THAT(gaus.Integral(std::vector<double>(1,0), std::vector<double>(1,0)), Catch::Matchers::WithinAbs(0, 0.0001));
     }
 }
 

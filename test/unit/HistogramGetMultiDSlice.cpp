@@ -34,8 +34,7 @@ TEST_CASE("Multi-Dimensional Histogram Slicing"){
         Histogram dim1 = origHistogram.GetSlice(fixedBins);
         
         // grab the axis & total bin number in slice for later testing  
-        BinAxis newAx = dim1.GetAxes().GetAxis(0); 
-        size_t numBins = dim1.GetNBins(); 
+        BinAxis newAx = dim1.GetAxes().GetAxis(0);
 
         // CODE TO VERIFY BIN CONTENTS OF SLICE IS CORRECT 
         // vector stores the local idx for each bin in slice for each axis 
