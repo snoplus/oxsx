@@ -35,7 +35,7 @@ TEST_CASE("Three pdfs no systematics"){
     edMan.SetNormalisations(std::vector<double>(3, 1));
 
     SECTION("Bin Probability Method"){
-      REQUIRE(edMan.BinProbability(0) == Catch::Approx(prob1 * prob2 * prob3));
+        REQUIRE(edMan.BinProbability(0) == Catch::Approx(prob1 * prob2 * prob3));
     }
     
     SECTION("Probability Method"){
