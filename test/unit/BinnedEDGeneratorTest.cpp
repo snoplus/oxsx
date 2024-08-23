@@ -19,8 +19,8 @@ TEST_CASE("Recover a 1D gaussian"){
     REQUIRE(outPdf.Integral() == 1000000);
     outPdf.Normalise();
 
-    double outMean = outPdf.Means().at(0);
-    double inMean = inPdf.Means().at(0);
+    const double outMean = outPdf.Means().at(0);
+    const double inMean = inPdf.Means().at(0);
 
-    REQUIRE(std::abs(outMean) < 0.01);
+    REQUIRE_THAT(outMean, Catch::Matchers::WithinAbs(inMean, 0.01));
 }

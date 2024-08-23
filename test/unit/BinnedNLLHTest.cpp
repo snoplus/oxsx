@@ -52,7 +52,7 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
         params["c"] = 1;
         lh.SetParameters(params);
         REQUIRE(lh.GetParameters() == params);
-        REQUIRE(lh.Evaluate() == Catch::Approx(sumNorm + sumLogProb));
+        REQUIRE_THAT(lh.Evaluate(), Catch::Matchers::WithinAbs(sumNorm + sumLogProb, 0.0001));
     }
     SECTION("Correct Probability with constraint"){
         lh.SetConstraint("a", 3, 1);
@@ -66,7 +66,7 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
         params["b"] = 1;
         params["c"] = 1;
         lh.SetParameters(params);
-        REQUIRE(lh.Evaluate() == Catch::Approx(sumNorm + sumLogProb + constraint));
+        REQUIRE_THAT(lh.Evaluate(), Catch::Matchers::WithinAbs(sumNorm + sumLogProb + constraint, 0.0001));
     }
     SECTION("Correct Probability with asymmetric constraint"){
         lh.SetConstraint("b", 5, 1, 2);
@@ -80,7 +80,7 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
         params["b"] = 1;
         params["c"] = 1;
         lh.SetParameters(params);
-        REQUIRE(lh.Evaluate() == Catch::Approx(sumNorm + sumLogProb + constraint));
+        REQUIRE_THAT(lh.Evaluate(), Catch::Matchers::WithinAbs(sumNorm + sumLogProb + constraint, 0.0001));
     }
     SECTION("Correct Probability with asymmetric constraint 2"){
         lh.SetConstraint("b", -3, 1, 2);
@@ -94,7 +94,7 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
         params["b"] = 1;
         params["c"] = 1;
         lh.SetParameters(params);
-        REQUIRE(lh.Evaluate() == Catch::Approx(sumNorm + sumLogProb + constraint));
+        REQUIRE_THAT(lh.Evaluate(), Catch::Matchers::WithinAbs(sumNorm + sumLogProb + constraint, 0.0001));
     }
 
     std::vector<int> genRates(3, pow(10,6));
@@ -138,7 +138,7 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
       params["b"] = 1;
       params["c"] = 1;
       lh2.SetParameters(params);
-      REQUIRE(lh2.Evaluate() == Catch::Approx(sumNorm + sumLogProb + betaPen));
+      REQUIRE_THAT(lh2.Evaluate(), Catch::Matchers::WithinAbs(sumNorm + sumLogProb + betaPen, 0.0001));
     }
     SECTION("Correct Probability with Barlow Beeston and constraint"){
       lh2.SetConstraint("a", 3, 1);
@@ -175,7 +175,7 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
       params["b"] = 1;
       params["c"] = 1;
       lh2.SetParameters(params);
-      REQUIRE(lh2.Evaluate() == Catch::Approx(sumNorm + sumLogProb + betaPen + constraint));
+      REQUIRE_THAT(lh2.Evaluate(), Catch::Matchers::WithinAbs(sumNorm + sumLogProb + betaPen + constraint, 0.0001));
     }
     SECTION("Correct probability with Barlow Beeston and asymmetric constraint"){
       lh2.SetConstraint("b", 5, 1, 2);
@@ -212,7 +212,7 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
       params["b"] = 1;
       params["c"] = 1;
       lh2.SetParameters(params);
-      REQUIRE(lh2.Evaluate() == Catch::Approx(sumNorm + sumLogProb + betaPen + constraint));
+      REQUIRE_THAT(lh2.Evaluate(), Catch::Matchers::WithinAbs(sumNorm + sumLogProb + betaPen + constraint, 0.0001));
     }
     SECTION("Correct Probability with Barlow Beeston and constraint 2"){
       lh2.SetConstraint("b", -3, 1, 2);
@@ -249,6 +249,6 @@ TEST_CASE("Binned NLLH, 3 rates no systematics"){
       params["b"] = 1;
       params["c"] = 1;
       lh2.SetParameters(params);
-      REQUIRE(lh2.Evaluate() == Catch::Approx(sumNorm + sumLogProb + betaPen + constraint));
+      REQUIRE_THAT(lh2.Evaluate(), Catch::Matchers::WithinAbs(sumNorm + sumLogProb + betaPen + constraint, 0.0001));
     }
 }

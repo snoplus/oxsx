@@ -44,7 +44,7 @@ TEST_CASE("Dataset generation by random draws"){
     bootstraps.push_back(false);
     gen.SetBootstrap(bootstraps);
     OXSXDataSet newDataSet = gen.ExpectedRatesDataSet();
-    REQUIRE(newDataSet.GetNEntries() == std::accumulate(rates.begin(), rates.end(), 0));
+    REQUIRE(int(newDataSet.GetNEntries()) == std::accumulate(rates.begin(), rates.end(), 0));
   }
   
 
@@ -73,7 +73,7 @@ TEST_CASE("Dataset generation by random draws"){
     bootstraps.push_back(true);
     gen.SetBootstrap(bootstraps);
     OXSXDataSet newDataSet = gen.ExpectedRatesDataSet();
-    REQUIRE(newDataSet.GetNEntries() == std::accumulate(rates.begin(), rates.end(), 0));
+    REQUIRE(int(newDataSet.GetNEntries()) == std::accumulate(rates.begin(), rates.end(), 0));
   }
 
 
