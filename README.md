@@ -23,6 +23,7 @@ Signal Extraction framework for the SNO+ experiment
    cmake -B build -S . -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/path/to/Catch2/
    cmake --build build/ --target install
    ```
+   (Of course, if you have permissions to write to default locations you don't necessarily need to invoke the DCMAKE_INSTALL_PREFIX option)
 
 <h2>Installation Instructions </h2>
 Follow the installation instructions for each of the above using either the default install location or a different directory if you would prefer. Be careful to start the install with a clean environment.
