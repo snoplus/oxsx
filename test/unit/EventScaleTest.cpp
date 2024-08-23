@@ -2,7 +2,8 @@
 #include <Event.h>
 #include <EventScale.h>
 
-TEST_CASE("Simple scale on variable number 3"){
+TEST_CASE("Simple scale on variable number 3")
+{
     EventScale scaler("scaler");
     std::vector<std::string> observableScaler;
     observableScaler.push_back("obs3");
@@ -24,7 +25,7 @@ TEST_CASE("Simple scale on variable number 3"){
 
     Event inData(fakeObservations);
     inData.SetObservableNames(&observablesData);
-    
+
     // apply the scale
     Event outData = scaler(inData);
     std::vector<double> modifiedObs = outData.GetData();

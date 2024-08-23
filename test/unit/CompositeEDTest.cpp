@@ -6,7 +6,8 @@
 #include <AnalyticED.h>
 #include <iostream>
 
-TEST_CASE("Combining 1D gaussians", "[CompositeED]"){
+TEST_CASE("Combining 1D gaussians", "[CompositeED]")
+{
     Gaussian gausF1(0.5, 0.4);
     Gaussian gausF2(0.5, 0.3);
 
@@ -15,7 +16,7 @@ TEST_CASE("Combining 1D gaussians", "[CompositeED]"){
 
     ObsSet d1("obs0");
     ObsSet d2("obs2");
-    
+
     gaus1.SetObservables(d1);
     gaus2.SetObservables(d2);
 
@@ -39,35 +40,38 @@ TEST_CASE("Combining 1D gaussians", "[CompositeED]"){
     Event ev(vals);
     ev.SetObservableNames(&observables);
 
-    SECTION("Check Dimensions"){
+    SECTION("Check Dimensions")
+    {
         REQUIRE(compositeED.GetNDims() == 2);
     }
 
-    SECTION("Check Data Flow to internal pdfs "){
-        double prob  = compositeED.Probability(ev);
+    SECTION("Check Data Flow to internal pdfs ")
+    {
+        double prob = compositeED.Probability(ev);
         REQUIRE(prob == Catch::Approx(0.15141173681343614));
-        
     }
 
-    SECTION("Check Clone Functionality"){
-        EventDistribution* clone = compositeED.Clone();
-        REQUIRE(clone -> GetNDims() == 2);
-        REQUIRE(clone -> Probability(ev) == Catch::Approx(0.15141173681343614));
+    SECTION("Check Clone Functionality")
+    {
+        EventDistribution *clone = compositeED.Clone();
+        REQUIRE(clone->GetNDims() == 2);
+        REQUIRE(clone->Probability(ev) == Catch::Approx(0.15141173681343614));
     }
 
-    SECTION("Second level of recursion"){
+    SECTION("Second level of recursion")
+    {
         Gaussian nextF = Gaussian(0.9, 0.8);
 
         AnalyticED nextED("g3", &nextF);
         nextED.SetObservables(ObsSet("obs3"));
         CompositeED level2 = compositeED * nextED;
-        REQUIRE( level2.GetNDims() == 3 );
-        REQUIRE( level2.Probability(ev) == Catch::Approx(0.07491808959564718));
-                                                                                         
+        REQUIRE(level2.GetNDims() == 3);
+        REQUIRE(level2.Probability(ev) == Catch::Approx(0.07491808959564718));
     }
 }
 
-TEST_CASE(" Composite of two Binned EDs"){
+TEST_CASE(" Composite of two Binned EDs")
+{
 
     // Paired into two couplets
     BinAxis axis1("axis1", -80, 80, 100);
@@ -78,16 +82,15 @@ TEST_CASE(" Composite of two Binned EDs"){
 
     AxisCollection axes1;
     AxisCollection axes2;
-    
+
     axes1.AddAxis(axis1);
     axes1.AddAxis(axis2);
-    
+
     axes2.AddAxis(axis3);
     axes2.AddAxis(axis4);
 
     BinnedED pdf1("b1", axes1);
     BinnedED pdf2("b2", axes2);
-
 
     // Data, where to look
     std::vector<std::string> indicies1;
@@ -95,7 +98,7 @@ TEST_CASE(" Composite of two Binned EDs"){
 
     indicies1.push_back("obs0");
     indicies1.push_back("obs2");
-    
+
     indicies2.push_back("obs1");
     indicies2.push_back("obs3");
 
@@ -104,7 +107,4 @@ TEST_CASE(" Composite of two Binned EDs"){
 
     // Now combine
     CompositeED compositeED = pdf1 * pdf2;
-
-
 }
-
