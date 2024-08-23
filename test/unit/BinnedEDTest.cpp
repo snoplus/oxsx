@@ -69,7 +69,7 @@ TEST_CASE("Filling a 2x2 PDF"){
 
 
     SECTION("Bin Content initialisation and setting"){
-        double initialContent = pdf.GetBinContent(1);
+        const double initialContent = pdf.GetBinContent(1);
 
         REQUIRE(initialContent == 0);
         
@@ -77,12 +77,12 @@ TEST_CASE("Filling a 2x2 PDF"){
         double newContent = pdf.GetBinContent(1);
         REQUIRE(newContent == 10.01);
 
-        double setContent = 20.9;
-        pdf.SetBinContent(1, 20.9);
+        const double setContent = 20.9;
+        pdf.SetBinContent(1, setContent);
         newContent = pdf.GetBinContent(1);
 
-        REQUIRE(newContent == 20.9);
-        REQUIRE(pdf.Integral() == Catch::Approx(20.9));
+        REQUIRE(newContent == setContent);
+        REQUIRE_THAT(pdf.Integral(), Catch::Matchers::WithinAbs(setContent, 0.0001));
     }
 
 }
