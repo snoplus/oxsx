@@ -1,5 +1,5 @@
-#include <catch2/catch_approx.hpp>
 #include <catch2/catch_all.hpp>
+#include <catch2/catch_approx.hpp>
 #include <DistTools.h>
 #include <BinnedED.h>
 #include <Gaussian.h>

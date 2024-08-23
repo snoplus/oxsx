@@ -1,5 +1,5 @@
-#include <catch2/catch_approx.hpp>
 #include <catch2/catch_all.hpp>
+#include <catch2/catch_approx.hpp>
 #include <SystematicManager.h>
 #include <Scale.h>
 
