@@ -15,6 +15,14 @@ Signal Extraction framework for the SNO+ experiment
 
 6. [ROOT](https://root.cern.ch/downloading-root) Should be installed with Minuit2 enabled `./configure --enable-minuit2`
 
+7. [Catch2] (https://github.com/catchorg/Catch2) Version 3.0.0+ is needed. Install with:
+   ```
+   git clone git@github.com:catchorg/Catch2.git
+   cd Catch2/
+   git checkout v3.7.0 // Or whichever tag you want (must be >= 3.0.0)
+   cmake -B build -S . -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/path/to/Catch2/
+   cmake --build build/ --target install
+   ```
 
 <h2>Installation Instructions </h2>
 Follow the installation instructions for each of the above using either the default install location or a different directory if you would prefer. Be careful to start the install with a clean environment.
