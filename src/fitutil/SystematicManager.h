@@ -16,54 +16,56 @@
 #include <Systematic.h>
 #include <SparseMatrix.h>
 
-class SystematicManager{
- public:
-    SystematicManager(){
-      std::vector<Systematic*> holder;
-      fGroups[""]=holder;
-    }
-    ~SystematicManager() {}
+class SystematicManager
+{
+public:
+   SystematicManager()
+   {
+      std::vector<Systematic *> holder;
+      fGroups[""] = holder;
+   }
+   ~SystematicManager() {}
 
-    void Add(Systematic*);
+   void Add(Systematic *);
 
-    void Add(Systematic*,const std::string& groupName_ );
+   void Add(Systematic *, const std::string &groupName_);
 
-    const std::map<std::string,std::vector<Systematic*> >& GetSystematicsGroup() const;
+   const std::map<std::string, std::vector<Systematic *>> &GetSystematicsGroup() const;
 
-    const std::vector<Systematic*>& GetSystematicsInGroup(const std::string & name) const;
+   const std::vector<Systematic *> &GetSystematicsInGroup(const std::string &name) const;
 
-    const std::set<std::string> GetGroupNames() const;
-    
-    size_t GetNSystematics() const;
-    size_t GetNGroups() const;
+   const std::set<std::string> GetGroupNames() const;
 
-    size_t GetNSystematicsInGroup(const std::string& name_) const;
+   size_t GetNSystematics() const;
+   size_t GetNGroups() const;
 
-    const std::vector<std::string> GetSystematicsNamesInGroup(const std::string& name) const;
+   size_t GetNSystematicsInGroup(const std::string &name_) const;
 
-    const std::vector<std::string> GetGroup(const std::string& name) const;
+   const std::vector<std::string> GetSystematicsNamesInGroup(const std::string &name) const;
 
-    const std::vector<Systematic*>& GetGlobalSystematics() const;
+   const std::vector<std::string> GetGroup(const std::string &name) const;
 
-    void AddDist(const BinnedED& pdf, const std::vector<std::string>& syss_);
-    void AddDist(const BinnedED& pdf, const std::string& syss_);
+   const std::vector<Systematic *> &GetGlobalSystematics() const;
 
-    const SparseMatrix& GetTotalResponse(const std::string& groupName_ = "" ) const;
+   void AddDist(const BinnedED &pdf, const std::vector<std::string> &syss_);
+   void AddDist(const BinnedED &pdf, const std::string &syss_);
 
-    void DistortEDs(const std::vector<BinnedED>& OrigEDs,
-                    std::vector<BinnedED>& WorkingEDs,
-                    std::vector<double>* norms=nullptr) const;
+   const SparseMatrix &GetTotalResponse(const std::string &groupName_ = "") const;
 
-    void Construct();
+   void DistortEDs(const std::vector<BinnedED> &OrigEDs,
+                   std::vector<BinnedED> &WorkingEDs,
+                   std::vector<double> *norms = nullptr) const;
 
- private:
-    size_t fNGroups;
-    std::map<std::string,SparseMatrix> fTotalReponses;
-    std::map<std::string,std::vector<Systematic*> > fGroups;
+   void Construct();
 
-    std::map<std::string,std::vector<std::string> > fEDGroups;
-    void UniqueSystematics(const std::vector<std::string>&);
-    void checkAllOtherGroups(const Systematic* syss_);
-    size_t CountNSystematics() const;
+private:
+   size_t fNGroups;
+   std::map<std::string, SparseMatrix> fTotalReponses;
+   std::map<std::string, std::vector<Systematic *>> fGroups;
+
+   std::map<std::string, std::vector<std::string>> fEDGroups;
+   void UniqueSystematics(const std::vector<std::string> &);
+   void checkAllOtherGroups(const Systematic *syss_);
+   size_t CountNSystematics() const;
 };
 #endif

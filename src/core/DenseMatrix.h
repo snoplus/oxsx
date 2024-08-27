@@ -12,31 +12,31 @@
 #include <armadillo>
 class BinnedPhysDist;
 
-class DenseMatrix{
- public:
- DenseMatrix() : fNRows(0), fNCols(0) {}
-    DenseMatrix(size_t rows_, size_t cols_);
+class DenseMatrix
+{
+public:
+   DenseMatrix() : fNRows(0), fNCols(0) {}
+   DenseMatrix(size_t rows_, size_t cols_);
 
-    std::vector<double> operator() (const std::vector<double>& input_) const;
+   std::vector<double> operator()(const std::vector<double> &input_) const;
 
-    void   SetComponent(size_t row_, size_t column_, double val_);
-    double GetComponent(size_t row_, size_t column_) const;
-    
-    DenseMatrix operator*=(const DenseMatrix& other_);
-   
-    void   SetZeros();
-    void   SetToIdentity();
+   void SetComponent(size_t row_, size_t column_, double val_);
+   double GetComponent(size_t row_, size_t column_) const;
 
-    void SetSymmetricMatrix(const std::vector<double>& _input);
+   DenseMatrix operator*=(const DenseMatrix &other_);
 
-    void   Print(const std::string&);
-    void   PrintSparse(const std::string&);
+   void SetZeros();
+   void SetToIdentity();
 
- private:
-    // N x M matrix
-    size_t fNRows;
-    size_t fNCols;
-    arma::mat fArmaMat;
+   void SetSymmetricMatrix(const std::vector<double> &_input);
 
+   void Print(const std::string &);
+   void PrintSparse(const std::string &);
+
+private:
+   // N x M matrix
+   size_t fNRows;
+   size_t fNCols;
+   arma::mat fArmaMat;
 };
 #endif

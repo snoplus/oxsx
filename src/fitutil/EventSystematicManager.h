@@ -5,17 +5,18 @@
 
 class EventSystematic;
 class Event;
-class EventSystematicManager{
- public:    
-    Event ApplySystematics(const Event&) const;
+class EventSystematicManager
+{
+public:
+   Event ApplySystematics(const Event &) const;
 
-    void Clear();
-    void Add(EventSystematic*);
-    const std::vector<EventSystematic*>& GetSystematics() const;
-    size_t GetNSystematics() const;
+   void Clear();
+   void Add(EventSystematic *);
+   const std::vector<EventSystematic *> &GetSystematics() const;
+   size_t GetNSystematics() const;
 
- private:
-    std::vector<EventSystematic*> fSystematics;
+private:
+   std::vector<EventSystematic *> fSystematics;
 };
 
 #endif

@@ -9,31 +9,32 @@
 #include <TestStatistic.h>
 #include <ComponentManager.h>
 
-//FIXME::Enforce equal binning on the pdfs
+// FIXME::Enforce equal binning on the pdfs
 class DataSet;
-class ChiSquare : public TestStatistic{
- public:
-    ChiSquare() : fCalculatedDataDist(false) {}
+class ChiSquare : public TestStatistic
+{
+public:
+   ChiSquare() : fCalculatedDataDist(false) {}
 
-    void SetDataSet(DataSet* d);
-    DataSet* GetDataSet();
-   
-    // Fit Component interface
-    double Evaluate();
-    void   RegisterFitComponents();
-    size_t GetParameterCount() const;
-    void   SetParameters(const ParameterDict& params_);
-    ParameterDict GetParameters() const;
-    std::set<std::string> GetParameterNames() const;
-    
- private:
-    bool              fCalculatedDataDist;
-    BinnedED          fDataDist;
-    void              BinData();
+   void SetDataSet(DataSet *d);
+   DataSet *GetDataSet();
 
-    DataSet*          fDataSet;
-    BinnedEDManager   fPdfManager;
-    SystematicManager fSystematicManager;
-    ComponentManager  fComponentManager;
+   // Fit Component interface
+   double Evaluate();
+   void RegisterFitComponents();
+   size_t GetParameterCount() const;
+   void SetParameters(const ParameterDict &params_);
+   ParameterDict GetParameters() const;
+   std::set<std::string> GetParameterNames() const;
+
+private:
+   bool fCalculatedDataDist;
+   BinnedED fDataDist;
+   void BinData();
+
+   DataSet *fDataSet;
+   BinnedEDManager fPdfManager;
+   SystematicManager fSystematicManager;
+   ComponentManager fComponentManager;
 };
 #endif

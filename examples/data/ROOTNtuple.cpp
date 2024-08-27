@@ -6,21 +6,22 @@
 #include <string>
 #include <iostream>
 
-const std::string fileName = ""; 
-const std::string treeName = ""; 
+const std::string fileName = "";
+const std::string treeName = "";
 
 // used for creating data representations, both should match an observable
 // name from the root ntuple (i.e. a branch name)
 
-int main(){
+int main()
+{
     ROOTNtuple nt(fileName, treeName);
-    
+
     // The ntuple knows how many entries it has, and what the observables are
     std::cout << "The ntuple contains " << nt.GetNEntries() << "entries "
-              << "\n each with " << nt.GetNObservables() 
+              << "\n each with " << nt.GetNObservables()
               << "called:" << std::endl;
 
-    for(size_t i = 0; i < nt.GetNObservables(); i++)
+    for (size_t i = 0; i < nt.GetNObservables(); i++)
         std::cout << nt.GetObservableNames().at(i) << "\t";
     std::cout << std::endl;
 

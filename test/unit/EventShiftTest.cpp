@@ -2,7 +2,8 @@
 #include <Event.h>
 #include <EventShift.h>
 
-TEST_CASE("Simple shift on variable number 2"){
+TEST_CASE("Simple shift on variable number 2")
+{
     EventShift shifter("shifter");
     std::vector<std::string> observableShifter;
     observableShifter.push_back("obs2");

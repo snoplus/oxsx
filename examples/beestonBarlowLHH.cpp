@@ -13,15 +13,16 @@
 #include <BinnedNLLH.h>
 #include <ParameterDict.h>
 
-const std::string bgMCfile    = "";
-const std::string sigMCfile   = "";
-const std::string bgTreeName  = "";
+const std::string bgMCfile = "";
+const std::string sigMCfile = "";
+const std::string bgTreeName = "";
 const std::string sigTreeName = "";
 
 const std::string dataFile = "";
 const std::string dataTreeName = "";
 
-int main(){
+int main()
+{
   ////////////////////
   // 1. Set Up PDFs //
   ////////////////////
@@ -35,17 +36,17 @@ int main(){
   dataObs.push_back("energy");
 
   // Set up pdf with these bins in this observable
-  BinnedED bgPdf("bgPDF",axes);
+  BinnedED bgPdf("bgPDF", axes);
   bgPdf.SetObservables(dataObs);
 
-  //Hard code bin contents of PDF
-  bgPdf.SetBinContent(0,20);
-  bgPdf.SetBinContent(1,35);
-  bgPdf.SetBinContent(2,30);
-  bgPdf.SetBinContent(3,15);
+  // Hard code bin contents of PDF
+  bgPdf.SetBinContent(0, 20);
+  bgPdf.SetBinContent(1, 35);
+  bgPdf.SetBinContent(2, 30);
+  bgPdf.SetBinContent(3, 15);
   bgPdf.Normalise();
 
-  //Hard code generated number of events
+  // Hard code generated number of events
   const int gen_rate = 1000;
 
   std::cout << "Initialised PDF" << std::endl;
@@ -54,14 +55,14 @@ int main(){
   // 2. Fill with data and normalise //
   /////////////////////////////////////
 
-  BinnedED bgData("bgData",axes);
+  BinnedED bgData("bgData", axes);
   bgData.SetObservables(dataObs);
 
-  //Hard code bin contents of data
-  bgData.SetBinContent(0,25);
-  bgData.SetBinContent(1,30);
-  bgData.SetBinContent(2,40);
-  bgData.SetBinContent(3,10);
+  // Hard code bin contents of data
+  bgData.SetBinContent(0, 25);
+  bgData.SetBinContent(1, 30);
+  bgData.SetBinContent(2, 40);
+  bgData.SetBinContent(3, 10);
 
   std::cout << "Filled data " << std::endl;
 
@@ -79,10 +80,10 @@ int main(){
 
   ParameterDict parameterValues;
 
-  //Set normalisation of PDF
+  // Set normalisation of PDF
   parameterValues["bgPDF"] = 100;
 
-  //Calculate and print likelihood
+  // Calculate and print likelihood
   lhFunction.SetParameters(parameterValues);
   std::cout << "Total LogL = " << lhFunction.Evaluate() << std::endl;
 

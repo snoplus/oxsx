@@ -14,32 +14,33 @@
 class Event;
 class TTree;
 class TLeaf;
-class ROOTTree : public DataSet{
- public:
-    ROOTTree(const std::string& fileName_, const std::string& treeName_);
-    ~ROOTTree();
+class ROOTTree : public DataSet
+{
+public:
+   ROOTTree(const std::string &fileName_, const std::string &treeName_);
+   ~ROOTTree();
 
-    Event GetEntry(size_t iEvent_) const;
-    unsigned  GetNEntries() const;
-    unsigned  GetNObservables() const;
+   Event GetEntry(size_t iEvent_) const;
+   unsigned GetNEntries() const;
+   unsigned GetNObservables() const;
 
-    void LoadBaskets();
-    void DropBaskets();
+   void LoadBaskets();
+   void DropBaskets();
 
-    std::vector<std::string> GetObservableNames() const; // just returns the cache
+   std::vector<std::string> GetObservableNames() const; // just returns the cache
 
- private:
-    void GatherObservableNames(); // actually works the names out
-    std::vector<std::string> fObsNames;
-    std::vector<TLeaf*> fLeaves;
+private:
+   void GatherObservableNames(); // actually works the names out
+   std::vector<std::string> fObsNames;
+   std::vector<TLeaf *> fLeaves;
 
-    // no copying allowed
-    ROOTTree(const ROOTTree&);
-    ROOTTree operator=(const ROOTTree&);
+   // no copying allowed
+   ROOTTree(const ROOTTree &);
+   ROOTTree operator=(const ROOTTree &);
 
-    TFile*   fROOTFile;
-    TTree* fTree;
-    
-    Event Assemble(size_t iEvent_) const;
+   TFile *fROOTFile;
+   TTree *fTree;
+
+   Event Assemble(size_t iEvent_) const;
 };
 #endif

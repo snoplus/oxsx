@@ -16,37 +16,38 @@
 #include <ObsSet.h>
 #include <vector>
 
-class Systematic : public FitComponent{
- public:
-    virtual ~Systematic()  {}
+class Systematic : public FitComponent
+{
+public:
+   virtual ~Systematic() {}
 
-    BinnedED 
-    operator()(const BinnedED& pdf_, double* norm=nullptr) const;
-        
-    void SetResponse(const SparseMatrix& responseMatrix_);
-    const SparseMatrix& GetResponse() const;
-        
-    void   SetTransformationObs(const ObsSet&);
-    ObsSet GetTransformationObs() const;
+   BinnedED
+   operator()(const BinnedED &pdf_, double *norm = nullptr) const;
 
-    void   SetDistributionObs(const ObsSet&);
-    ObsSet GetDistributionObs() const;
+   void SetResponse(const SparseMatrix &responseMatrix_);
+   const SparseMatrix &GetResponse() const;
 
-    const AxisCollection& GetAxes() const;
-    void  SetAxes(const AxisCollection& axes_);
+   void SetTransformationObs(const ObsSet &);
+   ObsSet GetTransformationObs() const;
 
-    virtual void Construct() = 0;
+   void SetDistributionObs(const ObsSet &);
+   ObsSet GetDistributionObs() const;
 
- protected:
-    SparseMatrix   fResponse;
-    AxisCollection fAxes; // The full bin definition of the distributions
-    ObsSet fTransObs;     // the observables to tranform
-    ObsSet fDistObs;      // the full set of observables for the distriubtion to act on
-    // obs of the pdfs it will act on, needs to be at least the lenth of the 
-    // systematics representation
-    
-    // methods below used for index manipilation between pdf and response
-    bool BinsCompatible(size_t bin1 , size_t bin2) const;
-    bool VectorContains(const std::vector<size_t>&, size_t) const;
+   const AxisCollection &GetAxes() const;
+   void SetAxes(const AxisCollection &axes_);
+
+   virtual void Construct() = 0;
+
+protected:
+   SparseMatrix fResponse;
+   AxisCollection fAxes; // The full bin definition of the distributions
+   ObsSet fTransObs;     // the observables to tranform
+   ObsSet fDistObs;      // the full set of observables for the distriubtion to act on
+   // obs of the pdfs it will act on, needs to be at least the lenth of the
+   // systematics representation
+
+   // methods below used for index manipilation between pdf and response
+   bool BinsCompatible(size_t bin1, size_t bin2) const;
+   bool VectorContains(const std::vector<size_t> &, size_t) const;
 };
 #endif

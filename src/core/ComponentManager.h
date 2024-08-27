@@ -5,22 +5,23 @@
 #include <set>
 #include <string>
 
-class ComponentManager{
- public:
-    ComponentManager() : fComponentCount(0) {}
-    void AddComponent(FitComponent*);
+class ComponentManager
+{
+public:
+   ComponentManager() : fComponentCount(0) {}
+   void AddComponent(FitComponent *);
 
-    void SetParameters(const ParameterDict&);
-    std::set<std::string>  GetParameterNames() const;
-    ParameterDict             GetParameters() const;
-    int                       GetTotalParameterCount() const;
-    size_t                    GetComponentCount() const;
-    void                      Clear();
-    
-    double GetParameter(const std::string&) const;
+   void SetParameters(const ParameterDict &);
+   std::set<std::string> GetParameterNames() const;
+   ParameterDict GetParameters() const;
+   int GetTotalParameterCount() const;
+   size_t GetComponentCount() const;
+   void Clear();
 
- private:
-    std::vector<FitComponent*>  fComponents;
-    int fComponentCount;
+   double GetParameter(const std::string &) const;
+
+private:
+   std::vector<FitComponent *> fComponents;
+   int fComponentCount;
 };
 #endif
