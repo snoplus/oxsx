@@ -1,6 +1,6 @@
 /***********************************************************************************************/
 /* A quadratic constraint on a fit parameter, for log likelihood and Chi-Square tests this is  */
-/* equivlent to a gaussian contraint.                                                          */
+/* equivalent to a gaussian contraint.                                                         */
 /* If a second width is given, asymmetric errors are used.                                     */
 /***********************************************************************************************/
 #ifndef __OXSX_QUADRATIC_CONSTRAINT__

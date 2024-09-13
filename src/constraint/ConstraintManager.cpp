@@ -100,6 +100,14 @@ void ConstraintManager::SetConstraint(const std::string &paramName_1, double mea
     }
 }
 
+void ConstraintManager::SetConstraint(const std::string &paramName_1, const std::string &paramName_2, double ratiomean_, double ratiosigma_)
+{
+    /*
+     * Add/update a ratio constraint for a pair of parameters; we don't need to worry about other constraints
+     */
+    fConstraintsRatio[std::pair<std::string, std::string>(paramName_1, paramName_2)] = RatioConstraint(ratiomean_, ratiosigma_);
+}
+
 double ConstraintManager::Evaluate(const ParameterDict &params) const
 {
     /*
@@ -126,6 +134,18 @@ double ConstraintManager::Evaluate(const ParameterDict &params) const
         if (fDebugMode)
         {
             std::cout << "Pair constraint (" << param_pair.first << ", " << param_pair.second << "): Evaluate() = " << c << std::endl;
+        }
+    }
+
+    // ...and finally sum over the ratio constraints.
+    for (const auto &c_pair : fConstraintsRatio)
+    {
+        const std::pair<std::string, std::string> param_pair = c_pair.first;
+        const double c = c_pair.second.Evaluate(params.at(param_pair.first), params.at(param_pair.second));
+	total += c;
+        if (fDebugMode)
+        {
+            std::cout << "Ratio constraint (" << param_pair.first << ", " << param_pair.second << "): Evaluate() = " << c << std::endl;
         }
     }
 
