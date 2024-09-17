@@ -124,3 +124,11 @@ void DenseMatrix::PrintSparse(const std::string &prefix_ = "")
     arma::sp_mat B(fArmaMat);
     B.print(prefix_);
 }
+
+void DenseMatrix::SetMatrix(const arma::mat& input_matrix)
+{
+    if (input_matrix.n_rows != fNRows || input_matrix.n_cols != fNCols)
+        throw DimensionError("DenseMatrix::SetMatrix() Input matrix dimensions do not match requirements for the DenseMatrix object!");
+
+    fArmaMat = input_matrix;
+}

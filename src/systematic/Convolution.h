@@ -12,10 +12,11 @@
 
 class ConditionalPDF;
 class PDF;
+class DenseMatrix;
 class Convolution : public Systematic
 {
 public:
-   Convolution(const std::string &name_) : fDist(NULL), fCachedCompatibleBins(false), fName(name_) {}
+   Convolution(const std::string &name_) : fDist(NULL), fCachedPermutationMatrix(false), fName(name_) {}
    ~Convolution();
    void SetFunction(PDF *function_);
    void SetConditionalPDF(ConditionalPDF *function_);
@@ -36,16 +37,21 @@ public:
    void SetName(const std::string &);
 
 private:
-   void Reset();
    ConditionalPDF *fDist;
-   bool fCachedCompatibleBins;
-
+   bool fCachedPermutationMatrix;
    AxisCollection fSubMapAxes;
-   void CacheCompatibleBins();
-   std::vector<std::vector<size_t>> fCompatibleBins;
+   AxisCollection fNotSubMapAxes;
+   // std::vector<std::vector<size_t>> fCompatibleBins;
    // the systematic subMap bin for each global bin of pdf
-   std::vector<size_t> fSysBins;
-
+   // std::vector<size_t> fSysBins;
    std::string fName;
+   SparseMatrix fBinningPerm;
+   SparseMatrix fBinningPermT;
+
+   AxisCollection DetermineAxisSubCollection(const std::vector<size_t>& rel_indices);
+   size_t BlockedBinningIndex(size_t bin_index, const std::vector<size_t>& relativeIndices);
+   void CachePermutationMatrix();
+   // void CacheCompatibleBins();
+   void ConstructSubmatrix(DenseMatrix& subMap) const;
 };
 #endif
