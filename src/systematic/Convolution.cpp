@@ -25,14 +25,15 @@ Convolution::~Convolution()
     delete fDist;
 }
 
-void Convolution::ConstructSubmatrix(DenseMatrix& subMap) const
+void Convolution::ConstructSubmatrix(std::vector<long long unsigned int>& column_indices, std::vector<long long unsigned int>& row_indices,
+                                     std::vector<double>& vals) const
 {
     std::vector<double> binCentres(fSubMapAxes.GetNDimensions());
     std::vector<double> lowEdges(fSubMapAxes.GetNDimensions());
     std::vector<double> highEdges(fSubMapAxes.GetNDimensions());
 
-    // subMap.resize(fSubMapAxes.GetNBins(), fSubMapAxes.GetNBins());
-    std::vector<double> vals;
+    column_indices.reserve(fSubMapAxes.GetNBins()*fSubMapAxes.GetNBins()); // likely to need only a fraction of this memory!
+    row_indices.reserve(fSubMapAxes.GetNBins()*fSubMapAxes.GetNBins());
     vals.reserve(fSubMapAxes.GetNBins()*fSubMapAxes.GetNBins());
 
     for (long long unsigned int origBin = 0; origBin < fSubMapAxes.GetNBins(); origBin++)
@@ -45,12 +46,40 @@ void Convolution::ConstructSubmatrix(DenseMatrix& subMap) const
         {
             fSubMapAxes.GetBinLowEdges(destBin, lowEdges);
             fSubMapAxes.GetBinHighEdges(destBin, highEdges);
-            vals.push_back(fDist->Integral(lowEdges, highEdges, binCentres));
+            const double integral = fDist->Integral(lowEdges, highEdges, binCentres);
+            if (integral > 1.0e-20) { // only bother adding to matrix if non-zero!
+                column_indices.push_back(origBin);
+                row_indices.push_back(destBin);
+                vals.push_back(integral);
+            }
             // subMap.SetComponent(destBin, origBin, fDist->Integral(lowEdges, highEdges, binCentres));
         }
     }
-    subMap.SetMatrix(arma::mat(vals.data(), fSubMapAxes.GetNBins(), fSubMapAxes.GetNBins()));
 }
+
+
+void Convolution::MakeBlockMatrix(const std::vector<long long unsigned int>& column_indices, const std::vector<long long unsigned int>& row_indices,
+                                  const std::vector<double>& vals, SparseMatrix& response_blocked) {
+    const size_t N = fAxes.GetNBins();
+    const size_t n_sub = fSubMapAxes.GetNBins();
+    const size_t n_blocks = N/n_sub;
+    const size_t size_block = vals.size();
+    std::vector<long long unsigned int> column_indices_bl;
+    std::vector<long long unsigned int> row_indices_bl;
+    std::vector<double> vals_bl;
+    column_indices_bl.reserve(size_block*n_blocks);
+    row_indices_bl.reserve(size_block*n_blocks);
+    vals_bl.reserve(size_block*n_blocks);
+    for (size_t block_idx=0; block_idx<n_blocks; block_idx++) {
+        vals_bl.insert(vals_bl.end(), std::begin(vals), std::end(vals));
+        for (size_t idx=0; idx<size_block; idx++) {
+            column_indices_bl.push_back(column_indices.at(idx)+block_idx*n_sub);
+            row_indices_bl.push_back(row_indices.at(idx)+block_idx*n_sub);
+        }
+    }
+    response_blocked.SetComponents(row_indices_bl, column_indices_bl, vals_bl);
+}
+
 
 void Convolution::Construct()
 {
@@ -62,21 +91,29 @@ void Convolution::Construct()
         CachePermutationMatrix();
 
     // Work out the transition probabilitites within this sub set of the bins
-    const size_t n_sub = fSubMapAxes.GetNBins();
-    DenseMatrix subMap(n_sub, n_sub);
-    ConstructSubmatrix(subMap);
+    std::vector<long long unsigned int> column_indices;
+    std::vector<long long unsigned int> row_indices;
+    std::vector<double> vals;
+    ConstructSubmatrix(column_indices, row_indices, vals);
     // Expand to full size matrix by first generating a block diagonal matrix
-    arma::sp_mat response_blocked(N, N);
-    const size_t n_blocks = N/n_sub;
-
-    for (size_t block_idx=0; block_idx<n_blocks; block_idx++) {
-        response_blocked.submat(block_idx*n_sub,block_idx*n_sub, (block_idx+1)*n_sub-1,(block_idx+1)*n_sub-1) = subMap.GetMatrix();
-    }
     SparseMatrix response_blocked_sm(N, N);
-    response_blocked_sm.SetMatrix(response_blocked);
+    MakeBlockMatrix(column_indices, row_indices, vals, response_blocked_sm);
+
+    // arma::sp_mat response_blocked(N, N);
+    // const size_t n_blocks = N/n_sub;
+
+    // for (size_t block_idx=0; block_idx<n_blocks; block_idx++) {
+    //     response_blocked.submat(block_idx*n_sub,block_idx*n_sub, (block_idx+1)*n_sub-1,(block_idx+1)*n_sub-1) = subMap.GetMatrix();
+    // }
+    // SparseMatrix response_blocked_sm(N, N);
+    // response_blocked_sm.SetMatrix(response_blocked);
     // Pre- and post-multiply by permutation matrices to go from and to default PDF indexing -> transformation axis-first indexing,
     // So that block diagonal matrix can be used nicely
-    fResponse = fBinningPermT * response_blocked_sm * fBinningPerm;
+    if (fPermMatrixIdentity) {
+        fResponse = response_blocked_sm;
+    } else {
+        fResponse = fBinningPermT * response_blocked_sm * fBinningPerm;
+    }
 
     // // Now expand to the full size matrix. Elements are zero by default
     // // compatible bins are cached, values must match the smaller matrix above
@@ -157,13 +194,18 @@ void Convolution::CachePermutationMatrix()
     std::vector<long long unsigned int> axesBinningIndices;
     std::vector<long long unsigned int> blockedBinningIndices;
     std::vector<double> values(fAxes.GetNBins(), 1.0);
+    fPermMatrixIdentity = true;
     for (size_t i = 0; i < fAxes.GetNBins(); i++) {
         axesBinningIndices.push_back(i);
-        blockedBinningIndices.push_back(BlockedBinningIndex(i, relativeIndices));
+        const size_t idx_blocked = BlockedBinningIndex(i, relativeIndices);
+        if (idx_blocked != i) { fPermMatrixIdentity = false; }
+        blockedBinningIndices.push_back(idx_blocked);
     }
     // std::cout << blockedBinningIndices.size() << " " << axesBinningIndices.size() << " " << values.size() << std::endl;
-    fBinningPerm.SetComponents(blockedBinningIndices, axesBinningIndices, values);
-    fBinningPermT.SetComponents(axesBinningIndices, blockedBinningIndices, values);
+    if (!fPermMatrixIdentity) {
+        fBinningPerm.SetComponents(blockedBinningIndices, axesBinningIndices, values);
+        fBinningPermT.SetComponents(axesBinningIndices, blockedBinningIndices, values);
+    }
 
     fCachedPermutationMatrix = true;
 }
