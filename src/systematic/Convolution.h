@@ -12,17 +12,20 @@
 
 class ConditionalPDF;
 class PDF;
-class DenseMatrix;
+
 class Convolution : public Systematic
 {
 public:
-   Convolution(const std::string &name_) : fDist(NULL), fCachedPermutationMatrix(false), fName(name_) {}
+   // Constructor/Destructor
+   Convolution(const std::string &name_) : fDist(NULL), fName(name_), fCachedIndexPermutations(false) {}
    ~Convolution();
-   void SetFunction(PDF *function_);
-   void SetConditionalPDF(ConditionalPDF *function_);
+   // Two ways of setting the kernel for convolution:
+   void SetFunction(PDF *function_); // Just give me a PDF object directly...
+   void SetConditionalPDF(ConditionalPDF *function_); // ...Or create a ConditionalPDF object first yourself
+   // Construct the response matrix for this convolution object! (Systematic Interface)
    void Construct();
 
-   // Make this fittable, by delegating to the underlying pdf
+   // FitComponent interface
    void SetParameter(const std::string &name_, double value);
    double GetParameter(const std::string &name_) const;
 
@@ -37,27 +40,20 @@ public:
    void SetName(const std::string &);
 
 private:
-   ConditionalPDF *fDist;
-   bool fCachedPermutationMatrix;
-   AxisCollection fSubMapAxes;
-   AxisCollection fNotSubMapAxes;
-   // std::vector<std::vector<size_t>> fCompatibleBins;
-   // the systematic subMap bin for each global bin of pdf
-   // std::vector<size_t> fSysBins;
-   std::string fName;
-   std::vector<long long unsigned int> fColumnPerms;
-   std::vector<long long unsigned int> fRowPerms;
-   // bool fPermMatrixIdentity;
-   // SparseMatrix fBinningPerm;
-   // SparseMatrix fBinningPermT;
+   ConditionalPDF *fDist; // kernel used in convolution
+   std::string fName; // name of this object
+   // Members needed for efficient calculations:
+   bool fCachedIndexPermutations; // have we run the CacheIndexPermutations() method yet?
+   AxisCollection fSubMapAxes; // axes in fAxes associated with fTransObs
+   AxisCollection fNotSubMapAxes; // axes in fAxes NOT associated with fTransObs
+   std::vector<long long unsigned int> fColumnPerms; // Mapping from blocked matrix bin index -> true bin index
 
-   AxisCollection DetermineAxisSubCollection(const std::vector<size_t>& rel_indices);
-   size_t BlockedBinningIndex(size_t bin_index, const std::vector<size_t>& relativeIndices);
-   void CachePermutationMatrix();
-   // void CacheCompatibleBins();
+   AxisCollection DetermineAxisSubCollection(const std::vector<size_t>& rel_indices) const;
+   size_t BlockedBinningIndex(size_t bin_index, const std::vector<size_t>& relativeIndices) const;
+   void CacheIndexPermutations();
    void ConstructSubmatrix(std::vector<long long unsigned int>& column_indices, std::vector<long long unsigned int>& row_indices,
                            std::vector<double>& vals) const;
-   void MakeBlockMatrix(const std::vector<long long unsigned int>& column_indices, const std::vector<long long unsigned int>& row_indices,
-                           const std::vector<double>& vals, SparseMatrix& response_blocked);
+   void MakeFullMatrix(const std::vector<long long unsigned int>& column_indices, const std::vector<long long unsigned int>& row_indices,
+                           const std::vector<double>& vals, SparseMatrix& response_blocked) const;
 };
 #endif

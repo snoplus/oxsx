@@ -31,11 +31,18 @@ TEST_CASE("1D gaussian", "[Gaussian]")
 {
     Gaussian gaus(0, 1);
 
-    SECTION("Check paramter storage")
+    SECTION("Check parameter storage")
     {
 
         REQUIRE(gaus.GetMean(0) == 0);
         REQUIRE(gaus.GetStDev(0) == 1);
+    }
+
+    SECTION("Check parameter storage via FitComponent interface")
+    {
+
+        REQUIRE(gaus.GetParameter("means_0") == 0);
+        REQUIRE(gaus.GetParameter("stddevs_0") == 1);
     }
 
     SECTION("Check probability")
