@@ -73,8 +73,8 @@ void Convolution::MakeBlockMatrix(const std::vector<long long unsigned int>& col
     for (size_t block_idx=0; block_idx<n_blocks; block_idx++) {
         vals_bl.insert(vals_bl.end(), std::begin(vals), std::end(vals));
         for (size_t idx=0; idx<size_block; idx++) {
-            column_indices_bl.push_back(column_indices.at(idx)+block_idx*n_sub);
-            row_indices_bl.push_back(row_indices.at(idx)+block_idx*n_sub);
+            column_indices_bl.push_back(fColumnPerms.at(column_indices.at(idx)+block_idx*n_sub));
+            row_indices_bl.push_back(fRowPerms.at(row_indices.at(idx)+block_idx*n_sub));
         }
     }
     response_blocked.SetComponents(row_indices_bl, column_indices_bl, vals_bl);
@@ -109,11 +109,12 @@ void Convolution::Construct()
     // response_blocked_sm.SetMatrix(response_blocked);
     // Pre- and post-multiply by permutation matrices to go from and to default PDF indexing -> transformation axis-first indexing,
     // So that block diagonal matrix can be used nicely
-    if (fPermMatrixIdentity) {
-        fResponse = response_blocked_sm;
-    } else {
-        fResponse = fBinningPermT * response_blocked_sm * fBinningPerm;
-    }
+    fResponse = response_blocked_sm;
+    // if (fPermMatrixIdentity) {
+    //     fResponse = response_blocked_sm;
+    // } else {
+    //     fResponse = fBinningPermT * response_blocked_sm * fBinningPerm;
+    // }
 
     // // Now expand to the full size matrix. Elements are zero by default
     // // compatible bins are cached, values must match the smaller matrix above
@@ -191,23 +192,33 @@ void Convolution::CachePermutationMatrix()
     }
     fNotSubMapAxes = DetermineAxisSubCollection(relativeIndicesNot);
     //
-    std::vector<long long unsigned int> axesBinningIndices;
-    std::vector<long long unsigned int> blockedBinningIndices;
-    std::vector<double> values(fAxes.GetNBins(), 1.0);
-    fPermMatrixIdentity = true;
-    for (size_t i = 0; i < fAxes.GetNBins(); i++) {
-        axesBinningIndices.push_back(i);
+    const size_t N = fAxes.GetNBins();
+    fColumnPerms.resize(N);
+    fRowPerms.reserve(N);
+    for (size_t i = 0; i < N; i++) {
         const size_t idx_blocked = BlockedBinningIndex(i, relativeIndices);
-        if (idx_blocked != i) { fPermMatrixIdentity = false; }
-        blockedBinningIndices.push_back(idx_blocked);
-    }
-    // std::cout << blockedBinningIndices.size() << " " << axesBinningIndices.size() << " " << values.size() << std::endl;
-    if (!fPermMatrixIdentity) {
-        fBinningPerm.SetComponents(blockedBinningIndices, axesBinningIndices, values);
-        fBinningPermT.SetComponents(axesBinningIndices, blockedBinningIndices, values);
+        fColumnPerms.at(idx_blocked) = i;
+        fRowPerms.push_back(idx_blocked);
     }
 
-    fCachedPermutationMatrix = true;
+    //
+    // std::vector<long long unsigned int> axesBinningIndices;
+    // std::vector<long long unsigned int> blockedBinningIndices;
+    // std::vector<double> values(fAxes.GetNBins(), 1.0);
+    // fPermMatrixIdentity = true;
+    // for (size_t i = 0; i < fAxes.GetNBins(); i++) {
+    //     axesBinningIndices.push_back(i);
+    //     const size_t idx_blocked = BlockedBinningIndex(i, relativeIndices);
+    //     if (idx_blocked != i) { fPermMatrixIdentity = false; }
+    //     blockedBinningIndices.push_back(idx_blocked);
+    // }
+    // // std::cout << blockedBinningIndices.size() << " " << axesBinningIndices.size() << " " << values.size() << std::endl;
+    // if (!fPermMatrixIdentity) {
+    //     fBinningPerm.SetComponents(blockedBinningIndices, axesBinningIndices, values);
+    //     fBinningPermT.SetComponents(axesBinningIndices, blockedBinningIndices, values);
+    // }
+    // // std::cout << "fPermMatrixIdentity: " << fPermMatrixIdentity << std::endl;
+    // fCachedPermutationMatrix = true;
 }
 
 // void Convolution::CacheCompatibleBins()
