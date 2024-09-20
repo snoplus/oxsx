@@ -23,9 +23,6 @@ public:
    void SetComponent(size_t row_, size_t column_, double val_);
    double GetComponent(size_t row_, size_t column_) const;
 
-   size_t GetNRows() const { return fNRows; }
-   size_t GetNCols() const { return fNCols; }
-
    DenseMatrix operator*=(const DenseMatrix &other_);
 
    void SetZeros();
@@ -35,9 +32,6 @@ public:
 
    void Print(const std::string &);
    void PrintSparse(const std::string &);
-
-   void SetMatrix(const arma::mat& input_matrix);
-   arma::mat GetMatrix() const { return fArmaMat; }
 
 private:
    // N x M matrix

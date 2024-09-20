@@ -111,11 +111,3 @@ void SparseMatrix::SetComponents(const std::vector<long long unsigned int> &rowI
 
     fArmaMat = arma::sp_mat(locs, arma::vec(values_));
 }
-
-void SparseMatrix::SetMatrix(const arma::sp_mat& input_matrix)
-{
-    if (input_matrix.n_rows != fNRows || input_matrix.n_cols != fNCols)
-        throw DimensionError("SparseMatrix::SetMatrix() Input matrix dimensions do not match requirements for the SparseMatrix object!");
-
-    fArmaMat = input_matrix;
-}

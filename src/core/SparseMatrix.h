@@ -26,8 +26,6 @@ public:
                       const std::vector<long long unsigned int> &colIndices_,
                       const std::vector<double> &values_);
 
-   void SetMatrix(const arma::sp_mat& input_matrix);
-   arma::sp_mat GetMatrix() const { return fArmaMat; }
 
    SparseMatrix operator*=(const SparseMatrix &other_);
    SparseMatrix operator*(const SparseMatrix &other_);
