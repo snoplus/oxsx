@@ -4,7 +4,7 @@ import buildhelp
 import platform
 import os
 
-env = Environment(CXXFLAGS = "-O2 -std=c++17 -pedantic -Wall -Wextra -pg")
+env = Environment(CXXFLAGS = "-O2 -std=c++17 -pedantic -Wall -Wextra")
 if env.GetOption('clean'):
     Return('env')
 
