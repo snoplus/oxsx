@@ -9,6 +9,7 @@
 #include <string>
 #include <QuadraticConstraint.h>
 #include <BivariateQuadraticConstraint.h>
+#include <RatioConstraint.h>
 #include <ParameterDict.h>
 
 class ConstraintManager
@@ -23,6 +24,8 @@ public:
     // Add correlated constraint between two parameters
     void SetConstraint(const std::string &paramName_1, double mean_1, double sigma_1,
                        const std::string &paramName_2, double mean_2, double sigma_2, double correlation);
+    void SetConstraint(const std::string &paramName_1, const std::string &paramName_2,
+		       double ratiomean_, double ratiosigma_);
     // Evaluate sum of all constraints
     double Evaluate(const ParameterDict &params) const;
     //
@@ -35,6 +38,8 @@ private:
     std::map<std::pair<std::string, std::string>, BivariateQuadraticConstraint> fConstraintsPair;
     // Stores whether a given fit parameter has an individual (true) or pair (false) constraint
     std::map<std::string, bool> fUseIndConstraints;
+    // Stores ratio constraints between pairs of fit parameters
+    std::map<std::pair<std::string, std::string>, RatioConstraint> fConstraintsRatio;
     //
     bool fDebugMode;
 };
