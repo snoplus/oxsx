@@ -101,9 +101,9 @@ GaussianFitter::GetParameter(const std::string &name_) const
         it = find(fStdDevsNames.begin(), fStdDevsNames.end(), name_);
         if (it == fStdDevsNames.end())
             throw NotFoundError(Formatter() << "GaussianFitter:: Parameter : " << name_ << " was not known to the GaussianFitter. Available names: " << ToString(GetParameterNames()));
-        return fOrignalFunc->GetStDev(it - fStdDevsNames.end());
+        return fOrignalFunc->GetStDev(std::distance(it, fStdDevsNames.begin()));
     }
-    return fOrignalFunc->GetMean(it - fStdDevsNames.end());
+    return fOrignalFunc->GetMean(std::distance(it, fMeansNames.begin()));
 }
 
 void GaussianFitter::SetParameters(const ParameterDict &ps_)
