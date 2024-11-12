@@ -101,6 +101,30 @@ TEST_CASE("Binned NLLH, 3 rates no systematics")
     REQUIRE_THAT(lh.Evaluate(), Catch::Matchers::WithinAbs(sumNorm + sumLogProb + constraint, 0.0001));
   }
 
+  SECTION("Consistent Probability with buffer")
+  {
+
+    BinnedNLLH lh_buffer;
+    lh_buffer.AddPdf(pdf1);
+
+    // Add a generous buffer region
+    lh_buffer.SetBuffer("axis1",30,30);
+    lh_buffer.SetDataSet(&data);
+    lh_buffer.RegisterFitComponents();
+
+    ParameterDict params;
+    params["a"] = 1;
+    lh_buffer.SetParameters(params);
+    double llh1 = lh_buffer.Evaluate();
+
+    // Now let's re-evaluate, to check there's no issue with the shrinking being reapplied
+    double llh2 = lh_buffer.Evaluate();
+    REQUIRE_THAT(llh1, Catch::Matchers::WithinAbs(llh2, 0.0001));
+
+    std::pair<unsigned, unsigned> buffers = lh_buffer.GetBuffer("axis1");
+    REQUIRE(buffers == std::pair<unsigned, unsigned>(30,30));
+  }
+
   std::vector<int> genRates(3, pow(10, 6));
   BinnedNLLH lh2;
   lh2.SetBarlowBeeston(true);
