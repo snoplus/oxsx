@@ -55,10 +55,11 @@ SystematicManager::GetTotalResponse(const std::string &groupName_) const
 
 void SystematicManager::Add(Systematic *sys_, const std::string &groupName_)
 {
-  if (groupName_ == ""){
-    std::cout << "Warning::Adding systematic with empty group name. Will apply to all events." << std::endl;
-    Add(sys_);
-  }
+    if (groupName_ == "")
+    {
+        std::cout << "Warning::Adding systematic with empty group name. Will apply to all events." << std::endl;
+        Add(sys_);
+    }
     fGroups[groupName_].push_back(sys_);
     fNGroups = fGroups.size();
 }

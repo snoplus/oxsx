@@ -28,11 +28,11 @@ MetropolisSampler::Draw(const ParameterDict &current_)
     ParameterDict newStep;
     for (ParameterDict::const_iterator it = current_.begin(); it != current_.end(); ++it)
     {
-      // If the parameter is fixed, don't change it
-      if( fFixedParameters.count(it->first) )
-	newStep[it->first] = it->second;
-      else
-        newStep[it->first] = it->second + Rand::Gaus(0, fSigmas.at(it->first));
+        // If the parameter is fixed, don't change it
+        if (fFixedParameters.count(it->first))
+            newStep[it->first] = it->second;
+        else
+            newStep[it->first] = it->second + Rand::Gaus(0, fSigmas.at(it->first));
     }
     return newStep;
 }
