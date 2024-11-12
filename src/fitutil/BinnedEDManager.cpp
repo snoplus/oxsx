@@ -144,21 +144,31 @@ BinnedEDManager::ApplyShrink(const BinnedEDShrinker& shrinker_){
     for (size_t i = 0; i < fWorkingPdfs.size(); i++){
         // Normalise if normalisation is a fittable param, but if indirect then track any change
         if (fAllowNormsFittable.at(i) == DIRECT) {
-            fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
-            fWorkingPdfs[i].Normalise();
+            if( fWorkingPdfs.at(0).GetNBins() == fOriginalPdfs.at(0).GetNBins() ){
+                fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
+                fWorkingPdfs[i].Normalise();
+            }
+            else{
+                return;
+            }
         } else if (fAllowNormsFittable.at(i) == FALSE) {
-            fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
-            const double integral_after = fWorkingPdfs[i].Integral();
-            fNormalisations[i] = integral_after;
-        } else {
-            const double integral_before = fWorkingPdfs[i].Integral();
-            fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
-            const double integral_after = fWorkingPdfs[i].Integral();
-            if (integral_before == 0. && integral_after == 0.) { fNormalisations[i] = 0.; }
-            else { fNormalisations[i] *= integral_after/integral_before; }
-        }
+            if ( fWorkingPdfs.at(0).GetNBins() == fOriginalPdfs.at(0).GetNBins() ){
+                fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
+                const double integral_after = fWorkingPdfs[i].Integral();
+                fNormalisations[i] = integral_after;
+            }
+            else{
+                return;
+            }
+      } else {
+    const double integral_before = fWorkingPdfs[i].Integral();
+    fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
+    const double integral_after = fWorkingPdfs[i].Integral();
+    if (integral_before == 0. && integral_after == 0.) { fNormalisations[i] = 0.; }
+    else { fNormalisations[i] *= integral_after/integral_before; }
+      }
     }
-    
+
 }
 
 ////////////////////////////////
