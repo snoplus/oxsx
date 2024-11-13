@@ -142,7 +142,7 @@ double ConstraintManager::Evaluate(const ParameterDict &params) const
     {
         const std::pair<std::string, std::string> param_pair = c_pair.first;
         const double c = c_pair.second.Evaluate(params.at(param_pair.first), params.at(param_pair.second));
-	total += c;
+        total += c;
         if (fDebugMode)
         {
             std::cout << "Ratio constraint (" << param_pair.first << ", " << param_pair.second << "): Evaluate() = " << c << std::endl;

@@ -5,32 +5,41 @@
 #include <Exceptions.h>
 #include <sstream>
 
-unsigned 
-BinnedEDManager::GetNPdfs() const{
+unsigned
+BinnedEDManager::GetNPdfs() const
+{
     return fOriginalPdfs.size();
 }
 
 size_t
-BinnedEDManager::GetNDims() const{
+BinnedEDManager::GetNDims() const
+{
     return fNDims;
 }
 
-double 
-BinnedEDManager::Probability(const Event& data_) {
+double
+BinnedEDManager::Probability(const Event &data_)
+{
     ReassertNorms(true);
     double sum = 0;
     size_t j = 0;
-    for(size_t i = 0; i < fWorkingPdfs.size(); i++){
-        if (fAllowNormsFittable.at(i) == DIRECT) {
+    for (size_t i = 0; i < fWorkingPdfs.size(); i++)
+    {
+        if (fAllowNormsFittable.at(i) == DIRECT)
+        {
             sum += fNormalisations.at(i) * fWorkingPdfs[i].Probability(data_);
             j++;
-        } else if (fAllowNormsFittable.at(i) == INDIRECT) {
+        }
+        else if (fAllowNormsFittable.at(i) == INDIRECT)
+        {
             sum += fFittableNorms.at(j) * fWorkingPdfs.at(i).Probability(data_);
             j++;
-        } else {
-        // In case where we don't auto-normalise the pdf,
-        // the normalisation is held within the pdf itself!
-        sum += fWorkingPdfs.at(i).Probability(data_);
+        }
+        else
+        {
+            // In case where we don't auto-normalise the pdf,
+            // the normalisation is held within the pdf itself!
+            sum += fWorkingPdfs.at(i).Probability(data_);
         }
     }
 
@@ -38,127 +47,166 @@ BinnedEDManager::Probability(const Event& data_) {
 }
 
 double
-BinnedEDManager::BinProbability(size_t bin_) {
+BinnedEDManager::BinProbability(size_t bin_)
+{
     ReassertNorms(true);
     double sum = 0;
     size_t j = 0;
-    try{
-        for(size_t i = 0; i < fWorkingPdfs.size(); i++){
-            if (fAllowNormsFittable.at(i) == DIRECT) {
+    try
+    {
+        for (size_t i = 0; i < fWorkingPdfs.size(); i++)
+        {
+            if (fAllowNormsFittable.at(i) == DIRECT)
+            {
                 sum += fNormalisations.at(i) * fWorkingPdfs.at(i).GetBinContent(bin_);
                 j++;
-            } else if (fAllowNormsFittable.at(i) == INDIRECT) {
+            }
+            else if (fAllowNormsFittable.at(i) == INDIRECT)
+            {
                 sum += fFittableNorms.at(j) * fWorkingPdfs.at(i).GetBinContent(bin_);
                 j++;
-            } else {
+            }
+            else
+            {
                 // In case where we don't auto-normalise the pdf,
                 // the normalisation is held within the pdf itself!
                 sum += fWorkingPdfs.at(i).GetBinContent(bin_);
             }
         }
     }
-    catch(const std::out_of_range&){
+    catch (const std::out_of_range &)
+    {
         throw LogicError("BinnedEDManager:: Normalisation vector doesn't match pdf vector - are the normalisations set?");
     }
     return sum;
 }
 
-
-void
-BinnedEDManager::SetNormalisations(const std::vector<double>& normalisations_){
+void BinnedEDManager::SetNormalisations(const std::vector<double> &normalisations_)
+{
     if (normalisations_.size() != fOriginalPdfs.size())
         throw LogicError("BinnedEDManager: number of norms doesn't match #pdfs");
     fNormalisations = normalisations_;
 }
 
-void
-BinnedEDManager::ApplySystematics(const SystematicManager& sysMan_){
+void BinnedEDManager::ApplySystematics(const SystematicManager &sysMan_)
+{
     // If there are no systematics dont do anything
     //  ( working pdfs = original pdfs from initialisation)
 
-    if(!sysMan_.GetNSystematics())
+    if (!sysMan_.GetNSystematics())
         return;
-    if (fAllNormsDirFittable) {
-        sysMan_.DistortEDs(fOriginalPdfs,fWorkingPdfs);
-    } else {
+    if (fAllNormsDirFittable)
+    {
+        sysMan_.DistortEDs(fOriginalPdfs, fWorkingPdfs);
+    }
+    else
+    {
         std::vector<double> norms(fNormalisations.size(), 0);
-        sysMan_.DistortEDs(fOriginalPdfs,fWorkingPdfs, &norms);
-        for (size_t i = 0; i < norms.size(); i++) {
-            if (fAllowNormsFittable.at(i) == FALSE) {
+        sysMan_.DistortEDs(fOriginalPdfs, fWorkingPdfs, &norms);
+        for (size_t i = 0; i < norms.size(); i++)
+        {
+            if (fAllowNormsFittable.at(i) == FALSE)
+            {
                 fNormalisations[i] = norms.at(i);
-            } else if (fAllowNormsFittable.at(i) == INDIRECT) {
+            }
+            else if (fAllowNormsFittable.at(i) == INDIRECT)
+            {
                 fNormalisations[i] *= norms.at(i);
             }
         }
     }
 }
 
-const BinnedED&
-BinnedEDManager::GetOriginalPdf(size_t index_) const{
+const BinnedED &
+BinnedEDManager::GetOriginalPdf(size_t index_) const
+{
     return fOriginalPdfs.at(index_);
 }
 
-void
-BinnedEDManager::AddPdf(const BinnedED& pdf_, const NormFittingStatus norm_fitting_status){
+void BinnedEDManager::AddPdf(const BinnedED &pdf_, const NormFittingStatus norm_fitting_status)
+{
     fOriginalPdfs.push_back(pdf_);
     fWorkingPdfs.push_back(pdf_);
     fNPdfs++;
     fNormalisations.resize(fOriginalPdfs.size(), 0);
     fAllowNormsFittable.push_back(norm_fitting_status);
-    if (norm_fitting_status) { fFittableNorms.push_back(0); }
-    if (norm_fitting_status != DIRECT) { fAllNormsDirFittable = false; }
+    if (norm_fitting_status)
+    {
+        fFittableNorms.push_back(0);
+    }
+    if (norm_fitting_status != DIRECT)
+    {
+        fAllNormsDirFittable = false;
+    }
     RegisterParameters();
 }
 
-void 
-BinnedEDManager::AddPdfs(const std::vector<BinnedED>& pdfs_,
-                         const std::vector<NormFittingStatus>* norm_fitting_statuses){
-    if(norm_fitting_statuses != nullptr && pdfs_.size() != norm_fitting_statuses->size()) {
+void BinnedEDManager::AddPdfs(const std::vector<BinnedED> &pdfs_,
+                              const std::vector<NormFittingStatus> *norm_fitting_statuses)
+{
+    if (norm_fitting_statuses != nullptr && pdfs_.size() != norm_fitting_statuses->size())
+    {
         throw DimensionError("BinnedEDManager: number of norm_fittable bools doesn't the number of pdfs");
     }
 
-    for(size_t i = 0; i < pdfs_.size(); i++){
-        if (norm_fitting_statuses != nullptr) {
+    for (size_t i = 0; i < pdfs_.size(); i++)
+    {
+        if (norm_fitting_statuses != nullptr)
+        {
             AddPdf(pdfs_.at(i), norm_fitting_statuses->at(i));
-        } else {
+        }
+        else
+        {
             AddPdf(pdfs_.at(i));
         }
     }
     RegisterParameters();
 }
 
-const std::vector<double>&
-BinnedEDManager::GetNormalisations() const{
+const std::vector<double> &
+BinnedEDManager::GetNormalisations() const
+{
     return fNormalisations;
 }
 
-void
-BinnedEDManager::ApplyShrink(const BinnedEDShrinker& shrinker_){
+void BinnedEDManager::ApplyShrink(const BinnedEDShrinker &shrinker_)
+{
     if (!shrinker_.GetBuffers().size())
         return;
-        
+
     // only shrink if not already shrunk! FIXME: more obvious behaviour
     if (!fWorkingPdfs.size())
         return;
 
-    for (size_t i = 0; i < fWorkingPdfs.size(); i++){
+    for (size_t i = 0; i < fWorkingPdfs.size(); i++)
+    {
         // Normalise if normalisation is a fittable param, but if indirect then track any change
-        if (fAllowNormsFittable.at(i) == DIRECT) {
+        if (fAllowNormsFittable.at(i) == DIRECT)
+        {
             fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
             fWorkingPdfs[i].Normalise();
-        } else if (fAllowNormsFittable.at(i) == FALSE) {
+        }
+        else if (fAllowNormsFittable.at(i) == FALSE)
+        {
             fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
             const double integral_after = fWorkingPdfs[i].Integral();
             fNormalisations[i] = integral_after;
-        } else {
+        }
+        else
+        {
             const double integral_before = fWorkingPdfs[i].Integral();
             fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
             const double integral_after = fWorkingPdfs[i].Integral();
-            if (integral_before == 0. && integral_after == 0.) { fNormalisations[i] = 0.; }
-            else { fNormalisations[i] *= integral_after/integral_before; }
+            if (integral_before == 0. && integral_after == 0.)
+            {
+                fNormalisations[i] = 0.;
+            }
+            else
+            {
+                fNormalisations[i] *= integral_after / integral_before;
+            }
         }
     }
-    
 }
 
 ////////////////////////////////
@@ -166,80 +214,95 @@ BinnedEDManager::ApplyShrink(const BinnedEDShrinker& shrinker_){
 ////////////////////////////////
 
 std::string
-BinnedEDManager::GetName() const{
+BinnedEDManager::GetName() const
+{
     return fName;
 }
 
-void
-BinnedEDManager::SetName(const std::string& n_){
+void BinnedEDManager::SetName(const std::string &n_)
+{
     fName = n_;
 }
 
-void
-BinnedEDManager::RenameParameter(const std::string& old_, const std::string& new_){
+void BinnedEDManager::RenameParameter(const std::string &old_, const std::string &new_)
+{
     fParameterManager.RenameParameter(old_, new_);
 }
 
-void
-BinnedEDManager::SetParameter(const std::string& name_, double value_){
+void BinnedEDManager::SetParameter(const std::string &name_, double value_)
+{
     fParameterManager.SetParameter(name_, value_);
 }
 
 double
-BinnedEDManager::GetParameter(const std::string& name_) const{
+BinnedEDManager::GetParameter(const std::string &name_) const
+{
     return fParameterManager.GetParameter(name_);
 }
 
-void
-BinnedEDManager::SetParameters(const ParameterDict& ps_){
+void BinnedEDManager::SetParameters(const ParameterDict &ps_)
+{
     fParameterManager.SetParameters(ps_);
 }
 
 ParameterDict
-BinnedEDManager::GetParameters() const{
+BinnedEDManager::GetParameters() const
+{
     return fParameterManager.GetParameters();
 }
 
 size_t
-BinnedEDManager::GetParameterCount() const{
+BinnedEDManager::GetParameterCount() const
+{
     return fParameterManager.GetParameterCount();
 }
 
 std::set<std::string>
-BinnedEDManager::GetParameterNames() const{
+BinnedEDManager::GetParameterNames() const
+{
     return fParameterManager.GetParameterNames();
 }
 
-void
-BinnedEDManager::RegisterParameters(){
+void BinnedEDManager::RegisterParameters()
+{
     fParameterManager.Clear();
     std::vector<std::string> parameterNames;
-    if (fAllNormsDirFittable) {
-        for(size_t i = 0; i < fOriginalPdfs.size(); i++) {
+    if (fAllNormsDirFittable)
+    {
+        for (size_t i = 0; i < fOriginalPdfs.size(); i++)
+        {
             parameterNames.push_back(fOriginalPdfs.at(i).GetName());
         }
         fParameterManager.AddContainer(fNormalisations, parameterNames);
-    } else {
-        for(size_t i = 0; i < fOriginalPdfs.size(); i++) {
-            if (fAllowNormsFittable.at(i)) {
+    }
+    else
+    {
+        for (size_t i = 0; i < fOriginalPdfs.size(); i++)
+        {
+            if (fAllowNormsFittable.at(i))
+            {
                 parameterNames.push_back(fOriginalPdfs.at(i).GetName());
             }
         }
-    fParameterManager.AddContainer(fFittableNorms, parameterNames);
+        fParameterManager.AddContainer(fFittableNorms, parameterNames);
     }
-}    
+}
 
-void BinnedEDManager::ReassertNorms(bool calcing_binprob) {
+void BinnedEDManager::ReassertNorms(bool calcing_binprob)
+{
     /*
-    * Normalisations that are fittable might have been changed 
-    * in fFittableNorms, but not in fNormalisations!
-    * This method corrects any changes that may have occured,
-    * so that both vectors are consistent.
-    */
-    if (!fAllNormsDirFittable) {
+     * Normalisations that are fittable might have been changed
+     * in fFittableNorms, but not in fNormalisations!
+     * This method corrects any changes that may have occured,
+     * so that both vectors are consistent.
+     */
+    if (!fAllNormsDirFittable)
+    {
         size_t j = 0;
-        for (size_t i = 0; i < fNormalisations.size(); i++) {
-            if (fAllowNormsFittable.at(i) == ((calcing_binprob) ? DIRECT : INDIRECT)) {
+        for (size_t i = 0; i < fNormalisations.size(); i++)
+        {
+            if (fAllowNormsFittable.at(i) == ((calcing_binprob) ? DIRECT : INDIRECT))
+            {
                 fNormalisations[i] = fFittableNorms.at(j);
                 j++;
             }
@@ -247,15 +310,18 @@ void BinnedEDManager::ReassertNorms(bool calcing_binprob) {
     }
 }
 
-void BinnedEDManager::AssertDimensions(const std::vector<std::string>& observables) {
+void BinnedEDManager::AssertDimensions(const std::vector<std::string> &observables)
+{
     /*
      * Check whether each PDF in the manager actually has dimensions
      * matching that of the input vector.
      * Whenever this is not the case, the given PDF is marginalised onto
      * the input vector's axes.
      */
-    for (auto &working_pdf : fWorkingPdfs) {
-        if (working_pdf.GetObservables() != observables) {
+    for (auto &working_pdf : fWorkingPdfs)
+    {
+        if (working_pdf.GetObservables() != observables)
+        {
             working_pdf = working_pdf.Marginalise(observables);
         }
     }
