@@ -25,7 +25,7 @@ public:
     void SetConstraint(const std::string &paramName_1, double mean_1, double sigma_1,
                        const std::string &paramName_2, double mean_2, double sigma_2, double correlation);
     void SetConstraint(const std::string &paramName_1, const std::string &paramName_2,
-		       double ratiomean_, double ratiosigma_);
+                       double ratiomean_, double ratiosigma_);
     // Evaluate sum of all constraints
     double Evaluate(const ParameterDict &params) const;
     //

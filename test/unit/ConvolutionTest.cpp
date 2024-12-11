@@ -19,7 +19,7 @@ TEST_CASE("Simple Gaussian Convolution systematic on 1d PDF")
 
   // Now build the Convolution systematic and related objects
   double sigma = 0.5;
-  Gaussian* gaussian = new Gaussian(0, sigma, "gaus");
+  Gaussian *gaussian = new Gaussian(0, sigma, "gaus");
   gaussian->RenameParameter("means_0", "mean");
   gaussian->RenameParameter("stddevs_0", "sigma");
 
@@ -58,15 +58,14 @@ TEST_CASE("Simple Gaussian Convolution systematic on 1d PDF")
 
     std::vector<double> modifiedObs = pdfs.at(0).GetBinContents();
     std::vector<double> correctVals = {
-      10.*(gsl_cdf_gaussian_P(1-mu, sigma)-gsl_cdf_gaussian_P(0-mu, sigma)),
-      10.*(gsl_cdf_gaussian_P(2-mu, sigma)-gsl_cdf_gaussian_P(1-mu, sigma)),
-      10.*(gsl_cdf_gaussian_P(3-mu, sigma)-gsl_cdf_gaussian_P(2-mu, sigma)),
-      10.*(gsl_cdf_gaussian_P(4-mu, sigma)-gsl_cdf_gaussian_P(3-mu, sigma)),
+        10. * (gsl_cdf_gaussian_P(1 - mu, sigma) - gsl_cdf_gaussian_P(0 - mu, sigma)),
+        10. * (gsl_cdf_gaussian_P(2 - mu, sigma) - gsl_cdf_gaussian_P(1 - mu, sigma)),
+        10. * (gsl_cdf_gaussian_P(3 - mu, sigma) - gsl_cdf_gaussian_P(2 - mu, sigma)),
+        10. * (gsl_cdf_gaussian_P(4 - mu, sigma) - gsl_cdf_gaussian_P(3 - mu, sigma)),
     };
 
     REQUIRE(modifiedObs == correctVals);
   }
-
 }
 
 TEST_CASE("Simple Gaussian Convolution systematic on 2d PDF")
@@ -85,7 +84,7 @@ TEST_CASE("Simple Gaussian Convolution systematic on 2d PDF")
 
   // Now build the Convolution systematic and related objects
   double sigma = 0.5;
-  Gaussian* gaussian = new Gaussian(0, sigma, "gaus");
+  Gaussian *gaussian = new Gaussian(0, sigma, "gaus");
   gaussian->RenameParameter("means_0", "mean");
   gaussian->RenameParameter("stddevs_0", "sigma");
 
@@ -125,18 +124,17 @@ TEST_CASE("Simple Gaussian Convolution systematic on 2d PDF")
 
     std::vector<double> modifiedObs = pdfs.at(0).GetBinContents();
     std::vector<double> correctVals(pdf1.GetNBins(), 0);
-    correctVals[axes.FlattenIndices({0,0})] = 10.*(gsl_cdf_gaussian_P(1-mu1, sigma)-gsl_cdf_gaussian_P(0-mu1, sigma));
-    correctVals[axes.FlattenIndices({1,0})] = 10.*(gsl_cdf_gaussian_P(2-mu1, sigma)-gsl_cdf_gaussian_P(1-mu1, sigma));
-    correctVals[axes.FlattenIndices({2,0})] = 10.*(gsl_cdf_gaussian_P(3-mu1, sigma)-gsl_cdf_gaussian_P(2-mu1, sigma));
-    correctVals[axes.FlattenIndices({3,0})] = 10.*(gsl_cdf_gaussian_P(4-mu1, sigma)-gsl_cdf_gaussian_P(3-mu1, sigma));
-    correctVals[axes.FlattenIndices({0,1})] = 20.*(gsl_cdf_gaussian_P(1-mu2, sigma)-gsl_cdf_gaussian_P(0-mu2, sigma));
-    correctVals[axes.FlattenIndices({1,1})] = 20.*(gsl_cdf_gaussian_P(2-mu2, sigma)-gsl_cdf_gaussian_P(1-mu2, sigma));
-    correctVals[axes.FlattenIndices({2,1})] = 20.*(gsl_cdf_gaussian_P(3-mu2, sigma)-gsl_cdf_gaussian_P(2-mu2, sigma));
-    correctVals[axes.FlattenIndices({3,1})] = 20.*(gsl_cdf_gaussian_P(4-mu2, sigma)-gsl_cdf_gaussian_P(3-mu2, sigma));
+    correctVals[axes.FlattenIndices({0, 0})] = 10. * (gsl_cdf_gaussian_P(1 - mu1, sigma) - gsl_cdf_gaussian_P(0 - mu1, sigma));
+    correctVals[axes.FlattenIndices({1, 0})] = 10. * (gsl_cdf_gaussian_P(2 - mu1, sigma) - gsl_cdf_gaussian_P(1 - mu1, sigma));
+    correctVals[axes.FlattenIndices({2, 0})] = 10. * (gsl_cdf_gaussian_P(3 - mu1, sigma) - gsl_cdf_gaussian_P(2 - mu1, sigma));
+    correctVals[axes.FlattenIndices({3, 0})] = 10. * (gsl_cdf_gaussian_P(4 - mu1, sigma) - gsl_cdf_gaussian_P(3 - mu1, sigma));
+    correctVals[axes.FlattenIndices({0, 1})] = 20. * (gsl_cdf_gaussian_P(1 - mu2, sigma) - gsl_cdf_gaussian_P(0 - mu2, sigma));
+    correctVals[axes.FlattenIndices({1, 1})] = 20. * (gsl_cdf_gaussian_P(2 - mu2, sigma) - gsl_cdf_gaussian_P(1 - mu2, sigma));
+    correctVals[axes.FlattenIndices({2, 1})] = 20. * (gsl_cdf_gaussian_P(3 - mu2, sigma) - gsl_cdf_gaussian_P(2 - mu2, sigma));
+    correctVals[axes.FlattenIndices({3, 1})] = 20. * (gsl_cdf_gaussian_P(4 - mu2, sigma) - gsl_cdf_gaussian_P(3 - mu2, sigma));
 
     REQUIRE(modifiedObs == correctVals);
   }
-
 }
 
 TEST_CASE("Simple Gaussian Convolution systematic on 2d PDF, alt axis ordering")
@@ -155,7 +153,7 @@ TEST_CASE("Simple Gaussian Convolution systematic on 2d PDF, alt axis ordering")
 
   // Now build the Convolution systematic and related objects
   double sigma = 0.5;
-  Gaussian* gaussian = new Gaussian(0, sigma, "gaus");
+  Gaussian *gaussian = new Gaussian(0, sigma, "gaus");
   gaussian->RenameParameter("means_0", "mean");
   gaussian->RenameParameter("stddevs_0", "sigma");
 
@@ -195,16 +193,15 @@ TEST_CASE("Simple Gaussian Convolution systematic on 2d PDF, alt axis ordering")
 
     std::vector<double> modifiedObs = pdfs.at(0).GetBinContents();
     std::vector<double> correctVals(pdf1.GetNBins(), 0);
-    correctVals[axes.FlattenIndices({0,0})] = 10.*(gsl_cdf_gaussian_P(1-mu1, sigma)-gsl_cdf_gaussian_P(0-mu1, sigma));
-    correctVals[axes.FlattenIndices({0,1})] = 10.*(gsl_cdf_gaussian_P(2-mu1, sigma)-gsl_cdf_gaussian_P(1-mu1, sigma));
-    correctVals[axes.FlattenIndices({0,2})] = 10.*(gsl_cdf_gaussian_P(3-mu1, sigma)-gsl_cdf_gaussian_P(2-mu1, sigma));
-    correctVals[axes.FlattenIndices({0,3})] = 10.*(gsl_cdf_gaussian_P(4-mu1, sigma)-gsl_cdf_gaussian_P(3-mu1, sigma));
-    correctVals[axes.FlattenIndices({1,0})] = 20.*(gsl_cdf_gaussian_P(1-mu2, sigma)-gsl_cdf_gaussian_P(0-mu2, sigma));
-    correctVals[axes.FlattenIndices({1,1})] = 20.*(gsl_cdf_gaussian_P(2-mu2, sigma)-gsl_cdf_gaussian_P(1-mu2, sigma));
-    correctVals[axes.FlattenIndices({1,2})] = 20.*(gsl_cdf_gaussian_P(3-mu2, sigma)-gsl_cdf_gaussian_P(2-mu2, sigma));
-    correctVals[axes.FlattenIndices({1,3})] = 20.*(gsl_cdf_gaussian_P(4-mu2, sigma)-gsl_cdf_gaussian_P(3-mu2, sigma));
+    correctVals[axes.FlattenIndices({0, 0})] = 10. * (gsl_cdf_gaussian_P(1 - mu1, sigma) - gsl_cdf_gaussian_P(0 - mu1, sigma));
+    correctVals[axes.FlattenIndices({0, 1})] = 10. * (gsl_cdf_gaussian_P(2 - mu1, sigma) - gsl_cdf_gaussian_P(1 - mu1, sigma));
+    correctVals[axes.FlattenIndices({0, 2})] = 10. * (gsl_cdf_gaussian_P(3 - mu1, sigma) - gsl_cdf_gaussian_P(2 - mu1, sigma));
+    correctVals[axes.FlattenIndices({0, 3})] = 10. * (gsl_cdf_gaussian_P(4 - mu1, sigma) - gsl_cdf_gaussian_P(3 - mu1, sigma));
+    correctVals[axes.FlattenIndices({1, 0})] = 20. * (gsl_cdf_gaussian_P(1 - mu2, sigma) - gsl_cdf_gaussian_P(0 - mu2, sigma));
+    correctVals[axes.FlattenIndices({1, 1})] = 20. * (gsl_cdf_gaussian_P(2 - mu2, sigma) - gsl_cdf_gaussian_P(1 - mu2, sigma));
+    correctVals[axes.FlattenIndices({1, 2})] = 20. * (gsl_cdf_gaussian_P(3 - mu2, sigma) - gsl_cdf_gaussian_P(2 - mu2, sigma));
+    correctVals[axes.FlattenIndices({1, 3})] = 20. * (gsl_cdf_gaussian_P(4 - mu2, sigma) - gsl_cdf_gaussian_P(3 - mu2, sigma));
 
     REQUIRE(modifiedObs == correctVals);
   }
-
 }
