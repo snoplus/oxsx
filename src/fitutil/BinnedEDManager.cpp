@@ -181,9 +181,9 @@ void BinnedEDManager::ApplyShrink(const BinnedEDShrinker &shrinker_)
     for (size_t i = 0; i < fWorkingPdfs.size(); i++)
     {
         // Normalise if normalisation is a fittable param, but if indirect then track any change
-        if (fAllowNormsFittable.at(i) == DIRECT) 
+        if (fAllowNormsFittable.at(i) == DIRECT)
         {
-            if( fWorkingPdfs.at(0).GetNBins() == fOriginalPdfs.at(0).GetNBins() )
+            if (fWorkingPdfs.at(0).GetNBins() == fOriginalPdfs.at(0).GetNBins())
             {
                 fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
                 fWorkingPdfs[i].Normalise();
@@ -192,10 +192,11 @@ void BinnedEDManager::ApplyShrink(const BinnedEDShrinker &shrinker_)
             {
                 return;
             }
-        } 
-        else if (fAllowNormsFittable.at(i) == FALSE) 
+        }
+        else if (fAllowNormsFittable.at(i) == FALSE)
         {
-            if ( fWorkingPdfs.at(0).GetNBins() == fOriginalPdfs.at(0).GetNBins() ){
+            if (fWorkingPdfs.at(0).GetNBins() == fOriginalPdfs.at(0).GetNBins())
+            {
                 fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
                 const double integral_after = fWorkingPdfs[i].Integral();
                 fNormalisations[i] = integral_after;
@@ -204,19 +205,19 @@ void BinnedEDManager::ApplyShrink(const BinnedEDShrinker &shrinker_)
             {
                 return;
             }
-        } 
-        else 
+        }
+        else
         {
             const double integral_before = fWorkingPdfs[i].Integral();
             fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
             const double integral_after = fWorkingPdfs[i].Integral();
-            if (integral_before == 0. && integral_after == 0.) 
-            { 
+            if (integral_before == 0. && integral_after == 0.)
+            {
                 fNormalisations[i] = 0.;
             }
             else
-            { 
-                fNormalisations[i] *= integral_after/integral_before;
+            {
+                fNormalisations[i] *= integral_after / integral_before;
             }
         }
     }
