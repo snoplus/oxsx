@@ -156,7 +156,7 @@ void SystematicManager::DistortEDs(const std::vector<BinnedED> &OrignalEDs_,
         // Copy EDs because WorkingED_s have to have the same binning as OrignalEDs_s.
         WorkingEDs_[j] = OrignalEDs_.at(j);
 
-        // If we haven't explicitly added the "" grooup to this dist's fEDGroups, apply that group first
+        // If we haven't explicitly added the "" group to this dist's fEDGroups, apply that group first
         if (std::find(fEDGroups.at(name).begin(), fEDGroups.at(name).end(), "") == fEDGroups.at(name).end() && fGroups.at("").size())
         {
             WorkingEDs_[j].SetBinContents(GetTotalResponse("").operator()(WorkingEDs_.at(j).GetBinContents()));
