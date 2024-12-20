@@ -215,11 +215,11 @@ void BinnedNLLH::AddPdfs(const std::vector<BinnedED> &pdfs,
     {
         if (norm_fitting_statuses != nullptr)
         {
-            AddPdf(pdfs.at(i), genrates_.at(i), norm_fitting_statuses->at(i));
+            AddPdf(pdfs.at(i), sys_.at(i), genrates_.at(i), norm_fitting_statuses->at(i));
         }
         else
         {
-            AddPdf(pdfs.at(i), genrates_.at(i));
+            AddPdf(pdfs.at(i), sys_.at(i), genrates_.at(i));
         }
     }
 }
