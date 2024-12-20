@@ -59,6 +59,7 @@ void SystematicManager::Add(Systematic *sys_, const std::string &groupName_)
     {
         std::cout << "Warning::Adding systematic with empty group name. Will apply to all events." << std::endl;
         Add(sys_);
+        return;
     }
     fGroups[groupName_].push_back(sys_);
     fNGroups = fGroups.size();
