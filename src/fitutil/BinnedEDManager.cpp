@@ -184,6 +184,7 @@ void BinnedEDManager::ApplyShrink(const BinnedEDShrinker &shrinker_)
         // Normalise if normalisation is a fittable param, but if indirect then track any change
         if (fAllowNormsFittable.at(i) == DIRECT)
         {
+
             if (fWorkingPdfs.at(i).GetNBins() == fOriginalPdfs.at(i).GetNBins())
             {
                 fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));

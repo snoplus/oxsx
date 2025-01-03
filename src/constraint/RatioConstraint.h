@@ -13,17 +13,17 @@ public:
     // Default constructor
     RatioConstraint() {}
     // Main constructor
-    RatioConstraint(double mean_, double sigma_ ) : fRatioMean(mean_), fRatioSigma(sigma_) { }
+    RatioConstraint(double mean_, double sigma_) : fRatioMean(mean_), fRatioSigma(sigma_) {}
 
     // Evaluate constraint at a particular pair of values
     double Evaluate(double val_1, double val_2) const
     {
-      if(std::abs(val_2) < fEpsilon)
-          val_2 = fEpsilon;
+        if (std::abs(val_2) < fEpsilon)
+            val_2 = fEpsilon;
 
         const double ratio = val_1 / val_2;
 
-	return (ratio - fRatioMean) * (ratio - fRatioMean) / (2 * fRatioSigma * fRatioSigma);
+        return (ratio - fRatioMean) * (ratio - fRatioMean) / (2 * fRatioSigma * fRatioSigma);
     }
 
 private:

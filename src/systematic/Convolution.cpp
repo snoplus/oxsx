@@ -23,8 +23,8 @@ Convolution::~Convolution()
     delete fDist;
 }
 
-void Convolution::ConstructSubmatrix(std::vector<long long unsigned int>& column_indices, std::vector<long long unsigned int>& row_indices,
-                                     std::vector<double>& vals) const
+void Convolution::ConstructSubmatrix(std::vector<long long unsigned int> &column_indices, std::vector<long long unsigned int> &row_indices,
+                                     std::vector<double> &vals) const
 {
     /*
      * Construct the sub-matrix associated with the convolution in the transformed axes.
@@ -37,9 +37,9 @@ void Convolution::ConstructSubmatrix(std::vector<long long unsigned int>& column
     std::vector<double> highEdges(fSubMapAxes.GetNDimensions());
     // Pre-allocate memory for the sub-matrix data
     // likely to need only a fraction of this memory!
-    column_indices.reserve(fSubMapAxes.GetNBins()*fSubMapAxes.GetNBins());
-    row_indices.reserve(fSubMapAxes.GetNBins()*fSubMapAxes.GetNBins());
-    vals.reserve(fSubMapAxes.GetNBins()*fSubMapAxes.GetNBins());
+    column_indices.reserve(fSubMapAxes.GetNBins() * fSubMapAxes.GetNBins());
+    row_indices.reserve(fSubMapAxes.GetNBins() * fSubMapAxes.GetNBins());
+    vals.reserve(fSubMapAxes.GetNBins() * fSubMapAxes.GetNBins());
     // Loop over all entries of the sub-matrix to determine their values
     for (long long unsigned int origBin = 0; origBin < fSubMapAxes.GetNBins(); origBin++)
     {
@@ -63,9 +63,8 @@ void Convolution::ConstructSubmatrix(std::vector<long long unsigned int>& column
     }
 }
 
-
-void Convolution::MakeFullMatrix(const std::vector<long long unsigned int>& column_indices, const std::vector<long long unsigned int>& row_indices,
-                                  const std::vector<double>& vals, SparseMatrix& response_blocked) const
+void Convolution::MakeFullMatrix(const std::vector<long long unsigned int> &column_indices, const std::vector<long long unsigned int> &row_indices,
+                                 const std::vector<double> &vals, SparseMatrix &response_blocked) const
 {
     /*
      * Given the response submatrix, make the full response matrix!
@@ -74,25 +73,25 @@ void Convolution::MakeFullMatrix(const std::vector<long long unsigned int>& colu
     // Set up variables first; pre-allocate memory for the large vectors associated with the full matrix's info
     const size_t N = fAxes.GetNBins();
     const size_t n_sub = fSubMapAxes.GetNBins();
-    const size_t n_blocks = N/n_sub;
+    const size_t n_blocks = N / n_sub;
     const size_t size_block = vals.size();
     std::vector<long long unsigned int> column_indices_bl;
     std::vector<long long unsigned int> row_indices_bl;
     std::vector<double> vals_bl;
-    column_indices_bl.reserve(size_block*n_blocks);
-    row_indices_bl.reserve(size_block*n_blocks);
-    vals_bl.reserve(size_block*n_blocks);
+    column_indices_bl.reserve(size_block * n_blocks);
+    row_indices_bl.reserve(size_block * n_blocks);
+    vals_bl.reserve(size_block * n_blocks);
     // Loop over the submatrix "blocks" in the full response matrix
-    for (size_t block_idx=0; block_idx<n_blocks; block_idx++)
+    for (size_t block_idx = 0; block_idx < n_blocks; block_idx++)
     {
         // Just add a copy of the values from vals into vals_bl, using fancy STL insert
         vals_bl.insert(vals_bl.end(), std::begin(vals), std::end(vals));
         // Now loop over the numbers in column_indices and row_indices
-        for (size_t idx=0; idx<size_block; idx++)
+        for (size_t idx = 0; idx < size_block; idx++)
         {
             // Use the cached mapping from blocked index -> true bin index for both columns and rows!
-            column_indices_bl.push_back(fColumnPerms.at(column_indices.at(idx)+block_idx*n_sub));
-            row_indices_bl.push_back(fColumnPerms.at(row_indices.at(idx)+block_idx*n_sub));
+            column_indices_bl.push_back(fColumnPerms.at(column_indices.at(idx) + block_idx * n_sub));
+            row_indices_bl.push_back(fColumnPerms.at(row_indices.at(idx) + block_idx * n_sub));
         }
     }
     // Fill the matrix object with these values
@@ -100,7 +99,6 @@ void Convolution::MakeFullMatrix(const std::vector<long long unsigned int>& colu
     // This is because Armadillo has to first sort the vectors we're giving it by column & row indices.
     response_blocked.SetComponents(row_indices_bl, column_indices_bl, vals_bl);
 }
-
 
 void Convolution::Construct()
 {
@@ -111,8 +109,8 @@ void Convolution::Construct()
      *
      * The key insights are that:
      *   (a) Each subspace of the BinnedED object that is being transformed by this convolution
-     *       will have an identical response "sub"-matrix, S, acting only in that subspace. 
-     *   (b) If you were to index the bins of the BinnedED object along the transformed axes first, 
+     *       will have an identical response "sub"-matrix, S, acting only in that subspace.
+     *   (b) If you were to index the bins of the BinnedED object along the transformed axes first,
      *       then because of (a) the full response matrix, R, will be of block-diagonal form:
      *
      *       [S      ]
@@ -147,7 +145,7 @@ void Convolution::Construct()
     fResponse = response_blocked_sm;
 }
 
-AxisCollection Convolution::DetermineAxisSubCollection(const std::vector<size_t>& rel_indices) const
+AxisCollection Convolution::DetermineAxisSubCollection(const std::vector<size_t> &rel_indices) const
 {
     /*
      * Given a vector of axis indices, return an AxisCollection with those axes from fAxes.
@@ -159,8 +157,7 @@ AxisCollection Convolution::DetermineAxisSubCollection(const std::vector<size_t>
     return ax;
 }
 
-
-size_t Convolution::BlockedBinningIndex(size_t bin_index, const std::vector<size_t>& relativeIndices) const
+size_t Convolution::BlockedBinningIndex(size_t bin_index, const std::vector<size_t> &relativeIndices) const
 {
     /* Given a bin index, using the existing binning order,
      * convert to the bin number that would be used if we asserted that
@@ -175,12 +172,13 @@ size_t Convolution::BlockedBinningIndex(size_t bin_index, const std::vector<size
     // Now split these indices into those within the transforing sub-collection, and those which aren't
     std::vector<size_t> bin_idxs_sub;
     std::vector<size_t> bin_idxs_notsub;
-    for (size_t ax_idx=0; ax_idx<fAxes.GetNDimensions(); ax_idx++)
+    for (size_t ax_idx = 0; ax_idx < fAxes.GetNDimensions(); ax_idx++)
     {
         if (std::find(relativeIndices.begin(), relativeIndices.end(), ax_idx) != std::end(relativeIndices))
         {
             bin_idxs_sub.push_back(bin_idxs.at(ax_idx));
-        } else
+        }
+        else
         {
             bin_idxs_notsub.push_back(bin_idxs.at(ax_idx));
         }
@@ -189,18 +187,17 @@ size_t Convolution::BlockedBinningIndex(size_t bin_index, const std::vector<size
     // sub-collection first
     const size_t idx_sub = fSubMapAxes.FlattenIndices(bin_idxs_sub);
     const size_t idx_notsub = fNotSubMapAxes.FlattenIndices(bin_idxs_notsub);
-    const size_t idx_blocked = idx_sub + idx_notsub*fSubMapAxes.GetNBins();
+    const size_t idx_blocked = idx_sub + idx_notsub * fSubMapAxes.GetNBins();
 
     return idx_blocked;
 }
-
 
 void Convolution::CacheIndexPermutations()
 {
     /*
      * During construction of the response matrix, we first create it in block diagonal form,
      * which would be correct if we count the bins along the transformed axes first.
-     * However, if this is not the case, we must permute the elements of the block matrix 
+     * However, if this is not the case, we must permute the elements of the block matrix
      * to get the matrix entry values in the correct place.
      * This method creates a mapping from blocked matrix bin index to true bin index.
      */
@@ -209,7 +206,7 @@ void Convolution::CacheIndexPermutations()
     fSubMapAxes = DetermineAxisSubCollection(relativeIndices);
     // get the axes that this systematic will /not/ act on
     std::vector<size_t> relativeIndicesNot;
-    for (size_t idx=0; idx<fDistObs.GetNObservables(); idx++)
+    for (size_t idx = 0; idx < fDistObs.GetNObservables(); idx++)
     {
         if (std::find(relativeIndices.begin(), relativeIndices.end(), idx) == std::end(relativeIndices))
         {
@@ -229,7 +226,6 @@ void Convolution::CacheIndexPermutations()
 
     fCachedIndexPermutations = true;
 }
-
 
 ///////////////////////////////
 // Make this object fittable //

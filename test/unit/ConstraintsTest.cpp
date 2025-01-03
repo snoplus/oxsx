@@ -47,6 +47,6 @@ TEST_CASE("Constraints")
     c_man.SetConstraint("c", "d", 5, 1);
     SECTION("Ratio constraint Evaluation")
     {
-        REQUIRE(c_man.Evaluate(params) == Catch::Approx(0.5 + 2. + (25. / 2. + 1. / 200. - 0.8 * 5 * (-1. / 10.)) / (1. - 0.8 * 0.8) + (25. / 2.) )  );
+        REQUIRE(c_man.Evaluate(params) == Catch::Approx(0.5 + 2. + (25. / 2. + 1. / 200. - 0.8 * 5 * (-1. / 10.)) / (1. - 0.8 * 0.8) + (25. / 2.)));
     }
 }
