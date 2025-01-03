@@ -153,6 +153,15 @@ void SystematicManager::DistortEDs(const std::vector<BinnedED> &OrignalEDs_,
         if (fEDGroups.find(name) == fEDGroups.end())
             continue;
 
+        // Copy EDs because WorkingED_s have to have the same binning as OrignalEDs_s.
+        WorkingEDs_[j] = OrignalEDs_.at(j);
+
+        // If we haven't explicitly added the "" group to this dist's fEDGroups, apply that group first
+        if (std::find(fEDGroups.at(name).begin(), fEDGroups.at(name).end(), "") == fEDGroups.at(name).end() && fGroups.at("").size())
+        {
+            WorkingEDs_[j].SetBinContents(GetTotalResponse("").operator()(WorkingEDs_.at(j).GetBinContents()));
+        }
+
         // Apply everything else.
         for (size_t i = 0; i < fEDGroups.at(name).size(); ++i)
         {
@@ -160,41 +169,13 @@ void SystematicManager::DistortEDs(const std::vector<BinnedED> &OrignalEDs_,
             std::string groupName = fEDGroups.at(name).at(i);
             // If "" is empty the do nothing.
             if (groupName == "" && fGroups.at("").size() == 0)
-            {
-                WorkingEDs_[j] = OrignalEDs_.at(j);
                 continue;
-            }
             if (!fGroups.at(groupName).size())
                 throw LogicError(Formatter() << "SystematicManager:: ED " << name
                                              << " has a systematic group of zero size acting on it");
-            // Copy EDs because WorkingED_s have to have the same binning as OrignalEDs_s.
-            WorkingEDs_[j] = OrignalEDs_.at(j);
 
-            // Logic overview:
-            //    - Check whether fGroups has more that just the "" group in it. If
-            //      not then apply the group as you would expect.
-            //    - If groups have been added but there is nothing in "" then apply
-            //      the groups on their own.
-            //    - Else apply the "" group first and then apply the rest.
-
-            if (fGroups.size() > 1)
-            {
-                if (fGroups.at("").size() == 0)
-                {
-                    WorkingEDs_[j].SetBinContents(GetTotalResponse(groupName).operator()(OrignalEDs_.at(j).GetBinContents()));
-                }
-                else
-                {
-                    WorkingEDs_[j].SetBinContents(
-                        GetTotalResponse(groupName).operator()(
-                            GetTotalResponse("").operator()(OrignalEDs_.at(j).GetBinContents())));
-                }
-            }
-            else
-            {
-                WorkingEDs_[j].SetBinContents(
-                    GetTotalResponse(groupName).operator()(OrignalEDs_.at(j).GetBinContents()));
-            }
+            // Now apply this group to the WorkingEDs
+            WorkingEDs_[j].SetBinContents(GetTotalResponse(groupName).operator()(WorkingEDs_.at(j).GetBinContents()));
         }
         if (norms != nullptr)
         {
