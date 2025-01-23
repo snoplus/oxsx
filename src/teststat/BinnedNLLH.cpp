@@ -384,7 +384,10 @@ void BinnedNLLH::SetConstraint(const std::string &paramName_1, double mean_1, do
 {
     fConstraints.SetConstraint(paramName_1, mean_1, sigma_1, paramName_2, mean_2, sigma_2, correlation);
 }
-
+void BinnedNLLH::SetConstraint(const std::string &paramName_1, const std::string &paramName_2, double ratiomean_, double ratiosigma_)
+{
+    fConstraints.SetConstraint(paramName_1, paramName_2, ratiomean_, ratiosigma_);
+}
 double
 BinnedNLLH::GetSignalCutEfficiency() const
 {
