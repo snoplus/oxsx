@@ -8,7 +8,6 @@
 
 #ifndef __OXSX_DENSE_MATRIX__
 #define __OXSX_DENSE_MATRIX__
-#include <AxisCollection.h>
 #include <armadillo>
 class BinnedPhysDist;
 

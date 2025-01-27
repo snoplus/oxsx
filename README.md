@@ -41,6 +41,34 @@ Follow the installation instructions for each of the above using either the defa
 
 4. Test the build was sucessful with `./test/RunUnits`
 
+<h2> Alternative Installation Instructions Using Singularity/Apptainer & CMake </h2>
+OXSX now comes with the ability to compile the repository via the build system CMake, 
+and the definition file needed to create a container which will contain all of the necessary 
+external repositories.
+
+1. Clone this repository with `git clone https://github.com/snoplus/oxsx.git`
+
+2. Have either [Docker](https://www.docker.com/), [Singularity](https://sylabs.io/singularity/), or [Apptainer](https://apptainer.org/) installed on your system. These are programs which allow you to build Containers on your system.
+
+3. Navigate into the `oxsx` repository, and create an OXSX container `oxsx_container.sif` with the following command (this is for Apptainer; very similar commands for what follows are used for Docker/Singularity):
+```
+apptainer build oxsx_container.sif oxsx_container.def
+```
+
+4. Open the container:
+```
+apptainer shell oxsx_container.sif
+```
+
+5. Build the repository, using CMake:
+```
+cmake -S . -B cmake-build-debug
+cmake --build cmake-build-debug
+```
+This will create a new build directory, `cmake-build-debug`, as part of the build process. Feel free to use a different name, such as `build` - though that may clash with any existing `build` directory if you've also compiled OXSX with Sconscript. This build procedure generates the `oxsx` library, compiles all of the code in `example/` and builds all of the unit tests within `test/`.
+
+6. Test the build was successful with `./cmake-build-debug/test/unit/RunUnits`
+
 <h3> Compiling Your Own Scripts</h3>
 
 scons auto-generates a script that compiles and links your c++ against the source code and dependencies just run `. <oxsx root>/bin/compile.sh <your cpp file>` to produce an executible of the same name

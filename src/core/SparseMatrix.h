@@ -8,7 +8,6 @@
 
 #ifndef __OXSX_SPARSE_MATRIX__
 #define __OXSX_SPARSE_MATRIX__
-#include <AxisCollection.h>
 #include <armadillo>
 class BinnedPhysDist;
 
