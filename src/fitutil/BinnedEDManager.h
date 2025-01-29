@@ -24,7 +24,7 @@ class BinnedEDManager : public FitComponent
 public:
    BinnedEDManager() : fAllNormsDirFittable(true), fNPdfs(0), fName("norms") {}
 
-   void AddPdf(const BinnedED &, const NormFittingStatus norm_fitting_status = DIRECT);
+   void AddPdf(const BinnedED &, const NormFittingStatus norm_fitting_status = INDIRECT);
    void AddPdfs(const std::vector<BinnedED> &,
                 const std::vector<NormFittingStatus> *norm_fitting_statuses = nullptr);
 
