@@ -1,0 +1,12 @@
+Bootstrap: docker
+From: snoplus/rat-container:main
+
+
+%post
+	apt-get install -y libopenblas-dev libhdf5-cpp-103 libarmadillo9 libarmadillo-dev
+	
+	cd /home/software/
+	git clone https://github.com/catchorg/Catch2.git
+	cd Catch2/
+	cmake -B build -S . -DBUILD_TESTING=OFF
+	cmake --build build/ --target install
