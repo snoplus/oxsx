@@ -138,6 +138,7 @@ void BinnedEDManager::AddPdf(const BinnedED &pdf_, const NormFittingStatus norm_
     {
         fAllNormsDirFittable = false;
     }
+
     RegisterParameters();
 }
 
@@ -183,14 +184,29 @@ void BinnedEDManager::ApplyShrink(const BinnedEDShrinker &shrinker_)
         // Normalise if normalisation is a fittable param, but if indirect then track any change
         if (fAllowNormsFittable.at(i) == DIRECT)
         {
-            fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
-            fWorkingPdfs[i].Normalise();
+
+            if (fWorkingPdfs.at(i).GetNBins() == fOriginalPdfs.at(i).GetNBins())
+            {
+                fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
+                fWorkingPdfs[i].Normalise();
+            }
+            else
+            {
+                return;
+            }
         }
         else if (fAllowNormsFittable.at(i) == FALSE)
         {
-            fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
-            const double integral_after = fWorkingPdfs[i].Integral();
-            fNormalisations[i] = integral_after;
+            if (fWorkingPdfs.at(i).GetNBins() == fOriginalPdfs.at(i).GetNBins())
+            {
+                fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
+                const double integral_after = fWorkingPdfs[i].Integral();
+                fNormalisations[i] = integral_after;
+            }
+            else
+            {
+                return;
+            }
         }
         else
         {
