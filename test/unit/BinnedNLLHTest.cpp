@@ -102,6 +102,83 @@ TEST_CASE("Binned NLLH, 3 rates no systematics")
     REQUIRE_THAT(lh.Evaluate(), Catch::Matchers::WithinAbs(sumNorm + sumLogProb + constraint, 0.0001));
   }
 
+  SECTION("Consistent Probability with buffer with INDIRECT NormFittingStatus")
+  {
+
+    BinnedNLLH lh_buffer_indirect;
+    NormFittingStatus norm_status = INDIRECT;
+    lh_buffer_indirect.AddPdf(pdf1, norm_status);
+
+    // Add a generous buffer region
+    lh_buffer_indirect.SetBuffer("axis1", 30, 30);
+    lh_buffer_indirect.SetDataSet(&data);
+    lh_buffer_indirect.RegisterFitComponents();
+
+    ParameterDict params;
+    params["a"] = 1;
+    lh_buffer_indirect.SetParameters(params);
+
+    double llh1 = lh_buffer_indirect.Evaluate();
+
+    // Now let's re-evaluate, to check there's no issue with the shrinking being reapplied
+    double llh2 = lh_buffer_indirect.Evaluate();
+    REQUIRE_THAT(llh1, Catch::Matchers::WithinAbs(llh2, 0.0001));
+
+    std::pair<unsigned, unsigned> buffers = lh_buffer_indirect.GetBuffer("axis1");
+    REQUIRE(buffers == std::pair<unsigned, unsigned>(30, 30));
+
+  }
+
+  SECTION("Consistent Probability with buffer with FALSE NormFittingStatus")
+  {
+
+    BinnedNLLH lh_buffer_false;
+    NormFittingStatus norm_status = FALSE;
+    lh_buffer_false.AddPdf(pdf1, norm_status);
+
+    // Add a generous buffer region
+    lh_buffer_false.SetBuffer("axis1", 30, 30);
+    lh_buffer_false.SetDataSet(&data);
+    lh_buffer_false.RegisterFitComponents();
+
+    ParameterDict params;
+    params["a"] = 1;
+    lh_buffer_false.SetParameters(params);
+    double llh1 = lh_buffer_false.Evaluate();
+
+    // Now let's re-evaluate, to check there's no issue with the shrinking being reapplied
+    double llh2 = lh_buffer_false.Evaluate();
+    REQUIRE_THAT(llh1, Catch::Matchers::WithinAbs(llh2, 0.0001));
+
+    std::pair<unsigned, unsigned> buffers = lh_buffer_false.GetBuffer("axis1");
+    REQUIRE(buffers == std::pair<unsigned, unsigned>(30, 30));
+  }
+
+  SECTION("Consistent Probability with buffer with DIRECT NormFittingStatus")
+  {
+
+    BinnedNLLH lh_buffer_direct;
+    NormFittingStatus norm_status = DIRECT;
+    lh_buffer_direct.AddPdf(pdf1, norm_status);
+
+    // Add a generous buffer region
+    lh_buffer_direct.SetBuffer("axis1", 30, 30);
+    lh_buffer_direct.SetDataSet(&data);
+    lh_buffer_direct.RegisterFitComponents();
+
+    ParameterDict params;
+    params["a"] = 1;
+    lh_buffer_direct.SetParameters(params);
+    double llh1 = lh_buffer_direct.Evaluate();
+
+    // Now let's re-evaluate, to check there's no issue with the shrinking being reapplied
+    double llh2 = lh_buffer_direct.Evaluate();
+    REQUIRE_THAT(llh1, Catch::Matchers::WithinAbs(llh2, 0.0001));
+
+    std::pair<unsigned, unsigned> buffers = lh_buffer_direct.GetBuffer("axis1");
+    REQUIRE(buffers == std::pair<unsigned, unsigned>(30, 30));
+  }
+
   std::vector<int> genRates(3, pow(10, 6));
   BinnedNLLH lh2;
   lh2.SetBarlowBeeston(true);

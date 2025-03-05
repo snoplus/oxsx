@@ -171,32 +171,46 @@ BinnedEDManager::GetNormalisations() const
 
 void BinnedEDManager::ApplyShrink(const BinnedEDShrinker &shrinker_)
 {
+
+    // If there's no buffer, there's no need to apply a shrink!
     if (!shrinker_.GetBuffers().size())
         return;
 
-    // only shrink if not already shrunk! FIXME: more obvious behaviour
-    if (!fWorkingPdfs.size())
+    // If the number of bins in the working PDFs =/= the number of bins in the corresponding original PDF, it's likely the
+    // shrinking has already been applied. This probably only happens if a buffer is being used without systematics. So
+    // we check if the bins equals the original number minus the shrinking, and if it has we assume the shrinking has already
+    // been applied successfully. If it doesn't equal that or the original number of bins, something bad has happened! For these
+    // tests we assume the buffer and number of bins are the same for all PDFs so just look at the 0th element
+    int bufferBins = 0;
+    std::map<std::string, std::pair<unsigned, unsigned>> bufferMap = shrinker_.GetBuffers();
+    for (std::map<std::string, std::pair<unsigned, unsigned>>::iterator it = bufferMap.begin(); it != bufferMap.end(); ++it)
+    {
+        bufferBins += it->second.first;
+        bufferBins += it->second.second;
+    }
+    if (fWorkingPdfs.at(0).GetNBins() == fOriginalPdfs.at(0).GetNBins() - bufferBins)
         return;
+    else if (fWorkingPdfs.at(0).GetNBins() != fOriginalPdfs.at(0).GetNBins() )
+        throw DimensionError(Formatter() << "BinnedEDManager:: #bins in Original PDF != #bins in Working PDF");
 
     for (size_t i = 0; i < fWorkingPdfs.size(); i++)
     {
+
+        const double integral_before = fWorkingPdfs[i].Integral();
+        fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
+        const double integral_after = fWorkingPdfs[i].Integral();
+
         // Normalise if normalisation is a fittable param, but if indirect then track any change
         if (fAllowNormsFittable.at(i) == DIRECT)
         {
-            fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
             fWorkingPdfs[i].Normalise();
         }
         else if (fAllowNormsFittable.at(i) == FALSE)
         {
-            fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
-            const double integral_after = fWorkingPdfs[i].Integral();
             fNormalisations[i] = integral_after;
         }
         else
         {
-            const double integral_before = fWorkingPdfs[i].Integral();
-            fWorkingPdfs[i] = shrinker_.ShrinkDist(fWorkingPdfs.at(i));
-            const double integral_after = fWorkingPdfs[i].Integral();
             if (integral_before == 0. && integral_after == 0.)
             {
                 fNormalisations[i] = 0.;
