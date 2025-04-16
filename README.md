@@ -69,7 +69,7 @@ This will create a new build directory, `cmake-build-debug`, as part of the buil
 
 6. Test the build was successful with `./cmake-build-debug/test/unit/RunUnits`
 
-<h3> Compiling Your Own Scripts</h3>
+<h2> Compiling Your Own Scripts</h2>
 
 scons auto-generates a script that compiles and links your c++ against the source code and dependencies just run `. <oxsx root>/bin/compile.sh <your cpp file>` to produce an executible of the same name
 
