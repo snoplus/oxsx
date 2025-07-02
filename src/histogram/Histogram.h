@@ -18,6 +18,7 @@ public:
    Histogram(const AxisCollection &axes_);
 
    double Integral() const;
+   double Integral(double,double);
    void Normalise();
    void Scale(double);
 
@@ -26,7 +27,8 @@ public:
    void Fill(double val_, double weight_ = 1);
 
    size_t FindBin(const std::vector<double> &vals_) const;
-
+   size_t FindBin(double);
+  
    std::vector<size_t> UnpackIndices(size_t bin_) const;
    size_t FlattenIndices(const std::vector<size_t> &indices_) const;
 

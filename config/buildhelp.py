@@ -34,7 +34,11 @@ def check_dependency(conf, dependency):
     for lib in Split(dependency.libs):
         if not conf.CheckLib(lib):
             print('!! Cannot locate library {0}'.format(lib))
-            Exit(0)
+	    print("Checking library", lib, "with env:")
+            print("  LIBPATH:", conf.env['LIBPATH'])
+            print("  LIBS:", conf.env['LIBS'])
+	    print("  LINKFLAGS:", conf.env['LINKFLAGS'])
+	    Exit(0)
         
 
 def sanity_checks(conf):
