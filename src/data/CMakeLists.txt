@@ -18,7 +18,6 @@ set(data_headers
     LazyOXSXDataSet.h
     ObsSet.h
     ObsSet.hh
-    OXSXDataSet.h
     ROOTNtuple.h
     ROOTTree.h
 )
