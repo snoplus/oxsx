@@ -7,7 +7,6 @@ set(examples
     beestonBarlowLHH.cpp
     Cuts.cpp
     DataSetGeneration.cpp
-    myFit.cpp
     simpleFit.cpp
     simpleSystematicFit.cpp
     systematicFit.cpp
