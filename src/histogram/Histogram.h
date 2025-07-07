@@ -18,7 +18,7 @@ public:
    Histogram(const AxisCollection &axes_);
 
    double Integral() const;
-   double Integral(double,double);
+   double Integral(double,double);//calculates the Bounded Integral for 1-D Histograms only
    void Normalise();
    void Scale(double);
 

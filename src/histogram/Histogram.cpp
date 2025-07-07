@@ -38,13 +38,18 @@ Histogram::Integral() const
 double
 Histogram::Integral(double min, double max)
 {
-    size_t low = FindBin(min);
-    size_t high = FindBin(max);
-    double sum = 0;
-    for (size_t i = low; i < high; i++)
-        sum += fBinContents[i];
-    return sum;
+  if(fNDims != 1){
+    std::cout << "This integral function only works for 1-D histograms" << std::endl;
+    throw DimensionError("Histogram::Integral",fNDims,1);
   }
+  if(max <= min) return 0.0;
+  size_t low = FindBin(min);
+  size_t high = FindBin(max);
+  double sum = 0;
+  for (size_t i = low; i <= high; i++)
+    sum += fBinContents[i];
+  return sum;
+}
 
 void Histogram::Normalise()
 {
