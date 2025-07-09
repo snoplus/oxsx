@@ -21,9 +21,9 @@ TEST_CASE("Bounded Integral Test")
     Histogram hist(Axes);
 
     //IF WE WANT TO VERIFY FOR HIGHER DIMENSIONS
-    //BinAxis var1("Variable1",2.0,3.5,100);
-    //Axes.AddAxis(var1);
-    //Histogram hist2D(Axes);
+    BinAxis var1("Variable1",2.0,3.5,100);
+    Axes.AddAxis(var1);
+    Histogram hist2D(Axes);
     
     //filling the histogram with a known function
     for(int i=0; i<= hist.GetNBins(); i++){
@@ -41,8 +41,9 @@ TEST_CASE("Bounded Integral Test")
       REQUIRE(hist.Integral(1.0,0.0) == 0);//protected to max < min arguments?
       REQUIRE(hist.Integral(0.7,0.7) == 0);//consistent with math? 
     }
-    /*SECTION("2D")
+    SECTION("2D") //should throw error for higher dimensions
       {
-	//hist2D.Integral(2.2,3.3); // does it throw error??
-	}*/
+	REQUIRE_THROWS( hist2D.Integral(0.2,0.7) ); 
+	REQUIRE_THROWS( hist2D.Integral(2.2,3.3) ); // does it throw error??
+	}
 }

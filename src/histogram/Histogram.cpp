@@ -98,6 +98,10 @@ Histogram::FindBin(const std::vector<double> &vals_) const
 size_t
 Histogram::FindBin(double value)
 {
+  if(fNDims != 1){
+    std::cout << "This FindBin function only works for 1-D histograms" << std::endl;
+    throw DimensionError("Histogram::Integral",fNDims,1);
+  }
   return fAxes.GetAxis(0).FindBin(value);
 }
 
