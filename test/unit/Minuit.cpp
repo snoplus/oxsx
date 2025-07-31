@@ -2,9 +2,9 @@
 #include <Minuit.h>
 #include <TestStatistic.h>
 
-class FakeStatistic : public TestStatistic {
+class DummyStatistic : public TestStatistic {
 public:
-    FakeStatistic() {
+    DummyStatistic() {
         fParamName = "x";
         fVal = 1.0;
     }
@@ -89,7 +89,7 @@ TEST_CASE("Minuit configuration methods") {
 
 TEST_CASE("Minuit optimise returns FitResult") {
     Minuit min;
-    FakeStatistic stat;
+    DummyStatistic stat;
 
     ParameterDict vals = {{"x", 1.}};
     ParameterDict errs = {{"x", 0.1}};
@@ -113,7 +113,7 @@ TEST_CASE("Minuit optimise returns FitResult") {
 
 TEST_CASE("Minuit fit result getter returns last fit") {
     Minuit min;
-    FakeStatistic stat;
+    DummyStatistic stat;
 
     ParameterDict vals = {{"x", 2.}};
     ParameterDict errs = {{"x", 0.2}};
