@@ -41,7 +41,7 @@ TEST_CASE("Minuit configuration methods") {
 
     SECTION("Set and get tolerance") {
         min.SetTolerance(0.01);
-        REQUIRE(min.GetTolerance() == Approx(0.01));
+        REQUIRE(min.GetTolerance() == Catch::Approx(0.01));
     }
 
     SECTION("Set and get strategy") {
@@ -56,7 +56,7 @@ TEST_CASE("Minuit configuration methods") {
 
     SECTION("Set and get upper contour edge") {
         min.SetUpperContourEdge(1.23);
-        REQUIRE(min.GetUpperContourEdge() == Approx(1.23));
+        REQUIRE(min.GetUpperContourEdge() == Catch::Approx(1.23));
     }
 
     SECTION("Fix and release parameters") {
@@ -107,7 +107,7 @@ TEST_CASE("Minuit optimise returns FitResult") {
 
     const FitResult &result = min.Optimise(&stat);
 
-    REQUIRE(result.IsValid());
+    REQUIRE(result.GetValid());
     REQUIRE(result.GetBestFit().count("x") == 1);
 }
 
