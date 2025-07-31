@@ -52,6 +52,9 @@ public:
    void SetTolerance(double);
    double GetTolerance() const;
 
+   void SetStrategy(int);
+   int GetStrategy() const;
+  
    void SetMaximising(bool b_) { fMaximising = b_; }
    bool GetMaximising() const { return fMaximising; }
 
@@ -69,6 +72,7 @@ private:
 
    unsigned fMaxCalls;
    double fTolerance;
+   int fStrategy = 2;
 
    std::string fMethod;
    ROOT::Minuit2::MnApplication *fMinimiser;
