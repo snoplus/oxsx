@@ -126,14 +126,16 @@ void Minuit::Initialise(TestStatistic *testStat_)
         }
     }
 
+    ROOT::Minuit2::MnStrategy strategy(fStrategy);
+
     if ("Migrad" == fMethod)
-        fMinimiser = new MnMigrad(fMinuitFCN, params);
+      fMinimiser = new MnMigrad(fMinuitFCN, params, strategy);
 
     else if ("Minimize" == fMethod)
-        fMinimiser = new MnMinimize(fMinuitFCN, params);
+      fMinimiser = new MnMinimize(fMinuitFCN, params, strategy);
 
     else if ("Simplex" == fMethod)
-        fMinimiser = new MnSimplex(fMinuitFCN, params);
+      fMinimiser = new MnSimplex(fMinuitFCN, params, strategy);
     else
         throw ValueError(Formatter() << "Minuit::Unrecognised method - "
                                      << fMethod);
@@ -210,6 +212,17 @@ double
 Minuit::GetTolerance() const
 {
     return fTolerance;
+}
+
+void Minuit::SetStrategy(int strat_)
+{
+    fStrategy = strat_;
+}
+
+int
+Minuit::GetStrategy() const
+{
+    return fStrategy;
 }
 
 FitResult
