@@ -129,13 +129,13 @@ void Minuit::Initialise(TestStatistic *testStat_)
     ROOT::Minuit2::MnStrategy strategy(fStrategy);
 
     if ("Migrad" == fMethod)
-      fMinimiser = new MnMigrad(fMinuitFCN, params, strategy);
+        fMinimiser = new MnMigrad(fMinuitFCN, params, strategy);
 
     else if ("Minimize" == fMethod)
-      fMinimiser = new MnMinimize(fMinuitFCN, params, strategy);
+        fMinimiser = new MnMinimize(fMinuitFCN, params, strategy);
 
     else if ("Simplex" == fMethod)
-      fMinimiser = new MnSimplex(fMinuitFCN, params, strategy);
+        fMinimiser = new MnSimplex(fMinuitFCN, params, strategy);
     else
         throw ValueError(Formatter() << "Minuit::Unrecognised method - "
                                      << fMethod);
@@ -178,10 +178,12 @@ Minuit::Optimise(TestStatistic *testStat_)
 
     // fix the requested parameters
     // first work out which minuit index this refers to
-    std::set<std::string>::iterator it = fFixedParameters.begin();
-    for (; it != fFixedParameters.end(); ++it)
+    for (const std::string& fixedPar : fFixedParameters)
     {
-        size_t pos = std::distance(std::find(fParameterNames.begin(), fParameterNames.end(), *it), fParameterNames.begin());
+        std::set<std::string>::iterator found = std::find(fParameterNames.begin(), fParameterNames.end(), fixedPar);
+        if (found == fParameterNames.end())
+            throw LogicError(Formatter() << "Unknown parameter to fix: " << fixedPar);
+        size_t pos = std::distance(fParameterNames.begin(), found);
         fMinimiser->Fix(pos);
     }
 
@@ -219,8 +221,7 @@ void Minuit::SetStrategy(int strat_)
     fStrategy = strat_;
 }
 
-int
-Minuit::GetStrategy() const
+int Minuit::GetStrategy() const
 {
     return fStrategy;
 }
