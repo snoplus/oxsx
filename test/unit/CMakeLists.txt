@@ -28,6 +28,7 @@ set(tests
     HistogramGetMultiDSlice.cpp
     HistogramIOTest.cpp
     HistToolsTest.cpp
+    MinuitTest.cpp
     HistIntegral.cpp
     ObservableSetTest.cpp
     ParameterManagerTest.cpp

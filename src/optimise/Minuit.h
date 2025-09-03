@@ -21,6 +21,7 @@ class Minuit : public Optimiser
 public:
    Minuit() : fMaxCalls(0),
               fTolerance(0.1),
+              fStrategy(2),
               fMethod("Migrad"),
               fMinimiser(NULL),
               fMaximising(false) {}
@@ -52,6 +53,9 @@ public:
    void SetTolerance(double);
    double GetTolerance() const;
 
+   void SetStrategy(int);
+   int GetStrategy() const;
+  
    void SetMaximising(bool b_) { fMaximising = b_; }
    bool GetMaximising() const { return fMaximising; }
 
@@ -69,6 +73,7 @@ private:
 
    unsigned fMaxCalls;
    double fTolerance;
+   int fStrategy;
 
    std::string fMethod;
    ROOT::Minuit2::MnApplication *fMinimiser;
