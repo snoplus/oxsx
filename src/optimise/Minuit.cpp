@@ -178,12 +178,11 @@ Minuit::Optimise(TestStatistic *testStat_)
 
     // fix the requested parameters
     // first work out which minuit index this refers to
-    std::set<std::string>::iterator fixParIt = fFixedParameters.begin();
-    for (; fixParIt != fFixedParameters.end(); ++fixParIt)
+    for (const std::string& fixedPar : fFixedParameters)
     {
-        std::set<std::string>::iterator found = std::find(fParameterNames.begin(), fParameterNames.end(), *fixParIt);
+        std::set<std::string>::iterator found = std::find(fParameterNames.begin(), fParameterNames.end(), fixedPar);
         if (found == fParameterNames.end())
-              throw LogicError(Formatter() << "Unknown parameter to fix: " << *fixParIt);
+            throw LogicError(Formatter() << "Unknown parameter to fix: " << fixedPar);
         size_t pos = std::distance(fParameterNames.begin(), found);
         fMinimiser->Fix(pos);
     }
