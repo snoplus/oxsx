@@ -170,6 +170,7 @@ TEST_CASE("Minuit optimise returns FitResult")
 
 TEST_CASE("Minuit fit result getter returns last fit")
 {
+
     Minuit min;
     DummyStatistic stat;
 
@@ -238,3 +239,4 @@ TEST_CASE("Fixing Minuit parameters returns correct values")
     REQUIRE(best.at("a") == Catch::Approx(10.0));
     REQUIRE(best.at("b") == Catch::Approx(3.0).margin(1e-3));
 }
+
