@@ -57,12 +57,7 @@ SparseMatrix::operator()(const std::vector<double> &input_) const
     }
     catch (const std::logic_error &e_)
     {
-        throw DimensionError(Formatter() << "DenseMatrix::opeator() : Input v\
-ector ("
-                                         << input_.size() << ")"
-                                         << " wrong size for Matrix ("
-                                         << fNRows << "x" << fNCols
-                                         << " ) to act on");
+        throw DimensionError(Formatter() << "SparseMatrix::operator() : "<< e_.what());
     }
 
     // armadillo function for quick transfer to std::vector double
@@ -110,4 +105,5 @@ void SparseMatrix::SetComponents(const std::vector<long long unsigned int> &rowI
     locs.row(1) = arma::urowvec(colIndices_);
 
     fArmaMat = arma::sp_mat(locs, arma::vec(values_));
+    fArmaMat.resize(fNRows, fNCols); //Sets matrix back to its proper size incase it was shrunk
 }
