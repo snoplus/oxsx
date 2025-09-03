@@ -29,6 +29,7 @@ set(tests
     HistogramIOTest.cpp
     HistToolsTest.cpp
     MinuitTest.cpp
+    HistIntegral.cpp
     ObservableSetTest.cpp
     ParameterManagerTest.cpp
     ScaleFuncSystTest.cpp
