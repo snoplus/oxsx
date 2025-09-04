@@ -190,10 +190,28 @@ TEST_CASE("StatisticSum working with multiple BinnedNLLH instances")
         ParameterDict params = {{"signal", 4}, {"background", 12}};
         sum_lh.SetParameters(params);
 
-        const double lh_eval = sum_lh.Evaluate();
+        double lh_eval = sum_lh.Evaluate();
         const double lh_exp_b = n_back - 3. * (n_back / 3.) * log(n_back / 3.);
         const double lh_exp_sb = n_signal + n_back - 2. * (n_back / 3.) * log(n_back / 3.) - (n_signal + n_back / 3.) * log(n_signal + n_back / 3.);
         const double lh_exp_tot = lh_exp_b + lh_exp_sb;
         REQUIRE(lh_eval == lh_exp_tot);
+
+        double constr_mean_signal = 2;
+        double constr_uncert_signal = 0.4;
+        double constr_mean_bg = 10;
+        double constr_uncert_bg = 0.12;
+        double corr_factor = 0.1;
+        sum_lh.SetConstraint("signal", constr_mean_signal, constr_uncert_signal, "background", constr_mean_bg, constr_uncert_bg, corr_factor);
+
+        sum_lh.SetParameters(params);
+        sum_lh.RegisterFitComponents();
+
+        const double z1 = (n_signal - constr_mean_signal) * (n_signal - constr_mean_signal) / (2 * constr_uncert_signal * constr_uncert_signal);
+        const double z2 = (n_back - constr_mean_bg) * (n_back - constr_mean_bg) / (2 * constr_uncert_bg * constr_uncert_bg);
+        const double z12 = corr_factor * (n_signal - constr_mean_signal) * (n_back - constr_mean_bg) / (constr_uncert_signal * constr_uncert_bg);
+        double lh_constr = (z1 - z12 + z2) / (1. - corr_factor * corr_factor);
+
+        lh_eval = sum_lh.Evaluate();
+        REQUIRE(lh_eval == lh_exp_tot + lh_constr);
     }
 }
