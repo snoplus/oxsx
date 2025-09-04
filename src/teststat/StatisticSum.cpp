@@ -13,6 +13,7 @@ StatisticSum::Evaluate()
     double sum = 0;
     for (size_t i = 0; i < fStats.size(); i++)
         sum += fStats.at(i)->Evaluate();
+    sum += GetConstraintManager().Evaluate(GetParameters());
     return sum;
 }
 
