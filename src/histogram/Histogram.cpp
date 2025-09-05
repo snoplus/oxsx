@@ -35,6 +35,22 @@ Histogram::Integral() const
     return sum;
 }
 
+double
+Histogram::Integral(double min, double max)
+{
+  if(fNDims != 1){
+    std::cout << "This integral function only works for 1-D histograms" << std::endl;
+    throw DimensionError("Histogram::Integral",fNDims,1);
+  }
+  if(max <= min) return 0.0;
+  size_t low = FindBin(min);
+  size_t high = FindBin(max);
+  double sum = 0;
+  for (size_t i = low; i <= high; i++)
+    sum += fBinContents[i];
+  return sum;
+}
+
 void Histogram::Normalise()
 {
     double sum = Integral();
@@ -77,6 +93,16 @@ size_t
 Histogram::FindBin(const std::vector<double> &vals_) const
 {
     return fAxes.FindBin(vals_);
+}
+
+size_t
+Histogram::FindBin(double value)
+{
+  if(fNDims != 1){
+    std::cout << "This FindBin function only works for 1-D histograms" << std::endl;
+    throw DimensionError("Histogram::Integral",fNDims,1);
+  }
+  return fAxes.GetAxis(0).FindBin(value);
 }
 
 double
