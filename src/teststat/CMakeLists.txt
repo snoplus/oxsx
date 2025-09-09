@@ -2,6 +2,7 @@ set(teststat_src
     teststat/BinnedNLLH.cpp
     teststat/ChiSquare.cpp
     teststat/StatisticSum.cpp
+    teststat/TestStatistic.cpp
     PARENT_SCOPE
 )
 
