@@ -5,6 +5,7 @@
 #include <DistTools.h>
 #include <OXSXDataSet.h>
 #include <Shift.h>
+#include <Histogram.h>
 #include <iostream>
 
 TEST_CASE("Binned NLLH, 3 rates no systematics")
@@ -20,10 +21,10 @@ TEST_CASE("Binned NLLH, 3 rates no systematics")
   BinnedED pdf2("b", DistTools::ToHist(gaus2, axes));
   BinnedED pdf3("c", DistTools::ToHist(gaus3, axes));
 
-  size_t centralBin = pdf1.FindBin(std::vector<double>(1, 0));
-  double prob1 = pdf1.GetBinContent(centralBin);
-  double prob2 = pdf2.GetBinContent(centralBin);
-  double prob3 = pdf3.GetBinContent(centralBin);
+  const size_t centralBin = pdf1.FindBin(std::vector<double>(1, 0));
+  const double prob1 = pdf1.GetBinContent(centralBin);
+  const double prob2 = pdf2.GetBinContent(centralBin);
+  const double prob3 = pdf3.GetBinContent(centralBin);
 
   std::vector<std::string> observable;
   observable.push_back("obs0");
@@ -93,6 +94,26 @@ TEST_CASE("Binned NLLH, 3 rates no systematics")
     double sumLogProb = -log(prob1 + prob2 + prob3);
     double sumNorm = 3;
     double constraint = 2;
+
+    ParameterDict params;
+    params["a"] = 1;
+    params["b"] = 1;
+    params["c"] = 1;
+    lh.SetParameters(params);
+    REQUIRE_THAT(lh.Evaluate(), Catch::Matchers::WithinAbs(sumNorm + sumLogProb + constraint, 0.0001));
+  }
+  SECTION("Correct Probability with shape constraint")
+  {
+    const BinAxis ax("c", -1.0, 9., 5); // lattice vals: 0, 2, 4, 6, 8
+    AxisCollection axs;
+    axs.AddAxis(ax);
+    Histogram hist(axs);
+    for (double x=0; x<10; x+=2) { hist.Fill(x, x*x); } // y=x^2 constraint, but will be linearly-interpolating
+
+    lh.SetConstraint("c", hist);
+    const double sumLogProb = -log(prob1 + prob2 + prob3);
+    constexpr double sumNorm = 3;
+    constexpr double constraint = 0.5*(0.+2.*2.);
 
     ParameterDict params;
     params["a"] = 1;

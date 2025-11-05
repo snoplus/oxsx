@@ -199,7 +199,8 @@ void AxisCollection::GetBinCentres(size_t bin_, std::vector<double> &output_) co
                                         << " nBins = " << fNBins);
 
     if (output_.size() != fNDimensions)
-        throw DimensionError("GetBinEdges: Input return vector.size() != fNDims ");
+        throw DimensionError(Formatter() << "GetBinCentres: Input return vector.size() != fNDims, " 
+                                         << output_.size() << " != " << fNDimensions);
 
     for (size_t i = 0; i < fNDimensions; i++)
     {

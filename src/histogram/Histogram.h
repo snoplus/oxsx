@@ -18,7 +18,7 @@ public:
    Histogram(const AxisCollection &axes_);
 
    double Integral() const;
-   double Integral(double,double);//calculates the Bounded Integral for 1-D Histograms only
+   double Integral(double,double) const;//calculates the Bounded Integral for 1-D Histograms only
    void Normalise();
    void Scale(double);
 
@@ -27,7 +27,7 @@ public:
    void Fill(double val_, double weight_ = 1);
 
    size_t FindBin(const std::vector<double> &vals_) const;
-   size_t FindBin(double);//only works for 1-D histograms
+   size_t FindBin(double) const;//only works for 1-D histograms
   
    std::vector<size_t> UnpackIndices(size_t bin_) const;
    size_t FlattenIndices(const std::vector<size_t> &indices_) const;
@@ -57,6 +57,10 @@ public:
    double GetBinHighEdge(size_t bin_, size_t dim_) const;
    double GetBinCentre(size_t bin_, size_t dim_) const;
 
+   void GetBinLowEdges(size_t bin_, std::vector<double>& output) const;
+   void GetBinHighEdges(size_t bin_, std::vector<double>& output) const;
+   void GetBinCentres(size_t bin_, std::vector<double>& output) const;
+
    void Add(const Histogram &, double weight = 1);
    void Multiply(const Histogram &);
    void Divide(const Histogram &);
@@ -64,6 +68,9 @@ public:
    std::vector<std::string> GetAxisNames() const;
    size_t GetAxisIndex(const std::string &name_) const;
    void AddPadding(double padding_ = std::numeric_limits<double>::min());
+
+   std::vector<double> GetLatticePointValues(const std::vector<double> &vals_,
+                                             std::vector<std::vector<double>>& latt_locs) const;
 
 private:
    AxisCollection fAxes;

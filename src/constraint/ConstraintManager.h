@@ -10,6 +10,8 @@
 #include <QuadraticConstraint.h>
 #include <BivariateQuadraticConstraint.h>
 #include <RatioConstraint.h>
+#include <ShapeInterpConstraint.h>
+#include <Histogram.h>
 #include <ParameterDict.h>
 
 class ConstraintManager
@@ -26,6 +28,8 @@ public:
                        const std::string &paramName_2, double mean_2, double sigma_2, double correlation);
     void SetConstraint(const std::string &paramName_1, const std::string &paramName_2,
                        double ratiomean_, double ratiosigma_);
+    // Add shape constraint
+    void SetConstraint(const std::string& label, const Histogram& hist);
     // Evaluate sum of all constraints
     double Evaluate(const ParameterDict &params) const;
     //
@@ -40,6 +44,8 @@ private:
     std::map<std::string, bool> fUseIndConstraints;
     // Stores ratio constraints between pairs of fit parameters
     std::map<std::pair<std::string, std::string>, RatioConstraint> fConstraintsRatio;
+    // Stores any shape constraints, linearly interpolating
+    std::map<std::string, ShapeInterpConstraint> fShapeInterpConstraints;
     //
     bool fDebugMode;
 };

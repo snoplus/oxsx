@@ -94,6 +94,11 @@ void TestStatistic::SetConstraint(const std::string &paramName_1, const std::str
     fConstraintManager.SetConstraint(paramName_1, paramName_2, ratiomean_, ratiosigma_);
 }
 
+void TestStatistic::SetConstraint(const std::string& label, const Histogram& hist)
+{
+    fConstraintManager.SetConstraint(label, hist);
+}
+
 void TestStatistic::SetDataSet(DataSet *dataSet_)
 {
     fDataSet = dataSet_;
