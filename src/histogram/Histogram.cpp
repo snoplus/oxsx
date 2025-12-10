@@ -6,6 +6,7 @@
 #include <iostream>
 #include <set>
 #include <algorithm>
+#include <bitset>
 
 Histogram::Histogram(const AxisCollection &axes_)
 {
@@ -36,7 +37,7 @@ Histogram::Integral() const
 }
 
 double
-Histogram::Integral(double min, double max)
+Histogram::Integral(double min, double max) const
 {
   if(fNDims != 1){
     std::cout << "This integral function only works for 1-D histograms" << std::endl;
@@ -96,7 +97,7 @@ Histogram::FindBin(const std::vector<double> &vals_) const
 }
 
 size_t
-Histogram::FindBin(double value)
+Histogram::FindBin(double value) const
 {
   if(fNDims != 1){
     std::cout << "This FindBin function only works for 1-D histograms" << std::endl;
@@ -413,6 +414,21 @@ Histogram::GetBinCentre(size_t bin_, size_t index_) const
     return fAxes.GetBinCentre(bin_, index_);
 }
 
+void Histogram::GetBinLowEdges(size_t bin_, std::vector<double>& output) const
+{
+    fAxes.GetBinLowEdges(bin_, output);
+}
+
+void Histogram::GetBinHighEdges(size_t bin_, std::vector<double>& output) const
+{
+    fAxes.GetBinHighEdges(bin_, output);
+}
+
+void Histogram::GetBinCentres(size_t bin_, std::vector<double>& output) const
+{
+    fAxes.GetBinCentres(bin_, output);
+}
+
 void Histogram::Add(const Histogram &other_, double weight_)
 {
     if (other_.GetAxes() != GetAxes())
@@ -463,4 +479,57 @@ void Histogram::AddPadding(double padding_)
             newBinContents.push_back(fBinContents[i]);
     }
     fBinContents = newBinContents;
+}
+
+std::vector<double>
+Histogram::GetLatticePointValues(const std::vector<double>& vals, std::vector<std::vector<double>>& latt_locs) const
+{
+    /*
+     * Given a point in the Histogram, determine the locations and values of the bin centres
+     * which surround the point in space.
+     * Direct output are the bin centre values, ordered "binary representation-wise":
+     * for each axis, a 0 corresponds to lowest point, 1 highest,
+     * so e.g. in a 3D histogram point (1,0,1) --> index 5 in list.
+     * Indirect output latt_locs are the positions of those bin centres, ordered the same way.
+     * 
+     * Note: an (arbitrary) maximum maximum allowable dimension has been to 20, so that we
+     * can take advantage of the very nice bitset class. If this becomes a problem,
+     * feel free to change (or modify the algorithm to do without it).
+     */
+    // Which bin is the sample point in? That gives us somewhere to start
+    const size_t vals_bin = FindBin(vals);
+    const std::vector<size_t> vals_bin_idxs = UnpackIndices(vals_bin);
+    // Where in that bin is the sample point relative to the centre?
+    std::vector<double> vals_bin_centre(fNDims);
+    GetBinCentres(vals_bin, vals_bin_centre);
+
+    std::vector<bool> vals_is_larger; 
+    for (size_t dim=0; dim<fNDims; dim++) { vals_is_larger.push_back(vals.at(dim) >= vals_bin_centre.at(dim)); }
+    // Obtain information about surrounding 2^N lattice points
+    const size_t N_L_POINTS = 1 << fNDims;
+    constexpr size_t MAX_DIMS = 20; // If you've got 20 dimensions in your histogram...tough luck! (arbitrary large number)
+    if (fNDims > MAX_DIMS) { throw DimensionError("Histogram::GetLatticePointValues(): Dimensionality of Histogram must be less than 20."); }
+
+    std::vector<double> latt_point_vals;
+    for (size_t latt_idx=0; latt_idx<N_L_POINTS; latt_idx++)
+    {
+        const std::bitset<MAX_DIMS> latt_idx_bits(latt_idx); // Convert lattice index into binary representation
+        std::vector<size_t> latt_ax_bins;
+        for (size_t dim=0; dim<fNDims; dim++)
+        {
+            // Determine bin indices for lattice point along each axis
+            // Turns out this magic formula works!
+            const size_t latt_ax_bin = vals_bin_idxs.at(dim) + latt_idx_bits.test(dim) + vals_is_larger.at(dim) - 1;
+            latt_ax_bins.push_back(latt_ax_bin);
+        }
+        // add lattice point position & value to vectors
+        const size_t latt_point_bin = FlattenIndices(latt_ax_bins);
+        const double latt_point_binval = GetBinContent(latt_point_bin);
+        latt_point_vals.push_back(latt_point_binval);
+        std::vector<double> latt_point_loc(fNDims);
+        GetBinCentres(latt_point_bin, latt_point_loc);
+        latt_locs.push_back(latt_point_loc);
+    }
+
+    return latt_point_vals;
 }
