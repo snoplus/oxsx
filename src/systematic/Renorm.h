@@ -1,5 +1,6 @@
 /****************************************************************/
-/* A systematic that applies a renormalisation                  */
+/* A systematic that applies a renormalisation.                 */
+/* Only use on PDFs with NormFittingStatus == FALSE             */
 /****************************************************************/
 #ifndef __OXSX_RENORM__
 #define __OXSX_RENORM__
