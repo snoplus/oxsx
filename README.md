@@ -43,8 +43,10 @@ Follow the installation instructions for each of the above using either the defa
 
 <h2> Alternative Installation Instructions Using Singularity/Apptainer & CMake </h2>
 OXSX now comes with the ability to compile the repository via the build system CMake, 
-and the definition file needed to create a container which will contain all of the necessary 
-external repositories.
+and the definition file needed to create a container which will contain OXO and all of the necessary 
+external repositories. Currently, you need a system you have sudo rights to for building the 
+container yourself; you can always build the container locally and then copy the SIF file
+to the remote machine you are likely working on (presuming you don't have sudo rights there).
 
 1. Clone this repository with `git clone https://github.com/snoplus/oxsx.git`
 
@@ -52,22 +54,28 @@ external repositories.
 
 3. Navigate into the `oxsx` repository, and create an OXSX container `oxsx_container.sif` with the following command (this is for Apptainer; very similar commands for what follows are used for Docker/Singularity):
 ```
-apptainer build oxsx_container.sif oxsx_container.def
+sudo apptainer build oxsx_container.sif oxsx_container.def
 ```
 
-4. Open the container:
+This will build OXO through CMake, and also build all of the required external repositories; this repo will be located inside the container at `/oxsx/`. A build sub-directory, `cmake-build`, is also made as part of the build process. This build procedure generates the `oxsx` library, compiles all of the code in `example/` and builds all of the unit tests within `test/`. The unit tests are run at the end of the container build process, to demonstrate the conatiner's validity.
+
+You can open the container with a command like:
 ```
 apptainer shell oxsx_container.sif
 ```
 
-5. Build the repository, using CMake:
+This default build of OXO is fine if you plan on simply running code that uses OXO. However, if you 
+would like to make active changes to OXO, you should have a clone of the repo outside the container, and when opening the container bind your oxsx directory to `/oxsx/` in the container. You can compile you own modified within the container by using CMake:
 ```
-cmake -S . -B cmake-build-debug
-cmake --build cmake-build-debug
+cmake -S . -B cmake-build
+cmake --build cmake-build
 ```
-This will create a new build directory, `cmake-build-debug`, as part of the build process. Feel free to use a different name, such as `build` - though that may clash with any existing `build` directory if you've also compiled OXSX with Sconscript. This build procedure generates the `oxsx` library, compiles all of the code in `example/` and builds all of the unit tests within `test/`.
 
-6. Test the build was successful with `./cmake-build-debug/test/unit/RunUnits`
+You can run the unit tests (which get compiled as part of the CMake build process) with the command:
+```
+./cmake-build/test/unit/RunUnits
+```
+
 
 <h2> Compiling Your Own Scripts</h2>
 
