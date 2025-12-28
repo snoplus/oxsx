@@ -1,12 +1,21 @@
 Bootstrap: docker
-From: snoplus/rat-container:main
+Registry: ghcr.io
+From: snoplus/rat:8.0.3-container
 
 
 %post
-	apt-get install -y libopenblas-dev libhdf5-cpp-103 libarmadillo9 libarmadillo-dev
+	dnf install -y openblas-devel hdf5 armadillo armadillo-devel
 	
-	cd /home/software/
+	cd /
 	git clone https://github.com/catchorg/Catch2.git
 	cd Catch2/
 	cmake -B build -S . -DBUILD_TESTING=OFF
 	cmake --build build/ --target install
+
+	cd /
+	git clone https://github.com/snoplus/oxsx.git
+	cd oxsx/
+	source entrypoint.sh
+	cmake -S . -B cmake-build
+	cmake --build cmake-build/
+	./cmake-build/test/unit/RunUnits
