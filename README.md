@@ -88,10 +88,10 @@ export APPTAINER_DOCKER_PASSWORD=<GitHub PAT>
 You can then pull the container with:
 
 ```
-apptainer pull oras://ghcr.io/snoplus/oxsx/oxsx_container:<tag>
+apptainer pull oras://ghcr.io/snoplus/oxsx:<tag>
 ```
 
-Replace <tag> with the desired OXSX tag, eg 1.4.1. Not all tags are available as containers. See [here](https://github.com/snoplus/oxsx/pkgs/container/oxsx%2Foxsx_container/versions) for the available container tags. Note: the container is stored as an OCI artifact and must be pulled using the ```oras:// prefix```.
+Replace <tag> with the desired OXSX tag, eg 1.4.1. Not all tags are available as containers. See [here](https://github.com/snoplus/oxsx/pkgs/container/oxsx) for the available container tags. Note: the container is stored as an OCI artifact and must be pulled using the ```oras:// prefix```.
 
 You can open the container with a command like:
 
