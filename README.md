@@ -1,7 +1,9 @@
 <h1> OXSX </h1>
+
 Signal Extraction framework for the SNO+ experiment
 
 <h2> Dependencies </h2>
+
 1. GCC compiler capable of compiling C++ code to the C++17 standard
 
 2. [Armadillo](http://arma.sourceforge.net/) is a linear algebra package used for quick matrix multiplication
@@ -10,7 +12,7 @@ Signal Extraction framework for the SNO+ experiment
 
 4. [SCons](http://www.scons.org/) Is used for the build, also a dependency for RAT
 
-5. [HDF5](https://www.hdfgroup.org/HDF5/release/obtain5.html) Should be configured to install with c++ support `./configure --enable-cxx && make && make install`
+5. [HDF5](https://www.hdfgroup.org/HDF5/release/obtain5.html) Should be configured to install with C++ support `./configure --enable-cxx && make && make install`
 
 6. [ROOT](https://root.cern.ch/downloading-root) Should be installed with Minuit2 enabled `./configure --enable-minuit2`
 
@@ -25,6 +27,7 @@ Signal Extraction framework for the SNO+ experiment
    (Of course, if you have permissions to write to default locations you don't necessarily need to invoke the `DCMAKE_INSTALL_PREFIX` option)
 
 <h2>Installation Instructions </h2>
+
 Follow the installation instructions for each of the above using either the default install location or a different directory if you would prefer. Be careful to start the install with a clean environment.
 
 Currently there are two build systems supported: CMake and SCons. It is recommended you use CMake as we will likely stop supporting SCons in the future.
@@ -67,7 +70,8 @@ Currently there are two build systems supported: CMake and SCons. It is recommen
 
 4. Test the build was sucessful with `./test/RunUnits`
 
-<h2> Alternative Installation Instructions Using the Container </h2>
+<h2> Alternative Installation Instructions using the Container </h2>
+
 There is a container that includes OXSX and all the required dependencies. It is stored on the GitHub Container Registry (GHCR) attached to the [GitHub OXSX repository](https://github.com/snoplus/oxsx).
 
 <h3>Using the Prebuilt Image</h3>
@@ -91,7 +95,7 @@ You can then pull the container with:
 apptainer pull oras://ghcr.io/snoplus/oxsx:<tag>
 ```
 
-Replace <tag> with the desired OXSX tag, eg 1.4.1. Not all tags are available as containers. See [here](https://github.com/snoplus/oxsx/pkgs/container/oxsx) for the available container tags. Note: the container is stored as an OCI artifact and must be pulled using the ```oras:// prefix```.
+Replace <tag> with the desired OXSX tag, eg. 1.4.1. Not all tags are available as containers; see [here](https://github.com/snoplus/oxsx/pkgs/container/oxsx) for the available container tags. Note: the container is stored as an OCI artifact and must be pulled using the ```oras://``` prefix.
 
 You can open the container with a command like:
 
@@ -99,7 +103,7 @@ You can open the container with a command like:
 apptainer shell oxsx_container.sif
 ```
 
-The default build of OXO inside the container is fine if you plan on simply running code that uses OXO. However, if you would like to make active changes to OXO, you should have a clone of the repo outside the container, and when opening the container bind your oxsx directory to `/oxsx/` in the container. You can compile your own modified within the container by using CMake:
+The default build of OXO inside the container is fine if you plan on simply running code that uses OXO. However, if you would like to make active changes to OXO, you should have a clone of the repo outside the container, and when opening the container bind your oxsx directory to `/oxsx/` in the container. You can compile your own modified version within the container by using CMake (similarly to building outside the container):
 
 ```
 cmake -S . -B cmake-build
@@ -139,6 +143,7 @@ scons auto-generates a script that compiles and links your c++ against the sourc
 Look in `<oxsx root>/examples` for help getting started
 
 <h2> Creating ntuples </h2>
+
 One way to read in data is using a ROOT ntuple. If you are looking at SNO+ data, you probably have a flat root tree that can be easily pruned down into this format with only the branches you are interested in.
 
 To create ntuples for oxsx run `./util/prune_flat_tree <path_to_file_to_convert> -treename <name_of_the_tree> <branch1> <branch2> <branch3> -newtreename <name_of_your_tree> -outfile <name_of_your_file> -nevents <number_of_events>`
