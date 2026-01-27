@@ -95,7 +95,7 @@ You can then pull the container with:
 apptainer pull oras://ghcr.io/snoplus/oxsx:<tag>
 ```
 
-Replace <tag> with the desired OXSX tag, eg. 1.4.0 . Not all tags are available as containers; see [here](https://github.com/snoplus/oxsx/pkgs/container/oxsx) for the available container tags. Note: the container is stored as an OCI artifact and must be pulled using the ```oras://``` prefix.
+Replace <tag> with the desired OXSX tag, eg. 1.4.0 . Not all tags are available as containers; see [here](https://github.com/snoplus/oxsx/pkgs/container/oxsx) for the available container tags. If you do not have permission to view that page, you will need to be granted access on the GitHub repo by one of the admins. Note: the container is stored as an OCI artifact and must be pulled using the ```oras://``` prefix.
 
 You can open the container with a command like:
 
