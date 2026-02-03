@@ -22,4 +22,5 @@ config/userconfig.ini
 bin/*.sh
 gsl/
 cmake-build-debug/
+cmake-build/
 *.sif
