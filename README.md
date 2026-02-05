@@ -1,8 +1,8 @@
-<h1> OXSX </h1>
+<h1>OXSX</h1>
 
 Signal Extraction framework for the SNO+ experiment
 
-<h2> Dependencies </h2>
+<h2>Dependencies</h2>
 
 1. GCC compiler capable of compiling C++ code to the C++17 standard
 
@@ -12,7 +12,7 @@ Signal Extraction framework for the SNO+ experiment
 
 4. [SCons](http://www.scons.org/) Is used for the build, also a dependency for RAT
 
-5. [HDF5](https://www.hdfgroup.org/HDF5/release/obtain5.html) Should be configured to install with C++ support `./configure --enable-cxx && make && make install`
+5. [HDF5](https://github.com/HDFGroup/hdf5) Should be configured to install with C++ support `./configure --enable-cxx && make && make install`
 
 6. [ROOT](https://root.cern.ch/downloading-root) Should be installed with Minuit2 enabled `./configure --enable-minuit2`
 
@@ -70,7 +70,7 @@ Currently there are two build systems supported: CMake and SCons. It is recommen
 
 4. Test the build was sucessful with `./test/RunUnits`
 
-<h2> Alternative Installation Instructions using the Container </h2>
+<h2>Alternative Installation Instructions using the Container</h2>
 
 There is a container that includes OXSX and all the required dependencies. It is stored on the GitHub Container Registry (GHCR) attached to the [GitHub OXSX repository](https://github.com/snoplus/oxsx).
 
@@ -95,7 +95,9 @@ You can then pull the container with:
 apptainer pull oras://ghcr.io/snoplus/oxsx:<tag>
 ```
 
-Replace <tag> with the desired OXSX tag, eg. 1.4.0 . Not all tags are available as containers; see [here](https://github.com/snoplus/oxsx/pkgs/container/oxsx) for the available container tags. If you do not have permission to view that page, you will need to be granted access on the GitHub repo by one of the admins. Note: the container is stored as an OCI artifact and must be pulled using the ```oras://``` prefix.
+Replace <tag> with the desired OXSX tag, eg. 1.4.0 . Not all tags are available as containers; see [here](https://github.com/snoplus/oxsx/pkgs/container/oxsx) for the available container tags. If you do not have permission to view that page, you will need to be granted access on the GitHub repo by one of the admins. There is a container tag `preAlma9`, which is an older version of the container that includes all the required dependencies but not `OXO` itself, and is built off of the old RAT container. As the old RAT container was built on an older Ubuntu version (20.0), this may be useful for building on older operating systems (eg. SL7).
+
+Note: the container is stored as an OCI artifact and must be pulled using the ```oras://``` prefix.
 
 You can open the container with a command like:
 
