@@ -7,10 +7,13 @@
 #define __OXSX_CONSTRAINT_MANAGER__
 #include <map>
 #include <string>
+#include <iostream>
+
 #include <QuadraticConstraint.h>
 #include <BivariateQuadraticConstraint.h>
 #include <RatioConstraint.h>
 #include <ShapeInterpConstraint.h>
+#include <ShapeConstraint.h>
 #include <Histogram.h>
 #include <ParameterDict.h>
 
@@ -30,6 +33,8 @@ public:
                        double ratiomean_, double ratiosigma_);
     // Add shape constraint
     void SetConstraint(const std::string& label, const Histogram& hist);
+     // Add analysitcal shape constraint
+    void SetConstraint(const ParameterDict &params_, ShapeFunc func_, double mean_, double sigma_);
     // Evaluate sum of all constraints
     double Evaluate(const ParameterDict &params) const;
     //
@@ -46,6 +51,8 @@ private:
     std::map<std::pair<std::string, std::string>, RatioConstraint> fConstraintsRatio;
     // Stores any shape constraints, linearly interpolating
     std::map<std::string, ShapeInterpConstraint> fShapeInterpConstraints;
+    // Stores any analytical shape constraints
+    std::map<ParameterDict, ShapeConstraint> fShapeConstraints;
     //
     bool fDebugMode;
 };
