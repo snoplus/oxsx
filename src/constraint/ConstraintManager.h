@@ -1,8 +1,8 @@
-/***********************************************************************************************/
-/* A class to store a set of QuadraticConstraint and BivariateQuadraticConstraint objects,     */
-/* associated with fit parameters.                                                             */
-/*                                                                                             */
-/***********************************************************************************************/
+/***********************************************************/
+/* A class to store a set QuadraticConstraint objects,     */
+/* associated with fit parameters.                         */
+/*                                                         */
+/***********************************************************/
 #ifndef __OXSX_CONSTRAINT_MANAGER__
 #define __OXSX_CONSTRAINT_MANAGER__
 #include <map>

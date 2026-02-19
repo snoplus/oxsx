@@ -11,8 +11,8 @@
 
 /*
  * Firstly, create a typedef for a general function that
- * takes in parameters + point in an event distribution's space, and returns
- * a value: this is a "shape function". Much like for the Shape Sytematic
+ * takes in parameters and returns a value: this is a "shape function".
+ * Much like for the Shape Sytematic
  */
 typedef std::function<double(const ParameterDict & )> ShapeFunc;
 
