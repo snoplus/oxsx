@@ -1,5 +1,5 @@
 /***********************************************************/
-/* A class to store a set QuadraticConstraint objects,     */
+/* A class to store a set of Constraint objects,           */
 /* associated with fit parameters.                         */
 /*                                                         */
 /***********************************************************/
