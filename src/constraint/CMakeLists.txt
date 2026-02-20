@@ -9,6 +9,7 @@ set(constraint_headers
     ConstraintManager.h
     QuadraticConstraint.h
     RatioConstraint.h
+    FractionalConstraint.h
     ShapeInterpConstraint.h
 )
 
