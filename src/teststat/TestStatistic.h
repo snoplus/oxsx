@@ -46,6 +46,7 @@ public:
     void SetConstraint(const std::string &paramName_, double mean_, double sigma_lo_, double sigma_hi_);
     void SetConstraint(const std::string &paramName_1, double mean_1, double sigma_1, const std::string &paramName_2, double mean_2, double sigma_2, double correlation);
     void SetConstraint(const std::string &paramName_1, const std::string &paramName_2, double ratiomean_, double ratiosigma_);
+    void SetConstraint(const ParameterDict &params_, ShapeFunc func_, double mean_, double sigma_);
     void SetConstraint(const std::string& label, const Histogram& hist);
 
     void SetDataSet(DataSet *);
