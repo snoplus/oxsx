@@ -807,6 +807,37 @@ some amount of correlation between them (correlation must be < 1 though).
 
 As expected, the penalty term can be evaluated with the `Evaluate(x1, x2)` method.
 
+## 8.3. RatioConstraint
+
+The `RatioConstraint` class applies a penalty based on the ratio of two parameter 
+values. The penalty is calculated as:
+
+```
+f(x1, x2) = ( (x1/x2) - mu)^2/(2*sigma^2)
+```
+
+where `x1` and `x2` are the current parameter values, and mu and sigma are
+the mean and width of the quadratic constraint around the ratio.
+
+The constraint is set with the `SetConstraint(paramname1, paramname2, ratio_mean, ratio_width)`
+method, and the penalty term is evaluated with `Evaluate(x1, x2)`.
+
+## 8.4 FractionalConstraint
+
+The `FractionalConstraint` class applies a penalty based on the fractional difference
+between two parameter values. The penalty is calculated as:
+
+```
+f(x1, x2) = ( ((x1-x2)/(x1+x2)) - mu)^2/(2*sigma^2)
+```
+
+where `x1` and `x2` are the current parameter values, and mu and sigma are
+the mean and width of the quadratic constraint around the fractional difference.
+
+The constraint is set with the `SetFracConstraint(paramname1, paramname2, frac_mean, frac_width)`
+method (note the change in name compared to other constraint types), and the penalty
+term is evaluated with `Evaluate(x1, x2)`.
+
 # 9. Parameter Wrangling
 
 We've seen that a large fraction of classes within OXO inherit from `FitComponent`,

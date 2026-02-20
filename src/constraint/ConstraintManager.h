@@ -10,6 +10,7 @@
 #include <QuadraticConstraint.h>
 #include <BivariateQuadraticConstraint.h>
 #include <RatioConstraint.h>
+#include <FractionalConstraint.h>
 #include <ShapeInterpConstraint.h>
 #include <Histogram.h>
 #include <ParameterDict.h>
@@ -26,10 +27,14 @@ public:
     // Add correlated constraint between two parameters
     void SetConstraint(const std::string &paramName_1, double mean_1, double sigma_1,
                        const std::string &paramName_2, double mean_2, double sigma_2, double correlation);
+    // Add ratio constraint between two parameters
     void SetConstraint(const std::string &paramName_1, const std::string &paramName_2,
                        double ratiomean_, double ratiosigma_);
     // Add shape constraint
     void SetConstraint(const std::string& label, const Histogram& hist);
+    // Add fractional diff constraint between two parameters
+    void SetFracConstraint(const std::string &paramName_1, const std::string &paramName_2,
+                           double fracmean_, double fracsigma_);
     // Evaluate sum of all constraints
     double Evaluate(const ParameterDict &params) const;
     //
@@ -44,6 +49,8 @@ private:
     std::map<std::string, bool> fUseIndConstraints;
     // Stores ratio constraints between pairs of fit parameters
     std::map<std::pair<std::string, std::string>, RatioConstraint> fConstraintsRatio;
+    // Stores fractional constraints between pairs of fit parameters
+    std::map<std::pair<std::string, std::string>, FractionalConstraint> fConstraintsFrac;
     // Stores any shape constraints, linearly interpolating
     std::map<std::string, ShapeInterpConstraint> fShapeInterpConstraints;
     //

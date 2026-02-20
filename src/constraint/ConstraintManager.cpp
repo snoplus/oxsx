@@ -119,6 +119,14 @@ void ConstraintManager::SetConstraint(const std::string& label, const Histogram&
     fShapeInterpConstraints[label] = ShapeInterpConstraint(hist);
 }
 
+void ConstraintManager::SetFracConstraint(const std::string &paramName_1, const std::string &paramName_2, double fracmean_, double fracsigma_)
+{
+    /*
+     * Add/update a fractional difference constraint for a pair of parameters; we don't need to worry about other constraints
+     */
+    fConstraintsFrac[std::pair<std::string, std::string>(paramName_1, paramName_2)] = FractionalConstraint(fracmean_, fracsigma_);
+}
+
 double ConstraintManager::Evaluate(const ParameterDict &params) const
 {
     /*
@@ -157,6 +165,17 @@ double ConstraintManager::Evaluate(const ParameterDict &params) const
         if (fDebugMode)
         {
             std::cout << "Ratio constraint (" << param_pair.first << ", " << param_pair.second << "): Evaluate() = " << c << std::endl;
+        }
+    }
+    // ...and then sum over the fractional constraints...
+    for (const auto &c_pair : fConstraintsFrac)
+    {
+        const std::pair<std::string, std::string> param_pair = c_pair.first;
+        const double c = c_pair.second.Evaluate(params.at(param_pair.first), params.at(param_pair.second));
+        total += c;
+        if (fDebugMode)
+        {
+            std::cout << "Fractional constraint (" << param_pair.first << ", " << param_pair.second << "): Evaluate() = " << c << std::endl;
         }
     }
     // ...and finally sum over the shape constraints
