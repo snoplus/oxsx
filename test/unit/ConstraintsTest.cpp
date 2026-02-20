@@ -123,3 +123,46 @@ TEST_CASE("ShapeInterpConstraints")
         REQUIRE(con.Evaluate(params) == Catch::Approx(4.5));
     }
 }
+
+// Set up analytical function (a-b) / (a+b)
+double frac_func(const ParameterDict &params)
+{
+    double val = (params.at("a") - params.at("b")) / (params.at("a")+params.at("b"));
+    return val;
+}
+
+// Set up analytical function, here mimicking a specific use case for the antinu 
+// analysis. We want a constraint on the fractional difference between the total
+// U and Th geonu rates. There are two fixed parameters for each of U and Th
+// which store the nominal rates in the PPO and bisMSB phases. A third parameter
+// for each then the scales the two parameters together. So the total rate for
+// each is scaling*(nom_bismsb + nom_ppo), and we want a constraint on the
+// fractional difference between those. 
+double scale_frac_func(const ParameterDict &params)
+{
+    double total_rate1 = params.at("c") * (params.at("d") + params.at("e"));
+    double total_rate2 = params.at("f") * (params.at("g") + params.at("h"));
+
+    double val = ( total_rate1 - total_rate2 ) / ( total_rate1 + total_rate2 );
+    return val;
+}
+
+TEST_CASE("ShapeConstraints")
+{
+    SECTION("Simple 1D analytical constraint")
+    {
+        ConstraintManager c_man;
+        ParameterDict params = {{"a", 3}, {"b", 1}};
+        c_man.SetConstraint(params, frac_func, 1, 0.5);
+        REQUIRE(c_man.Evaluate(params) == Catch::Approx(0.5));
+        params["c"] = 2;
+        params["d"] = 3;
+        params["e"] = 1;
+        params["f"] = 3;
+        params["g"] = 1;
+        params["h"] = 1./3.;
+        c_man.SetConstraint(params, scale_frac_func, 4./3., 0.5);
+        REQUIRE(c_man.Evaluate(params) == Catch::Approx( 0.5 + 2 ));
+    }
+
+}

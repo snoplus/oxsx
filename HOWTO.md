@@ -807,6 +807,22 @@ some amount of correlation between them (correlation must be < 1 though).
 
 As expected, the penalty term can be evaluated with the `Evaluate(x1, x2)` method.
 
+## 8.5 ShapeConstraint
+
+The `ShapeConstraint` class applies a penalty based on the value returned by an
+arbitrary function of fit parameters. The penalty is calculated as:
+
+```
+f(x1, x2) = (g(x1, x2) - mu)^2/(2*sigma^2)
+```
+
+where `g(x1, x2)` is the arbitrary function, supplied by the user.
+
+The constraint is set with the `SetConstraint(ParameterDict, ShapeFunc, mean, width)`
+method and the penalty term is evaluated with `Evaluate(ParameterDict)`. The `ShapeFunc`
+is defined similarly to `ShapeFunction` for shape systematics, as any function
+that takes in a `ParameterDict` and returns a double.
+
 # 9. Parameter Wrangling
 
 We've seen that a large fraction of classes within OXO inherit from `FitComponent`,

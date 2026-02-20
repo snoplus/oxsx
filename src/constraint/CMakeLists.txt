@@ -1,5 +1,6 @@
 set(constraint_src
     constraint/ConstraintManager.cpp
+    constraint/ShapeConstraint.cpp
     constraint/ShapeInterpConstraint.cpp
     PARENT_SCOPE
 )
@@ -9,6 +10,7 @@ set(constraint_headers
     ConstraintManager.h
     QuadraticConstraint.h
     RatioConstraint.h
+    ShapeConstraint.h
     ShapeInterpConstraint.h
 )
 
