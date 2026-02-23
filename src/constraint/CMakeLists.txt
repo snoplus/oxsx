@@ -8,6 +8,7 @@ set(constraint_src
 set(constraint_headers
     BivariateQuadraticConstraint.h
     ConstraintManager.h
+    FractionalConstraint.h
     QuadraticConstraint.h
     RatioConstraint.h
     ShapeConstraint.h

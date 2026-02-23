@@ -50,6 +50,14 @@ TEST_CASE("ConstraintManager")
     {
         REQUIRE(c_man.Evaluate(params) == Catch::Approx(0.5 + 2. + (25. / 2. + 1. / 200. - 0.8 * 5 * (-1. / 10.)) / (1. - 0.8 * 0.8) + (25. / 2.)));
     }
+    // Now add a fractional constraint
+    c_man.SetFracConstraint("e", "f", 1.0, 0.5);
+    params["e"] = 3;
+    params["f"] = 1;
+    SECTION("Fractional constraint Evaluation")
+    {
+        REQUIRE(c_man.Evaluate(params) == Catch::Approx(0.5 + 2. + (25. / 2. + 1. / 200. - 0.8 * 5 * (-1. / 10.)) / (1. - 0.8 * 0.8) + (25. / 2.) + (0.25 / 0.50)));
+    }
     // Now add a shape constraint
     const BinAxis ax("x", -0.5, 9.5, 10);
     AxisCollection axs;
@@ -60,7 +68,7 @@ TEST_CASE("ConstraintManager")
     params["x"] = 4.99;
     SECTION("Shape constraint Evaluation")
     {
-        REQUIRE(c_man.Evaluate(params) == Catch::Approx(0.5 + 2. + (25. / 2. + 1. / 200. - 0.8 * 5 * (-1. / 10.)) / (1. - 0.8 * 0.8) + (25. / 2.) + 16.0 + (4.99-4.0)*(25.-16.)/(5.-4.)));
+        REQUIRE(c_man.Evaluate(params) == Catch::Approx(0.5 + 2. + (25. / 2. + 1. / 200. - 0.8 * 5 * (-1. / 10.)) / (1. - 0.8 * 0.8) + (25. / 2.) + (0.25 / 0.50) + 16.0 + (4.99-4.0)*(25.-16.)/(5.-4.)));
     }
 }
 
