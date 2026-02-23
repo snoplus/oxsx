@@ -31,6 +31,7 @@ public:
    size_t GetNCols() const { return fNCols; }
    void SetZeros();
    void SetToIdentity();
+   void Scale(double);
 
    void Print(const std::string &) const;
    void PrintDense(const std::string &) const;
