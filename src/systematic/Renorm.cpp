@@ -13,22 +13,8 @@ void Renorm::Construct()
         throw LogicError("Renorm::Construct(): Tried to construct response matrix with an axis collection with wrong bins!");
     }
 
-    // Loop over bins in the transformation subspace, and set the scale value
-    std::vector<double> scale_vals;
-    scale_vals.reserve(fAxes.GetNBins());
-
-    for (size_t bin = 0; bin < fAxes.GetNBins(); bin++)
-    {
-        scale_vals.push_back(fScaleFactor);
-    }
-
-    // Finally, construct the full response matrix by setting the diagonal
-    // elements to their appropriate value, using the bin ID mapping to help.
-    for (size_t obs_bin_id = 0; obs_bin_id < fAxes.GetNBins(); obs_bin_id++)
-    {
-        fResponse.SetComponent(obs_bin_id, obs_bin_id,
-            scale_vals.at(obs_bin_id));
-    }
+    fResponse.SetToIdentity();
+    fResponse.Scale(fScaleFactor);
 }
 
 void Renorm::SetScaleFactor(double scaleFactor_)
