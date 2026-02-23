@@ -111,3 +111,8 @@ void SparseMatrix::SetComponents(const std::vector<long long unsigned int> &rowI
 
     fArmaMat = arma::sp_mat(locs, arma::vec(values_));
 }
+
+void SparseMatrix::Scale(double scale_)
+{
+    fArmaMat *= scale_;
+}
