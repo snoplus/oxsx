@@ -1,10 +1,4 @@
 #include <ConstraintManager.h>
-#include <QuadraticConstraint.h>
-#include <Exceptions.h>
-#include <BivariateQuadraticConstraint.h>
-#include <Histogram.h>
-#include <ParameterDict.h>
-#include <iostream>
 
 void ConstraintManager::SetConstraint(const std::string &paramName_, double mean_, double sigma_)
 {
@@ -109,6 +103,13 @@ void ConstraintManager::SetConstraint(const std::string &paramName_1, const std:
     fConstraintsRatio[std::pair<std::string, std::string>(paramName_1, paramName_2)] = RatioConstraint(ratiomean_, ratiosigma_);
 }
 
+void ConstraintManager::SetConstraint(const ParameterDict &params_, ShapeFunc func_, double mean_, double sigma_)
+{
+    // Add an analytical shape function
+    fShapeConstraints[params_] = ShapeConstraint(func_, mean_, sigma_);
+}
+
+
 void ConstraintManager::SetConstraint(const std::string& label, const Histogram& hist)
 {
     /*
@@ -144,6 +145,7 @@ double ConstraintManager::Evaluate(const ParameterDict &params) const
             std::cout << "Constraint " << param_name << ": Evaluate() = " << c << std::endl;
         }
     }
+
     // ...and then sum over the pair constraints...
     for (const auto &c_pair : fConstraintsPair)
     {
@@ -167,6 +169,7 @@ double ConstraintManager::Evaluate(const ParameterDict &params) const
             std::cout << "Ratio constraint (" << param_pair.first << ", " << param_pair.second << "): Evaluate() = " << c << std::endl;
         }
     }
+
     // ...and then sum over the fractional constraints...
     for (const auto &c_pair : fConstraintsFrac)
     {
@@ -178,14 +181,26 @@ double ConstraintManager::Evaluate(const ParameterDict &params) const
             std::cout << "Fractional constraint (" << param_pair.first << ", " << param_pair.second << "): Evaluate() = " << c << std::endl;
         }
     }
-    // ...and finally sum over the shape constraints
+
+    // ...and sum over the shape interpolation constraints
     for (const auto &c_pair : fShapeInterpConstraints)
     {
         const double c = c_pair.second.Evaluate(params);
         total += c;
         if (fDebugMode)
         {
-            std::cout << "Shape Constraint " << c_pair.first << ": Evaluate() = " << c << std::endl;
+            std::cout << "Shape Interp. Constraint " << c_pair.first << ": Evaluate() = " << c << std::endl;
+        }
+    }
+
+    // ...and finally sum over the analytical shape constraints
+    for (const auto &c_pair : fShapeConstraints)
+    {
+        const double c = c_pair.second.Evaluate(params);
+        total += c;
+        if (fDebugMode)
+        {
+            std::cout << "Shape Constraint : Evaluate() = " << c << std::endl;
         }
     }
 

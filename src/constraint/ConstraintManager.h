@@ -1,17 +1,20 @@
-/***********************************************************************************************/
-/* A class to store a set of QuadraticConstraint and BivariateQuadraticConstraint objects,     */
-/* associated with fit parameters.                                                             */
-/*                                                                                             */
-/***********************************************************************************************/
+/***********************************************************/
+/* A class to store a set of Constraint objects,           */
+/* associated with fit parameters.                         */
+/*                                                         */
+/***********************************************************/
 #ifndef __OXSX_CONSTRAINT_MANAGER__
 #define __OXSX_CONSTRAINT_MANAGER__
 #include <map>
 #include <string>
+#include <iostream>
+
 #include <QuadraticConstraint.h>
 #include <BivariateQuadraticConstraint.h>
 #include <RatioConstraint.h>
 #include <FractionalConstraint.h>
 #include <ShapeInterpConstraint.h>
+#include <ShapeConstraint.h>
 #include <Histogram.h>
 #include <ParameterDict.h>
 
@@ -32,6 +35,8 @@ public:
                        double ratiomean_, double ratiosigma_);
     // Add shape constraint
     void SetConstraint(const std::string& label, const Histogram& hist);
+    // Add analysitcal shape constraint
+    void SetConstraint(const ParameterDict &params_, ShapeFunc func_, double mean_, double sigma_);
     // Add fractional diff constraint between two parameters
     void SetFracConstraint(const std::string &paramName_1, const std::string &paramName_2,
                            double fracmean_, double fracsigma_);
@@ -53,6 +58,8 @@ private:
     std::map<std::pair<std::string, std::string>, FractionalConstraint> fConstraintsFrac;
     // Stores any shape constraints, linearly interpolating
     std::map<std::string, ShapeInterpConstraint> fShapeInterpConstraints;
+    // Stores any analytical shape constraints
+    std::map<ParameterDict, ShapeConstraint> fShapeConstraints;
     //
     bool fDebugMode;
 };

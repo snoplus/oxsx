@@ -94,6 +94,12 @@ void TestStatistic::SetConstraint(const std::string &paramName_1, const std::str
     fConstraintManager.SetConstraint(paramName_1, paramName_2, ratiomean_, ratiosigma_);
 }
 
+void TestStatistic::SetConstraint(const ParameterDict &params_, ShapeFunc func_, double mean_, double sigma_)
+{
+    fConstraintManager.SetConstraint(params_, func_, mean_, sigma_);
+}
+
+
 void TestStatistic::SetConstraint(const std::string& label, const Histogram& hist)
 {
     fConstraintManager.SetConstraint(label, hist);
