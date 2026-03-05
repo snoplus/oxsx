@@ -33,7 +33,7 @@ jobs:
     - name: Pull and Cache SIF
       run: |
         echo "${{ secrets.GITHUB_TOKEN }}" | apptainer remote login -u ${{ github.actor }} --password-stdin oras://ghcr.io
-        apptainer pull image.sif oras://ghcr.io/${{ github.repository }}:latest
+        apptainer pull image.sif oras://ghcr.io/${{ github.repository }}:1.4.0
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
