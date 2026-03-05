@@ -24,7 +24,7 @@ jobs:
       image: ghcr.io/snoplus/oxsx:1.4.0
       credentials:
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ secrets.OXO_PAT }}
 
     steps:
     - name: Checkout repository
