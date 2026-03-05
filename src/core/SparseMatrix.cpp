@@ -107,3 +107,8 @@ void SparseMatrix::SetComponents(const std::vector<long long unsigned int> &rowI
     fArmaMat = arma::sp_mat(locs, arma::vec(values_));
     fArmaMat.resize(fNRows, fNCols); //Sets matrix back to its proper size incase it was shrunk
 }
+
+void SparseMatrix::Scale(double scale_)
+{
+    fArmaMat *= scale_;
+}
