@@ -24,7 +24,7 @@ jobs:
       packages: read # Grants the GITHUB_TOKEN read access to GHCR
     # Use the v1.4.0 OXSX container as a start point. That has what we need in it.
     container:
-      image: ghcr.io/snoplus/oxsx:1.4.0
+      image: ghcr.io/${{ github.repository }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
