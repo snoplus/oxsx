@@ -25,7 +25,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Source ROOT (& RAT) environment
-      run: ls /usr/local/bin/ && source /usr/local/bin/entrypoint.sh
+      run: ls / && ls /rat/ && source /usr/local/bin/entrypoint.sh
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
