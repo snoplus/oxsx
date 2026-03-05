@@ -22,6 +22,9 @@ jobs:
     # Use the v1.4.0 OXSX container as a start point. That has what we need in it.
     container:
       image: ghcr.io/snoplus/oxsx:1.4.0
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.github_token }}
 
     steps:
     - name: Checkout repository
