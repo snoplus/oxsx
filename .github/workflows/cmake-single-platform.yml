@@ -45,5 +45,5 @@ jobs:
       run: apptainer exec image.sif /bin/bash -c "source entrypoint.sh && cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}"
 
     - name: Test
-      run: apptainer exec image.sif /bin/bash -c "source entrypoint.sh && ./${{github.workspace}}/build/test/unit/RunUnits"
+      run: apptainer exec image.sif /bin/bash -c "source entrypoint.sh && ${{github.workspace}}/build/test/unit/RunUnits"
 
