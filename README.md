@@ -2,6 +2,8 @@
 
 Signal Extraction framework for the SNO+ experiment
 
+For DOG LOVERS only
+
 <h2>Dependencies</h2>
 
 1. GCC compiler capable of compiling C++ code to the C++17 standard
