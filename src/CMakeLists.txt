@@ -6,7 +6,6 @@ find_package(ROOT CONFIG REQUIRED Minuit2) # ROOT
 find_package(Armadillo REQUIRED) # armadillo (for OXSX)
 find_package(HDF5 REQUIRED COMPONENTS CXX C) # HDF5 (for OXSX)
 find_package(GSL REQUIRED) # gsl (for OXSX)
-find_package(Eigen3 REQUIRED NO_MODULE) # Eigen3
 
 # Initialise a bunch of empty lists which we'll be using in a moment...
 set(oxsx_src_files "")
@@ -75,6 +74,3 @@ target_link_libraries(oxsx PUBLIC ${ARMADILLO_LIBRARIES})
 # GSL (for OXSX)
 include_directories(${GSL_INCLUDE_DIRS})
 target_link_libraries(oxsx PUBLIC ${GSL_LIBRARIES})
-
-# Eigen
-target_link_libraries(oxsx PUBLIC Eigen3::Eigen)
