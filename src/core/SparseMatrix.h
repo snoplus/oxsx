@@ -1,7 +1,7 @@
 /*********************************************************************************************/
-/* A sparse matrix class, a wrapper for the underlying Eigen sparse matrix object.           */
+/* A sparse matrix class, a wrapper for the underlying Armadillo sparse matrix object.       */
 /* Its main use in OXO is for holding the response matrix when systematics are applied to    */
-/* binned event distributions,                                                               */
+/* binned event distributions.                                                               */
 /*********************************************************************************************/
 
 #ifndef __OXSX_SPARSE_MATRIX__
