@@ -62,6 +62,8 @@ DenseMatrix
 DenseMatrix::operator*=(const DenseMatrix &other_)
 {
     fArmaMat = fArmaMat * other_.fArmaMat;
+    fNRows = fArmaMat.n_rows;
+    fNCols = fArmaMat.n_cols;
     return *this;
 }
 
@@ -74,7 +76,7 @@ void DenseMatrix::SetZeros()
 
 void DenseMatrix::SetToIdentity()
 {
-    if (!fNRows || !fNCols)
+    if (!fNRows || !fNCols || fNCols != fNRows)
         throw DimensionError(Formatter() << "DenseMatrix:: Can't set identity as matrix is not square. (rows,cols) : (" << fNRows << "," << fNCols << ")");
     fArmaMat.eye();
 }
@@ -114,12 +116,12 @@ void DenseMatrix::SetSymmetricMatrix(const std::vector<double> &_input)
     }
 }
 
-void DenseMatrix::Print(const std::string &prefix_ = "")
+void DenseMatrix::Print(const std::string &prefix_)
 {
     fArmaMat.print(prefix_);
 }
 
-void DenseMatrix::PrintSparse(const std::string &prefix_ = "")
+void DenseMatrix::PrintSparse(const std::string &prefix_)
 {
     arma::sp_mat B(fArmaMat);
     B.print(prefix_);

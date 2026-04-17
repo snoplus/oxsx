@@ -1,15 +1,12 @@
 /*********************************************************************************************/
-/* A square response Matix for the experiment. Takes a binned pdf and applies the detector   */
-/* to produce a new BinnedPhysDist. Inside is a vector of vectors, component fResponse[i][j] =    */
-/* R_i_j = fraction of contents in bin j of original pdf -> bin i in the output pdf          */
-/* the output bin contents are then x'_j = sum(R_i_j * x_j)                                  */
-/* The systematic object is responsible for pdf renormalisation - not here                   */
+/* A sparse matrix class, a wrapper for the underlying Eigen sparse matrix object.           */
+/* Its main use in OXO is for holding the response matrix when systematics are applied to    */
+/* binned event distributions,                                                               */
 /*********************************************************************************************/
 
 #ifndef __OXSX_SPARSE_MATRIX__
 #define __OXSX_SPARSE_MATRIX__
 #include <armadillo>
-class BinnedPhysDist;
 
 class SparseMatrix
 {
@@ -26,15 +23,15 @@ public:
                       const std::vector<double> &values_);
 
    SparseMatrix operator*=(const SparseMatrix &other_);
-   SparseMatrix operator*(const SparseMatrix &other_);
+   SparseMatrix operator*(const SparseMatrix &other_) const;
    size_t GetNRows() const { return fNRows; }
    size_t GetNCols() const { return fNCols; }
    void SetZeros();
    void SetToIdentity();
    void Scale(double);
 
-   void Print(const std::string &) const;
-   void PrintDense(const std::string &) const;
+   void Print(const std::string &prefix_ = "") const;
+   void PrintDense(const std::string &prefix_ = "") const;
 
 private:
    arma::sp_mat fArmaMat;

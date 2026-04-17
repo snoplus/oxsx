@@ -11,12 +11,12 @@ SparseMatrix::SparseMatrix(size_t rows_, size_t cols_)
     fArmaMat = arma::sp_mat(fNRows, fNCols);
 }
 
-void SparseMatrix::PrintDense(const std::string &prefix_ = "") const
+void SparseMatrix::PrintDense(const std::string &prefix_) const
 {
     fArmaMat.print(prefix_);
 }
 
-void SparseMatrix::Print(const std::string &prefix_ = "") const
+void SparseMatrix::Print(const std::string &prefix_) const
 {
     arma::mat B(fArmaMat);
     B.print(prefix_);
@@ -68,14 +68,17 @@ SparseMatrix
 SparseMatrix::operator*=(const SparseMatrix &other_)
 {
     fArmaMat = fArmaMat * other_.fArmaMat;
+    fNRows = fArmaMat.n_rows;
+    fNCols = fArmaMat.n_cols;
     return *this;
 }
 
 SparseMatrix
-SparseMatrix::operator*(const SparseMatrix &other_)
+SparseMatrix::operator*(const SparseMatrix &other_) const
 {
-    fArmaMat = fArmaMat * other_.fArmaMat;
-    return *this;
+    SparseMatrix output(fNRows, other_.fNCols);
+    output.fArmaMat = fArmaMat * other_.fArmaMat;
+    return output;
 }
 
 void SparseMatrix::SetZeros()

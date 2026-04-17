@@ -9,7 +9,6 @@
 #ifndef __OXSX_DENSE_MATRIX__
 #define __OXSX_DENSE_MATRIX__
 #include <armadillo>
-class BinnedPhysDist;
 
 class DenseMatrix
 {
@@ -24,13 +23,15 @@ public:
 
    DenseMatrix operator*=(const DenseMatrix &other_);
 
+   size_t GetNRows() const { return fNRows; }
+   size_t GetNCols() const { return fNCols; }
    void SetZeros();
    void SetToIdentity();
 
    void SetSymmetricMatrix(const std::vector<double> &_input);
 
-   void Print(const std::string &);
-   void PrintSparse(const std::string &);
+   void Print(const std::string &prefix_ = "");
+   void PrintSparse(const std::string &prefix_ = "");
 
 private:
    // N x M matrix
