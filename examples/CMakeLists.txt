@@ -11,6 +11,7 @@ set(examples
     simpleSystematicFit.cpp
     systematicFit.cpp
     VaryingCDF.cpp
+    MCMC.cpp
 )
 
 # Create an executable for each macro file
