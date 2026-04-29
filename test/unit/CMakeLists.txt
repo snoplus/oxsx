@@ -17,6 +17,7 @@ set(tests
     CutTest.cpp
     DataSetGeneratorTest.cpp
     DataSetIOTest.cpp
+    DenseMatrixTest.cpp
     DistToolsTest.cpp
     EDManagerTest.cpp
     EventScaleTest.cpp
@@ -36,6 +37,7 @@ set(tests
     ScaleSystTest.cpp
     ShapeTest.cpp
     ShiftSystTest.cpp
+    SparseMatrixTest.cpp
     SpectralFitDistTest.cpp
     SquareRootScaleTest.cpp
     StatisticSumTest.cpp
