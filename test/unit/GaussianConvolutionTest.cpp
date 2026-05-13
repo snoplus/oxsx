@@ -33,7 +33,7 @@ TEST_CASE("Simple GaussianConvolution systematic on 1d PDF")
 
   SECTION("Check FitComponent interface for GaussianConvolution, 1D")
   {
-    REQUIRE(conv.GetParameterCount() == 2); // two params: Gaussian's mean and sigma
+    REQUIRE(conv.GetParameterCount() == 1); // one param: Gaussian's sigma
     REQUIRE(conv.GetParameter("sigma") == sigma);
     REQUIRE(conv.GetName() == "smear_sys");
 
@@ -99,7 +99,7 @@ TEST_CASE("Simple GaussianConvolution systematic on 1d PDF, small CDF cutoff")
 
   SECTION("Check FitComponent interface for GaussianConvolution, 1D, with custom cutoff in place")
   {
-    REQUIRE(conv.GetParameterCount() == 2); // two params: Gaussian's mean and sigma
+    REQUIRE(conv.GetParameterCount() == 1); // one param: Gaussian's sigma
     REQUIRE(conv.GetParameter("sigma") == sigma);
     REQUIRE(conv.GetName() == "smear_sys");
 
@@ -163,7 +163,7 @@ TEST_CASE("Simple GaussianConvolution systematic on 2d PDF")
 
   SECTION("Check FitComponent interface for GaussianConvolution, 2D")
   {
-    REQUIRE(conv.GetParameterCount() == 2); // two params: Gaussian's mean and sigma
+    REQUIRE(conv.GetParameterCount() == 1); // one param: Gaussian's sigma
     REQUIRE(conv.GetParameter("sigma") == sigma);
     REQUIRE(conv.GetName() == "smear_sys");
 
@@ -230,7 +230,7 @@ TEST_CASE("Simple GaussianConvolution systematic on 2d PDF, alt axis ordering")
 
   SECTION("Check FitComponent interface for GaussianConvolution, 2D")
   {
-    REQUIRE(conv.GetParameterCount() == 2); // two params: Gaussian's mean and sigma
+    REQUIRE(conv.GetParameterCount() == 1); // one params: Gaussian's sigma
     REQUIRE(conv.GetParameter("sigma") == sigma);
     REQUIRE(conv.GetName() == "smear_sys");
 

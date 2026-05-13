@@ -42,6 +42,9 @@ public:
    void SetCdfCutOff(double);
    size_t GetNDims() const;
 
+   void HideMeanParameters();
+   bool GetHideMeanParameters() const;
+
    // Make this object fittable
    void SetParameter(const std::string &name_, double value);
    double GetParameter(const std::string &name_) const;

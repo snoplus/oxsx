@@ -36,7 +36,7 @@ Gaussian::Gaussian(const std::vector<double> &mean_,
     Initialise(mean_, stdDev_, name_);
 }
 
-Gaussian::Gaussian(const Gaussian &copy_) : fFitter(this, copy_.GetMeanNames(), copy_.GetStDevNames())
+Gaussian::Gaussian(const Gaussian &copy_) : fFitter(this, copy_.GetMeanNames(), copy_.GetStDevNames(), copy_.GetHideMeanParameters())
 {
     fMeans = copy_.fMeans;
     fStdDevs = copy_.fStdDevs;
@@ -53,7 +53,7 @@ Gaussian::operator=(const Gaussian &copy_)
     fCdfCutOff = copy_.fCdfCutOff;
     fNDims = copy_.fNDims;
     fName = std::string(copy_.fName + "_copy");
-    fFitter = GaussianFitter(this, copy_.GetMeanNames(), copy_.GetStDevNames());
+    fFitter = GaussianFitter(this, copy_.GetMeanNames(), copy_.GetStDevNames(), copy_.GetHideMeanParameters());
     return *this;
 }
 
@@ -169,6 +169,16 @@ size_t
 Gaussian::GetNDims() const
 {
     return fNDims;
+}
+
+void Gaussian::HideMeanParameters()
+{
+    fFitter.HideMeanParameters();
+}
+
+bool Gaussian::GetHideMeanParameters() const
+{
+    return fFitter.GetHideMeanParameters();
 }
 
 /////////////////

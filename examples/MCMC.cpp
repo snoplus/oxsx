@@ -24,6 +24,7 @@ in these sorts of circumstances, which is valuable for us to know.
 #include <VaryingCDF.h>
 #include <SquareRootScale.h>
 #include <Convolution.h>
+#include <GaussianConvolution.h>
 // global consts
 constexpr double N_SIGNAL = 100.; // Truth signal rate in dataset
 constexpr double N_BACK = 300.; // Truth background rate in dataset
@@ -31,6 +32,7 @@ constexpr double SIGMA_BACK = 50.; // Constraint uncertainty on background norma
 constexpr double SIGMA_ESCALE = 0.01;
 constexpr double SIGMA_ESMEAR = 0.05;
 constexpr double SIGMA_RSCALE = 0.01;
+constexpr double SIGMA_RSMEAR = 0.02;
 constexpr size_t N_STEPS = 10000;
 const std::string outfilename_root = "mcmc_example_output.root";
 
@@ -118,6 +120,7 @@ void add_systematics(BinnedNLLH& lh_function) {
      *  - Energy scale
      *  - Energy smear
      *  - Radial scale
+     *  - Radial smear
      */
     // 1: Add energy scale
     Scale* escale = new Scale("energy_scale");
@@ -154,7 +157,7 @@ void add_systematics(BinnedNLLH& lh_function) {
     lh_function.AddSystematic(esmear);
     lh_function.SetConstraint("energy_smear_param", 0., SIGMA_ESMEAR);
 
-    // 3: Add radial smear
+    // 3: Add radial scale
     Scale* rscale = new Scale("radial_scale");
     rscale->RenameParameter("scaleFactor", "radial_scale_factor");
     rscale->SetScaleFactor(1.0);
@@ -165,6 +168,17 @@ void add_systematics(BinnedNLLH& lh_function) {
 
     lh_function.AddSystematic(rscale);
     lh_function.SetConstraint("radial_scale_factor", 1.0, SIGMA_RSCALE);
+
+    // 4: Add radial smear
+    GaussianConvolution* rsmear = new GaussianConvolution("radial_smear");
+    rsmear->RenameSigma("radial_smear_sigma");
+    rsmear->SetAxes(lh_function.GetDataDist().GetAxes());
+    rsmear->SetDistributionObs(ObsSet(std::vector<std::string>({"energy", "r3"})));
+    rsmear->SetTransformationObs(ObsSet("r3"));
+    rsmear->Construct();
+
+    lh_function.AddSystematic(rsmear);
+    lh_function.SetConstraint("radial_smear_sigma", 0., SIGMA_RSMEAR);
 }
 
 std::pair<double, double> calc_scale_bounds(BinnedNLLH& lh_function, 
@@ -222,6 +236,11 @@ void setup_metaparams(ParameterDict& minima, ParameterDict& maxima,
     maxima["radial_scale_factor"] = rscale_bounds.second;
     initial_vals["radial_scale_factor"] = 1.0;
     initial_err["radial_scale_factor"] = SIGMA_RSCALE;
+    // radial_smear_sigma
+    minima["radial_smear_sigma"] = 0.;
+    maxima["radial_smear_sigma"] = 5.*SIGMA_RSMEAR;
+    initial_vals["radial_smear_sigma"] = 0.00001;
+    initial_err["radial_smear_sigma"] = SIGMA_RSMEAR;
 }
 
 TTree* run_mcmc(BinnedNLLH& lh_function, const ParameterDict& minima, const ParameterDict& maxima,

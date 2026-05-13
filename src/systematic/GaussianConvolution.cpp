@@ -10,6 +10,7 @@ Convolution(name_), sigma_name("stddevs_0")
     // SetFunction() clones this Gaussian object, packaging it within
     // a JumpPDF object (a kind of ConditionalPDF object).
     Gaussian gauss_tmp(1, "");
+    gauss_tmp.HideMeanParameters(); // we don't want kernel's mean to be a fit parameter
     SetFunction(&gauss_tmp);
 }
 
@@ -21,6 +22,7 @@ Convolution(name_), sigma_name("stddevs_0")
     // a JumpPDF object (a kind of ConditionalPDF object).
     Gaussian gauss_tmp(1, "");
     gauss_tmp.SetCdfCutOff(cutoff_); // set a custom CDF cutoff
+    gauss_tmp.HideMeanParameters(); // we don't want kernel's mean to be a fit parameter
     SetFunction(&gauss_tmp);
 }
 
