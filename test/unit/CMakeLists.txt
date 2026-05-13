@@ -24,6 +24,7 @@ set(tests
     EventShiftTest.cpp
     EventSystematicManagerTest.cpp
     FitParameterTest.cpp
+    GaussianConvolutionTest.cpp
     GaussianFitterTest.cpp
     GaussianTest.cpp
     HistogramGetMultiDSlice.cpp

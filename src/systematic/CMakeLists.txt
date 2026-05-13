@@ -1,5 +1,6 @@
 set(systematic_src
     systematic/Convolution.cpp
+    systematic/GaussianConvolution.cpp
     systematic/Renorm.cpp
     systematic/Scale.cpp
     systematic/ScaleFunction.cpp
@@ -11,6 +12,7 @@ set(systematic_src
 
 set(systematic_headers
     Convolution.h
+    GaussianConvolution.h
     Renorm.h
     Scale.h
     ScaleFunction.h

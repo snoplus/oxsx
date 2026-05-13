@@ -39,7 +39,7 @@ public:
    std::string GetName() const;
    void SetName(const std::string &);
 
-private:
+protected:
    ConditionalPDF *fDist; // kernel used in convolution
    std::string fName;     // name of this object
    // Members needed for efficient calculations:
