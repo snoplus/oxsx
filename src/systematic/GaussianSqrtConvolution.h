@@ -18,8 +18,6 @@ public:
     // Alternative contructor, if you want a custom CDF cutoff:
     // the number of sigmas away from the mean beyond which the CDF is set to 0 or 1 as appropriate. 5 by default.
     GaussianSqrtConvolution(const std::string &name, double cutoff_);
-    // Destructor
-    // ~GaussianSqrtConvolution();
     // Getters/Setters for underlying SquareRootScale's width parameter -
     // this is the proportionality constant which multiplies the sqrt scaling
     // (FitComponent interface will still work, this is just a quality-of-life feature)
