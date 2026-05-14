@@ -1,32 +1,45 @@
-#include <GaussianConvolution.h>
+#include <GaussianSqrtConvolution.h>
 #include <JumpPDF.h>
 #include <ConditionalPDF.h>
 #include <Gaussian.h>
+#include <VaryingCDF.h>
+#include <SquareRootScale.h>
 
-GaussianConvolution::GaussianConvolution(const std::string &name_) :
-Convolution(name_), fSigmaName("stddevs_0")
+GaussianSqrtConvolution::GaussianSqrtConvolution(const std::string &name_) :
+Convolution(name_), fSigmaName("grad")
 {
-    // Set the kernel to be a Gaussian.
-    // SetFunction() clones this Gaussian object, packaging it within
-    // a JumpPDF object (a kind of ConditionalPDF object).
+    // Set the kernel to be a Gaussian, with square-root scaling
+    // Gaussian* gauss_tmp = new Gaussian(1, "");
     Gaussian gauss_tmp(1, "");
-    gauss_tmp.HideMeanParameters(); // we don't want kernel's mean to be a fit parameter
-    SetFunction(&gauss_tmp);
+
+    VaryingCDF* smearer = new VaryingCDF("");
+    // VaryingCDF smearer("");
+    smearer->SetKernel(&gauss_tmp);
+
+    SquareRootScale* sqrt_scaler = new SquareRootScale("sqrt_scale");
+    smearer->SetDependance("stddevs_0", sqrt_scaler);
+
+    SetConditionalPDF(smearer);
 }
 
-GaussianConvolution::GaussianConvolution(const std::string &name_, double cutoff_) :
-Convolution(name_), fSigmaName("stddevs_0")
+GaussianSqrtConvolution::GaussianSqrtConvolution(const std::string &name_, double cutoff_) :
+Convolution(name_), fSigmaName("grad")
 {
     // Set the kernel to be a Gaussian.
-    // SetFunction() clones this Gaussian object, packaging it within
-    // a JumpPDF object (a kind of ConditionalPDF object).
     Gaussian gauss_tmp(1, "");
     gauss_tmp.SetCdfCutOff(cutoff_); // set a custom CDF cutoff
-    gauss_tmp.HideMeanParameters(); // we don't want kernel's mean to be a fit parameter
-    SetFunction(&gauss_tmp);
+    
+    VaryingCDF* smearer = new VaryingCDF("");
+    // VaryingCDF smearer("");
+    smearer->SetKernel(&gauss_tmp);
+
+    SquareRootScale* fSqrtScaler = new SquareRootScale("sqrt_scale");
+    smearer->SetDependance("stddevs_0", fSqrtScaler);
+
+    SetConditionalPDF(smearer);
 }
 
-void GaussianConvolution::ConstructSubmatrix(std::vector<long long unsigned int> &column_indices, std::vector<long long unsigned int> &row_indices,
+void GaussianSqrtConvolution::ConstructSubmatrix(std::vector<long long unsigned int> &column_indices, std::vector<long long unsigned int> &row_indices,
                                      std::vector<double> &vals) const
 {
     /*
@@ -133,22 +146,22 @@ void GaussianConvolution::ConstructSubmatrix(std::vector<long long unsigned int>
     }
 }
 
-double GaussianConvolution::GetSigma() const
+double GaussianSqrtConvolution::GetSigma() const
 {
     return fDist->GetParameter(fSigmaName);
 }
 
-void GaussianConvolution::SetSigma(double sigma_)
+void GaussianSqrtConvolution::SetSigma(double sigma_)
 {
     fDist->SetParameter(fSigmaName, sigma_);
 }
 
-std::string GaussianConvolution::GetSigmaName() const
+std::string GaussianSqrtConvolution::GetSigmaName() const
 {
     return fSigmaName;
 }
 
-void GaussianConvolution::RenameSigma(const std::string& newname_)
+void GaussianSqrtConvolution::RenameSigma(const std::string& newname_)
 {
     fDist->RenameParameter(fSigmaName, newname_);
     fSigmaName = newname_;

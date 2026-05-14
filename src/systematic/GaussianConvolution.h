@@ -27,7 +27,7 @@ public:
     void RenameSigma(const std::string& newname_);
 
 private:
-    std::string sigma_name; // tracks name of Gaussian's sigma parameter: used internally so user doens't need to remember!
+    std::string fSigmaName; // tracks name of Gaussian's sigma parameter: used internally so user doesn't need to remember!
 
     void ConstructSubmatrix(std::vector<long long unsigned int> &column_indices, std::vector<long long unsigned int> &row_indices,
                             std::vector<double> &vals) const;

@@ -25,6 +25,7 @@ in these sorts of circumstances, which is valuable for us to know.
 #include <SquareRootScale.h>
 #include <Convolution.h>
 #include <GaussianConvolution.h>
+#include <GaussianSqrtConvolution.h>
 // global consts
 constexpr double N_SIGNAL = 100.; // Truth signal rate in dataset
 constexpr double N_BACK = 300.; // Truth background rate in dataset
@@ -33,7 +34,7 @@ constexpr double SIGMA_ESCALE = 0.01;
 constexpr double SIGMA_ESMEAR = 0.05;
 constexpr double SIGMA_RSCALE = 0.01;
 constexpr double SIGMA_RSMEAR = 0.02;
-constexpr size_t N_STEPS = 10000;
+constexpr size_t N_STEPS = 100;
 const std::string outfilename_root = "mcmc_example_output.root";
 
 std::vector<BinnedED> load_mc(const AxisCollection& ax, const std::vector<std::string>& observables) {
@@ -134,21 +135,24 @@ void add_systematics(BinnedNLLH& lh_function) {
     lh_function.AddSystematic(escale);
     lh_function.SetConstraint("energy_scale_factor", 1.0, SIGMA_ESCALE);
 
-    // 2: Add energy smear (a bit complicated!)
+    // 2: Add energy smear (less complicated than it used to be!)
     //   A Gaussian kernel...
-    VaryingCDF* smearer = new VaryingCDF("energy_smear");
-    Gaussian* gaus = new Gaussian(0, 0.01, "e_gaus"); // temp sigma value
-    gaus->RenameParameter("means_0", "mean");
-    gaus->RenameParameter("stddevs_0", "sigma");
-    smearer->SetKernel(gaus);
-    //   ...With a width scaling by the square root of the energy...
-    SquareRootScale* smear_sigma_func = new SquareRootScale("e_smear_sigma_func");
-    smear_sigma_func->RenameParameter("grad", "energy_smear_param");
-    smear_sigma_func->SetGradient(0.03); // temp gradient value
-    smearer->SetDependance("sigma", smear_sigma_func);
-    //  ...which smears the PDFs along the energy axis.
-    Convolution* esmear = new Convolution("esmear");
-    esmear->SetConditionalPDF(smearer);
+    // VaryingCDF* smearer = new VaryingCDF("energy_smear");
+    // Gaussian* gaus = new Gaussian(0, 0.01, "e_gaus"); // temp sigma value
+    // gaus->RenameParameter("means_0", "mean");
+    // gaus->RenameParameter("stddevs_0", "sigma");
+    // smearer->SetKernel(gaus);
+    // //   ...With a width scaling by the square root of the energy...
+    // SquareRootScale* smear_sigma_func = new SquareRootScale("e_smear_sigma_func");
+    // smear_sigma_func->RenameParameter("grad", "energy_smear_param");
+    // smear_sigma_func->SetGradient(0.03); // temp gradient value
+    // smearer->SetDependance("sigma", smear_sigma_func);
+    // //  ...which smears the PDFs along the energy axis.
+    // Convolution* esmear = new Convolution("esmear");
+    // esmear->SetConditionalPDF(smearer);
+
+    GaussianSqrtConvolution* esmear = new GaussianSqrtConvolution("esmear");
+    esmear->RenameSigma("energy_smear_param");
     esmear->SetAxes(lh_function.GetDataDist().GetAxes());
     esmear->SetDistributionObs(ObsSet(std::vector<std::string>({"energy", "r3"})));
     esmear->SetTransformationObs(ObsSet("energy"));
