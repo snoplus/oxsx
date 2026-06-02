@@ -48,10 +48,7 @@ void GaussianConvolution::ConstructSubmatrix(std::vector<long long unsigned int>
     // - In most use cases, the binning along the smearing axis is ~equal,
     //   so the amount of smearing will become translation-invariant!
     //   Cache calculations of the smearing Integral() (which is expensive)
-    //   in a map object based on the integration upper endpoint (the output upper bin edge).
-    //   We're always calculating the integral relative to the bin centre,
-    //   so the upper and lower endpoints will be symmetric. We can therefore index
-    //   simply by the upper (relative) endpoint, say.
+    //   in a map object based on the integration endpoints (the output bin edges).
     //   After the first row, we expect ~all integrals to have already been calculated!
     // - For typical smearing kernels, the contribution necessarily goes monotonically down
     //   for bins further away from the original bin. In other words, we expect this submatrix
@@ -60,7 +57,7 @@ void GaussianConvolution::ConstructSubmatrix(std::vector<long long unsigned int>
     //   Instead of blithely scanning as usual over the full 2D grid of (origBin, destBin),
     //   we now start ~along the diagonal and work outwards - first forwards, then backwards.
     //   Whenever a zero is reached, we immediately exit the loop! 
-    std::map<double, double> integral_cache;
+    std::map<std::pair<double,double>, double> integral_cache;
     // Loop over all entries of the sub-matrix to determine their values
     for (long long unsigned int origBin = 0; origBin < fSubMapAxes.GetNBins(); origBin++)
     {
@@ -74,17 +71,19 @@ void GaussianConvolution::ConstructSubmatrix(std::vector<long long unsigned int>
             fSubMapAxes.GetBinLowEdges(destBin, lowEdges);
             fSubMapAxes.GetBinHighEdges(destBin, highEdges);
 
-            // Calculate destination upper bin edge along smearing axis, relative
+            // Calculate destination bin edges along smearing axis, relative
             // to origBin's centre
+            const double xlo = lowEdges.at(0) - binCentres.at(0);
             const double xhi = highEdges.at(0) - binCentres.at(0);
+            const std::pair<double, double> edges {xlo, xhi};
             // Has an integral already been calculated for this relative bin edge?
-            const auto it = integral_cache.find(xhi);
+            const auto it = integral_cache.find(edges);
             double integral = 0.;
             if (it == integral_cache.end())
             {
                 // Nope, need to calculate the integral (and add it to the cache)
                 integral = fDist->Integral(lowEdges, highEdges, binCentres);
-                integral_cache[xhi] = integral;
+                integral_cache[edges] = integral;
             } else
             {
                 // Yep, use that result!
@@ -109,13 +108,15 @@ void GaussianConvolution::ConstructSubmatrix(std::vector<long long unsigned int>
             fSubMapAxes.GetBinLowEdges(destBin, lowEdges);
             fSubMapAxes.GetBinHighEdges(destBin, highEdges);
 
-            const double xhi = lowEdges.at(0) - binCentres.at(0);
-            const auto it = integral_cache.find(xhi);
+            const double xlo = lowEdges.at(0) - binCentres.at(0);
+            const double xhi = highEdges.at(0) - binCentres.at(0);
+            const std::pair<double, double> edges {xlo, xhi};
+            const auto it = integral_cache.find(edges);
             double integral = 0.;
             if (it == integral_cache.end())
             {
                 integral = fDist->Integral(lowEdges, highEdges, binCentres);
-                integral_cache[xhi] = integral;
+                integral_cache[edges] = integral;
             } else
             {
                 integral = it->second;

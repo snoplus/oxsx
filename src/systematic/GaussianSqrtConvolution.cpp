@@ -65,13 +65,13 @@ void GaussianSqrtConvolution::ConstructSubmatrix(std::vector<long long unsigned 
     //   Instead of blithely scanning as usual over the full 2D grid of (origBin, destBin),
     //   we now start ~along the diagonal and work outwards - first forwards, then backwards.
     //   Whenever a zero is reached, we immediately exit the loop! 
-    std::map<double, double> integral_cache;
+    std::map<std::pair<double,double>, double> integral_cache;
     // Loop over all entries of the sub-matrix to determine their values
     for (long long unsigned int origBin = 0; origBin < fSubMapAxes.GetNBins(); origBin++)
     {
         // get the centre of the bin. Need to offset by this for a convolution
         fSubMapAxes.GetBinCentres(origBin, binCentres);
-
+        const double width = GetSigma()*sqrt(abs(binCentres.at(0))); // width of kernel
         // loop over the bins it can be smeared into, going forwards
         // from the bin after the diagonal first 
         for (long long unsigned int destBin = origBin+1; destBin < fSubMapAxes.GetNBins(); destBin++)
@@ -80,18 +80,20 @@ void GaussianSqrtConvolution::ConstructSubmatrix(std::vector<long long unsigned 
             fSubMapAxes.GetBinHighEdges(destBin, highEdges);
 
             // Calculate destination upper bin edge along smearing axis, relative
-            // to origBin's centre
+            // to origBin's centre and kernel's width
+            const double xlo = lowEdges.at(0) - binCentres.at(0);
             const double xhi = highEdges.at(0) - binCentres.at(0);
-            const double width = GetSigma()*sqrt(abs(binCentres.at(0)));
-            const double z = xhi / width;
+            const double zlo = xlo / width;
+            const double zhi = xhi / width;
+            const std::pair<double, double> zs {zlo, zhi};
             // Has an integral already been calculated for this pair of (relative) bin edges?
-            const auto it = integral_cache.find(z);
+            const auto it = integral_cache.find(zs);
             double integral = 0.;
             if (it == integral_cache.end())
             {
                 // Nope, need to calculate the integral (and add it to the cache)
                 integral = fDist->Integral(lowEdges, highEdges, binCentres);
-                integral_cache[z] = integral;
+                integral_cache[zs] = integral;
             } else
             {
                 // Yep, use that result!
@@ -116,15 +118,17 @@ void GaussianSqrtConvolution::ConstructSubmatrix(std::vector<long long unsigned 
             fSubMapAxes.GetBinLowEdges(destBin, lowEdges);
             fSubMapAxes.GetBinHighEdges(destBin, highEdges);
 
-            const double xhi = lowEdges.at(0) - binCentres.at(0);
-            const double width = GetSigma()*sqrt(abs(binCentres.at(0)));
-            const double z = xhi / width;
-            const auto it = integral_cache.find(z);
+            const double xlo = lowEdges.at(0) - binCentres.at(0);
+            const double xhi = highEdges.at(0) - binCentres.at(0);
+            const double zlo = xlo / width;
+            const double zhi = xhi / width;
+            const std::pair<double, double> zs {zlo, zhi};
+            const auto it = integral_cache.find(zs);
             double integral = 0.;
             if (it == integral_cache.end())
             {
                 integral = fDist->Integral(lowEdges, highEdges, binCentres);
-                integral_cache[z] = integral;
+                integral_cache[zs] = integral;
             } else
             {
                 integral = it->second;
