@@ -270,3 +270,71 @@ TEST_CASE("Simple GaussianConvolution systematic on 2d PDF, alt axis ordering")
     REQUIRE(modifiedObs == correctVals);
   }
 }
+
+TEST_CASE("GaussianConvolution systematic on 1d PDF, variable binning")
+{
+  // First - build base 1D BinnedED object for applying systematic to
+  AxisCollection axes;
+  const std::vector<double> lowEdges {0., 1., 3., 4.};
+  const std::vector<double> highEdges {1., 3., 4., 4.5};
+  axes.AddAxis(BinAxis("axis0", lowEdges, highEdges));
+  std::vector<std::string> observables;
+  observables.push_back("obs0");
+
+  BinnedED pdf1("pdf1", axes);
+  pdf1.SetBinContent(1, 10);
+  pdf1.SetObservables(observables);
+
+  // Now build the GaussianConvolution systematic
+  double sigma = 0.5;
+
+  GaussianConvolution conv("smear_sys");
+  conv.RenameSigma("sigma");
+  conv.SetSigma(sigma);
+  conv.SetAxes(axes);
+  conv.SetTransformationObs(observables);
+  conv.SetDistributionObs(observables);
+
+  SECTION("Check GetSigmaName() method")
+  {
+    REQUIRE(conv.GetSigmaName() == "sigma");
+  }
+
+  SECTION("Check FitComponent interface for GaussianConvolution, 1D")
+  {
+    REQUIRE(conv.GetParameterCount() == 1); // one param: Gaussian's sigma
+    REQUIRE(conv.GetParameter("sigma") == sigma);
+    REQUIRE(conv.GetName() == "smear_sys");
+
+    sigma = 1.;
+    conv.SetParameter("sigma", sigma);
+    REQUIRE(conv.GetParameter("sigma") == sigma);
+  }
+
+  // Add systematic & BinnedED objects to a systematic manager; test smearing
+  SystematicManager man;
+
+  SECTION("Test 1D GaussianConvolution smearing")
+  {
+    man.Add(&conv);
+    man.AddDist(pdf1, "");
+    man.Construct();
+
+    std::vector<BinnedED> pdfs = {pdf1};
+    std::vector<BinnedED> OrignalPdfs(pdfs);
+
+    man.DistortEDs(OrignalPdfs, pdfs);
+
+    const double mu = 2.0; // centre of bin which has data in it
+
+    std::vector<double> modifiedObs = pdfs.at(0).GetBinContents();
+    std::vector<double> correctVals = {
+        10. * (gsl_cdf_gaussian_P(1 - mu, sigma) - gsl_cdf_gaussian_P(0 - mu, sigma)),
+        10. * (gsl_cdf_gaussian_P(3 - mu, sigma) - gsl_cdf_gaussian_P(1 - mu, sigma)),
+        10. * (gsl_cdf_gaussian_P(4 - mu, sigma) - gsl_cdf_gaussian_P(3 - mu, sigma)),
+        10. * (gsl_cdf_gaussian_P(4.5 - mu, sigma) - gsl_cdf_gaussian_P(4 - mu, sigma)),
+    };
+
+    REQUIRE(modifiedObs == correctVals);
+  }
+}
