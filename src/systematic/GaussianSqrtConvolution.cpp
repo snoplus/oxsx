@@ -9,11 +9,9 @@ GaussianSqrtConvolution::GaussianSqrtConvolution(const std::string &name_) :
 Convolution(name_), fSigmaName("grad")
 {
     // Set the kernel to be a Gaussian, with square-root scaling
-    // Gaussian* gauss_tmp = new Gaussian(1, "");
     Gaussian gauss_tmp(1, "");
 
     VaryingCDF* smearer = new VaryingCDF("");
-    // VaryingCDF smearer("");
     smearer->SetKernel(&gauss_tmp);
 
     SquareRootScale* sqrt_scaler = new SquareRootScale("sqrt_scale");
@@ -30,7 +28,6 @@ Convolution(name_), fSigmaName("grad")
     gauss_tmp.SetCdfCutOff(cutoff_); // set a custom CDF cutoff
     
     VaryingCDF* smearer = new VaryingCDF("");
-    // VaryingCDF smearer("");
     smearer->SetKernel(&gauss_tmp);
 
     SquareRootScale* fSqrtScaler = new SquareRootScale("sqrt_scale");
@@ -58,11 +55,9 @@ void GaussianSqrtConvolution::ConstructSubmatrix(std::vector<long long unsigned 
     vals.reserve(fSubMapAxes.GetNBins() * fSubMapAxes.GetNBins());
     
     // Some tricks we are pulling here to make things go even faster:
-    // - In most use cases, the binning along the smearing axis is ~equal,
-    //   so the amount of smearing will become translation-invariant!
-    //   Cache calculations of the smearing Integral() (which is expensive)
-    //   in a map object based on the integration endpoints (the output bin edges)
-    //   After the first row, we expect ~all integrals to have already been calculated!
+    // - Cache calculations of the smearing Integral() (which is expensive)
+    //   in a map object based on the integration endpoints (the output bin edges),
+    //   scaled by the smearing width.
     // - For typical smearing kernels, the contribution necessarily goes monotonically down
     //   for bins further away from the original bin. In other words, we expect this submatrix
     //   to be quite diagonal-heavy, with no random spikes far away.
@@ -70,7 +65,7 @@ void GaussianSqrtConvolution::ConstructSubmatrix(std::vector<long long unsigned 
     //   Instead of blithely scanning as usual over the full 2D grid of (origBin, destBin),
     //   we now start ~along the diagonal and work outwards - first forwards, then backwards.
     //   Whenever a zero is reached, we immediately exit the loop! 
-    std::map<std::pair<double, double>, double> integral_cache;
+    std::map<double, double> integral_cache;
     // Loop over all entries of the sub-matrix to determine their values
     for (long long unsigned int origBin = 0; origBin < fSubMapAxes.GetNBins(); origBin++)
     {
@@ -84,19 +79,19 @@ void GaussianSqrtConvolution::ConstructSubmatrix(std::vector<long long unsigned 
             fSubMapAxes.GetBinLowEdges(destBin, lowEdges);
             fSubMapAxes.GetBinHighEdges(destBin, highEdges);
 
-            // Calculate destination bin edges along smearing axis, relative
+            // Calculate destination upper bin edge along smearing axis, relative
             // to origBin's centre
-            const double xlo = lowEdges.at(0) - binCentres.at(0);
-            const double xhi = lowEdges.at(0) - binCentres.at(0);
-            const std::pair<double, double> edges {xlo, xhi};
+            const double xhi = highEdges.at(0) - binCentres.at(0);
+            const double width = GetSigma()*sqrt(abs(binCentres.at(0)));
+            const double z = xhi / width;
             // Has an integral already been calculated for this pair of (relative) bin edges?
-            const auto it = std::find_if(integral_cache.begin(), integral_cache.end(), [edges](const std::pair<const std::pair<double, double>, double>& p){ return p.first == edges; });
+            const auto it = integral_cache.find(z);
             double integral = 0.;
             if (it == integral_cache.end())
             {
                 // Nope, need to calculate the integral (and add it to the cache)
                 integral = fDist->Integral(lowEdges, highEdges, binCentres);
-                integral_cache[edges] = integral;
+                integral_cache[z] = integral;
             } else
             {
                 // Yep, use that result!
@@ -121,15 +116,15 @@ void GaussianSqrtConvolution::ConstructSubmatrix(std::vector<long long unsigned 
             fSubMapAxes.GetBinLowEdges(destBin, lowEdges);
             fSubMapAxes.GetBinHighEdges(destBin, highEdges);
 
-            const double xlo = lowEdges.at(0) - binCentres.at(0);
             const double xhi = lowEdges.at(0) - binCentres.at(0);
-            const std::pair<double, double> edges {xlo, xhi};
-            const auto it = std::find_if(integral_cache.begin(), integral_cache.end(), [edges](const std::pair<const std::pair<double, double>, double>& p){ return p.first == edges; });
+            const double width = GetSigma()*sqrt(abs(binCentres.at(0)));
+            const double z = xhi / width;
+            const auto it = integral_cache.find(z);
             double integral = 0.;
             if (it == integral_cache.end())
             {
                 integral = fDist->Integral(lowEdges, highEdges, binCentres);
-                integral_cache[edges] = integral;
+                integral_cache[z] = integral;
             } else
             {
                 integral = it->second;

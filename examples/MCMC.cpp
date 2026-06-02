@@ -34,7 +34,7 @@ constexpr double SIGMA_ESCALE = 0.01;
 constexpr double SIGMA_ESMEAR = 0.05;
 constexpr double SIGMA_RSCALE = 0.01;
 constexpr double SIGMA_RSMEAR = 0.02;
-constexpr size_t N_STEPS = 100;
+constexpr size_t N_STEPS = 10000;
 const std::string outfilename_root = "mcmc_example_output.root";
 
 std::vector<BinnedED> load_mc(const AxisCollection& ax, const std::vector<std::string>& observables) {
