@@ -40,6 +40,7 @@ void Convolution::ConstructSubmatrix(std::vector<long long unsigned int> &column
     column_indices.reserve(fSubMapAxes.GetNBins() * fSubMapAxes.GetNBins());
     row_indices.reserve(fSubMapAxes.GetNBins() * fSubMapAxes.GetNBins());
     vals.reserve(fSubMapAxes.GetNBins() * fSubMapAxes.GetNBins());
+    
     // Loop over all entries of the sub-matrix to determine their values
     for (long long unsigned int origBin = 0; origBin < fSubMapAxes.GetNBins(); origBin++)
     {
@@ -103,7 +104,7 @@ void Convolution::MakeFullMatrix(const std::vector<long long unsigned int> &colu
 void Convolution::Construct()
 {
     /*
-     * Method that constructs the response matrix associated with this convlution systematic.
+     * Method that constructs the response matrix associated with this convolution systematic.
      * Attempts to be clever and speedy about building this, because this method can get computationally-
      * expensive, fast, when dealing with BinnedED objects with numerous dimensions and many bins!
      *

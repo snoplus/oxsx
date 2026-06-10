@@ -10,7 +10,7 @@
 
 using ContainerTools::ToString;
 
-GaussianFitter::GaussianFitter(Gaussian *gaus, const size_t &nDims_)
+GaussianFitter::GaussianFitter(Gaussian *gaus, const size_t &nDims_) : fHideMeans(false)
 {
     fOrignalFunc = gaus;
     std::stringstream ss;
@@ -25,7 +25,7 @@ GaussianFitter::GaussianFitter(Gaussian *gaus, const size_t &nDims_)
     }
 }
 
-GaussianFitter::GaussianFitter(Gaussian *gaus, const std::vector<std::string> &meanNames_, const std::vector<std::string> &stdDevNames_)
+GaussianFitter::GaussianFitter(Gaussian *gaus, const std::vector<std::string> &meanNames_, const std::vector<std::string> &stdDevNames_, bool hideMeans_) : fHideMeans(hideMeans_)
 {
     if (meanNames_.size() != stdDevNames_.size())
         throw OXSXException(Formatter() << "GaussianFitter:: #meanName != #stdDevNames");
@@ -43,11 +43,14 @@ void GaussianFitter::RenameParameter(const std::string &old_, const std::string 
     if (find(fMeansNames.begin(), fMeansNames.end(), old_) == fMeansNames.end() && find(fStdDevsNames.begin(), fStdDevsNames.end(), old_) == fStdDevsNames.end())
         throw NotFoundError(Formatter() << "GaussianFitter:: When attempting to renaming the parameter " << old_ << ", it wasn't found. Available names: " << ToString(GetParameterNames()));
 
-    it = find(fMeansNames.begin(), fMeansNames.end(), old_);
-    while (it != fMeansNames.end())
+    if (!fHideMeans)
     {
-        *it = new_;
-        it = find(it++, fMeansNames.end(), old_);
+        it = find(fMeansNames.begin(), fMeansNames.end(), old_);
+        while (it != fMeansNames.end())
+        {
+            *it = new_;
+            it = find(it++, fMeansNames.end(), old_);
+        }
     }
 
     it = find(fStdDevsNames.begin(), fStdDevsNames.end(), old_);
@@ -73,11 +76,14 @@ GaussianFitter::GetStdDevNames() const
 void GaussianFitter::SetParameter(const std::string &name_, double value_)
 {
     std::vector<std::string>::iterator it;
-    it = find(fMeansNames.begin(), fMeansNames.end(), name_);
-    while (it != fMeansNames.end())
+    if (!fHideMeans)
     {
-        fOrignalFunc->SetMean(it - fMeansNames.begin(), value_);
-        it = find(++it, fMeansNames.end(), name_);
+        it = find(fMeansNames.begin(), fMeansNames.end(), name_);
+        while (it != fMeansNames.end())
+        {
+            fOrignalFunc->SetMean(it - fMeansNames.begin(), value_);
+            it = find(++it, fMeansNames.end(), name_);
+        }
     }
     it = find(fStdDevsNames.begin(), fStdDevsNames.end(), name_);
     while (it != fStdDevsNames.end())
@@ -96,7 +102,7 @@ GaussianFitter::GetParameter(const std::string &name_) const
 
     std::vector<std::string>::const_iterator it;
     it = find(fMeansNames.begin(), fMeansNames.end(), name_);
-    if (it == fMeansNames.end())
+    if (fHideMeans || it == fMeansNames.end())
     {
         it = find(fStdDevsNames.begin(), fStdDevsNames.end(), name_);
         if (it == fStdDevsNames.end())
@@ -122,12 +128,12 @@ GaussianFitter::GetParameters() const
     std::vector<double> values;
 
     values.reserve(means.size() + stddevs.size()); // preallocate memory
-    values.insert(values.end(), means.begin(), means.end());
+    if (!fHideMeans) { values.insert(values.end(), means.begin(), means.end()); }
     values.insert(values.end(), stddevs.begin(), stddevs.end());
 
     std::vector<std::string> names;
     names.reserve(fMeansNames.size() + fStdDevsNames.size()); // preallocate memory
-    names.insert(names.end(), fMeansNames.begin(), fMeansNames.end());
+    if (!fHideMeans) { names.insert(names.end(), fMeansNames.begin(), fMeansNames.end()); }
     names.insert(names.end(), fStdDevsNames.begin(), fStdDevsNames.end());
 
     return ContainerTools::CreateMap(names, values);
@@ -136,7 +142,7 @@ GaussianFitter::GetParameters() const
 size_t
 GaussianFitter::GetParameterCount() const
 {
-    return fMeansNames.size() + fStdDevsNames.size();
+    return fHideMeans ? fStdDevsNames.size() : fMeansNames.size() + fStdDevsNames.size();
 }
 
 std::set<std::string>
@@ -145,7 +151,7 @@ GaussianFitter::GetParameterNames() const
     std::set<std::string> names;
     for (size_t i = 0; i < fMeansNames.size(); ++i)
     {
-        names.insert(fMeansNames.at(i));
+        if (!fHideMeans) { names.insert(fMeansNames.at(i)); }
         names.insert(fStdDevsNames.at(i));
     }
     return names;

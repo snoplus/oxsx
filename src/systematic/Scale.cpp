@@ -28,6 +28,7 @@ void Scale::Construct()
     const BinAxis &scaleAxis = fAxes.GetAxis(fDistObs.GetIndex(scaleAxisName));
     // Each (pre-scaled) bin gets a mapping from (post-scaled) bins to non-zero values
     std::vector<std::map<size_t, double>> scale_vals(scaleAxis.GetNBins(), std::map<size_t, double>{});
+    size_t nvals = 0;
     for (size_t bin = 0; bin < scaleAxis.GetNBins(); bin++)
     {
         // First - work out edges of scaled bin interval along axis
@@ -43,22 +44,42 @@ void Scale::Construct()
             if (contribution > 0)
             {
                 scale_vals[bin][bin_test] = contribution;
+                nvals++;
             }
         }
     }
 
-    // Finally, construct the full response matrix by setting the diagonal
+    // Finally, construct the full response matrix by setting the non-zero
     // elements to their appropriate value, using the bin ID mapping to help.
     fResponse.SetZeros();
+    // Set up variables first; pre-allocate memory for the large vectors associated with the full matrix's info
+    const size_t N = fAxes.GetNBins();
+    const size_t n_sub = scaleAxis.GetNBins();
+    const size_t n_blocks = N / n_sub;
+    const size_t size_block = nvals;
+    std::vector<long long unsigned int> column_indices_bl;
+    std::vector<long long unsigned int> row_indices_bl;
+    std::vector<double> vals_bl;
+    column_indices_bl.reserve(size_block * n_blocks);
+    row_indices_bl.reserve(size_block * n_blocks);
+    vals_bl.reserve(size_block * n_blocks);
+    // Loop over all origin bins
     for (size_t obs_bin_id = 0; obs_bin_id < fAxes.GetNBins(); obs_bin_id++)
     {
+        // ...and also loop over all possible non-zero destination bins
         const size_t scaleAxisBin = fDistTransBinMapping.at(obs_bin_id);
         for (const auto &postScaleBinPair : scale_vals.at(scaleAxisBin))
         {
+            // Put info about contribution for this bin into relevant vectors
             const size_t scaled_bin_id = fMappingDistAndTrans.GetComponent(obs_bin_id, postScaleBinPair.first);
-            fResponse.SetComponent(scaled_bin_id, obs_bin_id, postScaleBinPair.second);
+            row_indices_bl.push_back(scaled_bin_id);
+            column_indices_bl.push_back(obs_bin_id);
+            vals_bl.push_back(postScaleBinPair.second);
         }
     }
+    // Set elements of full response matrix all in one go using filled vectors
+    fResponse = SparseMatrix(N, N);
+    fResponse.SetComponents(row_indices_bl, column_indices_bl, vals_bl);
 }
 
 void Scale::SetScaleFactor(double scaleFactor_)

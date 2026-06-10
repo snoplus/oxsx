@@ -39,7 +39,7 @@ public:
    std::string GetName() const;
    void SetName(const std::string &);
 
-private:
+protected:
    ConditionalPDF *fDist; // kernel used in convolution
    std::string fName;     // name of this object
    // Members needed for efficient calculations:
@@ -51,7 +51,7 @@ private:
    AxisCollection DetermineAxisSubCollection(const std::vector<size_t> &rel_indices) const;
    size_t BlockedBinningIndex(size_t bin_index, const std::vector<size_t> &relativeIndices) const;
    void CacheIndexPermutations();
-   void ConstructSubmatrix(std::vector<long long unsigned int> &column_indices, std::vector<long long unsigned int> &row_indices,
+   virtual void ConstructSubmatrix(std::vector<long long unsigned int> &column_indices, std::vector<long long unsigned int> &row_indices,
                            std::vector<double> &vals) const;
    void MakeFullMatrix(const std::vector<long long unsigned int> &column_indices, const std::vector<long long unsigned int> &row_indices,
                        const std::vector<double> &vals, SparseMatrix &response_blocked) const;
